@@ -17,8 +17,8 @@ env_group.add_argument('--num_objects', type=int, default=-1, help='The number o
 env_group.add_argument('--max_episode_steps', type=int, default=-1, help='The maximal number of steps per episode')
 env_group.add_argument('--action_sequence', type=str, default='xyrp', choices=['xyrp', 'xyp', 'xyzrrrp'], help='The action space')
 env_group.add_argument('--random_orientation', type=strToBool, default=True, help='Allow the environment to initialize with random orientation')
-env_group.add_argument('--num_processes', type=int, default=5, help='The number of parallel environments to run')
-env_group.add_argument('--render', type=strToBool, default=False, help='Render the PyBullet GUI or not')
+env_group.add_argument('--num_processes', type=int, default=1, help='The number of parallel environments to run')
+env_group.add_argument('--render', type=strToBool, default=True, help='Render the PyBullet GUI or not')
 env_group.add_argument('--workspace_size', type=float, default=0.4, help='Size of the workspace in meters')
 env_group.add_argument('--heightmap_size', type=int, default=128, help='Size of the heightmap in pixels')
 env_group.add_argument('--patch_size', type=int, default=24, help='Size of the in-hand image in pixels')
@@ -36,7 +36,7 @@ training_group.add_argument('--init_eps', type=float, default=1.0, help='The ini
 training_group.add_argument('--final_eps', type=float, default=0., help='The final value of the epsilon schedule')
 training_group.add_argument('--training_iters', type=int, default=1, help='The number of training iterations per step')
 training_group.add_argument('--training_offset', type=int, default=100, help='The minimal number of transitions to start training')
-training_group.add_argument('--max_train_step', type=int, default=20000, help='The maximal number of training steps')
+training_group.add_argument('--max_train_step', type=int, default=200, help='The maximal number of training steps')
 training_group.add_argument('--device_name', type=str, default='cuda', help='The device for PyTorch')
 training_group.add_argument('--target_update_freq', type=int, default=100, help='The frequency of updating the target network')
 training_group.add_argument('--save_freq', type=int, default=500, help='The frequency of logging')
@@ -56,10 +56,12 @@ training_group.add_argument('--equi_n', type=int, default=4, help='The order of 
 training_group.add_argument('--aug', type=strToBool, default=False, help='If true, perform RAD data augmentation at each sample step')
 training_group.add_argument('--aug_type', type=str, choices=['se2', 'cn', 't', 'shift'], default='se2', help='The type of data augmentation')
 
+
 eval_group = parser.add_argument_group('eval')
 eval_group.add_argument('--num_eval_processes', type=int, default=5, help='The number of parallel environments for evaluation')
 eval_group.add_argument('--eval_freq', default=500, type=int, help='The evaluation frequency')
 eval_group.add_argument('--num_eval_episodes', default=100, type=int, help='The number of evaluation episodes')
+eval_group.add_argument('--object_index', default=-1, type=int, help='The index number of objects in object grasping')
 
 planner_group = parser.add_argument_group('planner')
 planner_group.add_argument('--planner_pos_noise', type=float, default=0)
@@ -155,6 +157,7 @@ aug = args.aug
 aug_type = args.aug_type
 
 # eval
+object_index = args.object_index
 num_eval_processes = args.num_eval_processes
 eval_freq = args.eval_freq
 num_eval_episodes = args.num_eval_episodes
@@ -278,6 +281,8 @@ if max_episode_steps != -1:
     env_config['max_steps'] = max_episode_steps
 if num_objects != -1:
     env_config['num_objects'] = num_objects
+if object_index != -1:
+    env_config['object_index'] = object_index
 
 if seed is not None:
     env_config['seed'] = seed

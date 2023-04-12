@@ -1,6 +1,19 @@
 import pybullet as pb
 import numpy as np
-
+import random
+import os
+import glob
+import pyredner # pyredner will be the main Python module we import for redner.
+import torch # We also import PyTorch
+import urllib
+import zipfile
+import random
+import torchvision
+import math
+from typing import Optional, List
+import sys
+import time
+from PIL import Image
 class Sensor(object):
   def __init__(self, cam_pos, cam_up_vector, target_pos, target_size, near, far):
     self.view_matrix = pb.computeViewMatrix(
@@ -8,7 +21,10 @@ class Sensor(object):
       cameraUpVector=cam_up_vector,
       cameraTargetPosition=target_pos,
     )
-
+    
+    self.cam_pos = cam_pos
+    self.cam_up_vector = cam_up_vector
+    self.target_pos = target_pos
     self.near = near
     self.far = far
     self.fov = np.degrees(2 * np.arctan((target_size / 2) / self.far))
@@ -22,17 +38,111 @@ class Sensor(object):
     )
     self.proj_matrix = pb.computeProjectionMatrixFOV(70, 1, 0.001, 0.3)
 
-  def getHeightmap(self, size):
+
+
+  def getHeightmap(self, size, objs, workspace):
+    self.workspace = workspace
+    self.objs = objs
+
+    def save_greyscale_image(img):
+        """
+        input: [128, 128] numpy.array 
+        output: N/A
+        """
+        img = np.array(img)
+        img = np.clip(img*255, 0 ,255).astype('uint8')
+        filename = f'gray_image_{int(time.time())}.png'
+        img = Image.fromarray(img)
+        img.save("/Users/tingxi/_BulletArm/BulletArm/bulletarm_baselines/fc_dqn/scripts/heightmapPNG/"+filename)
+        time.sleep(1)
+
+    def store_pos(string, l):
+      s = str(l)
+      s = string + s
+      with open("/Users/tingxi/_BulletArm/BulletArm/bulletarm_baselines/fc_dqn/scripts/actions.txt", "a") as f:
+        f.write(s)
+        f.write("\n")
+
+    def store_heightmap(heightmap):
+      heightmap = np.array(heightmap)
+      with open("/Users/tingxi/_BulletArm/BulletArm/bulletarm_baselines/fc_dqn/scripts/heightmap.txt", "a") as f:
+        np.savetxt(f, heightmap, delimiter=",")
+        f.write("\n")      
+
+    def setSingleObjPosition(if_store=False):
+      """
+      input: 
+        objs
+        set if storing positions into txt file
+      output: 
+        List[PyRedner Object] with new random position
+
+      Note: 
+      """
+      dir = "/Users/tingxi/_BulletArm/BulletArm/bulletarm/pybullet/urdf/object/GraspNet1B_object/000/convex.obj"
+      o = pyredner.load_obj(dir, return_objects=True)
+
+      x = self.objs[0].getXPosition()
+      y = self.objs[0].getYPosition()
+      z = self.objs[0].getZPosition()
+      #randpos = [x, y, 0.40]
+      """set the object to center FIRST"""
+
+      o[0].vertices[:,0:1] += x
+      o[0].vertices[:,1:2] += y
+      o[0].vertices[:,2:3] += z
+      if if_store: 
+        store_pos("mean position: ", [o[0].vertices[:,0:1].mean(), o[0].vertices[:,1:2].mean(), o[0].vertices[:,2:3].mean()])
+        store_pos("original position: ", [x,y,z])
+      return o
+
+    def rendering(cam_pos, cam_up_vector, target_pos, fov, obj_list):
+      
+      cam_pos = torch.FloatTensor(cam_pos)
+      cam_up_vector = torch.FloatTensor(cam_up_vector)
+      target_pos = torch.FloatTensor(target_pos)
+      fov = torch.tensor([fov], dtype=torch.float32)
+
+      camera = pyredner.Camera(position = cam_pos,
+                          look_at = target_pos,
+                          up = cam_up_vector,
+                          fov = fov, # in degree
+                          clip_near = 1e-2, # needs to > 0
+                          resolution = (128, 128)
+                          )
+      
+      print(cam_pos, cam_up_vector, target_pos, fov)
+      scene = pyredner.Scene(camera = camera, objects = obj_list)
+      chan_list = [pyredner.channels.depth]
+      img = pyredner.render_generic(scene, chan_list)
+      img = np.array(img)
+      img = np.squeeze(img, axis=2)
+      return img
+    
+    #===HERE IS THE DIFFERENTIABLE RENDERER===#
+    redner_obj_list = setSingleObjPosition(if_store=True)
+    img = rendering(self.cam_pos, self.cam_up_vector, self.target_pos, self.fov, redner_obj_list)
+    #===HERE IS THE DIFFERENTIABLE RENDERER===#
+
+    #===HERE IS THE ORIGINAL RENDERER===#
     image_arr = pb.getCameraImage(width=size, height=size,
                                   viewMatrix=self.view_matrix,
                                   projectionMatrix=self.proj_matrix,
                                   renderer=pb.ER_TINY_RENDERER)
     depth_img = np.array(image_arr[3])
     depth = self.far * self.near / (self.far - (self.far - self.near) * depth_img)
+    depth = np.abs(depth - np.max(depth)).reshape(size, size)
+    #===HERE IS THE ORIGINAL RENDERER===#
 
-    return np.abs(depth - np.max(depth)).reshape(size, size)
+    store_heightmap(img)
+    store_heightmap(depth)
+    
+    save_greyscale_image(img)
+    save_greyscale_image(depth)
 
-  def getRGBImg(self, size):
+    return img
+
+  def getRGBImg(self, size, objs):
     image_arr = pb.getCameraImage(width=size, height=size,
                                   viewMatrix=self.view_matrix,
                                   projectionMatrix=self.proj_matrix,
@@ -51,8 +161,8 @@ class Sensor(object):
 
   def getPointCloud(self, size, to_numpy=True):
     image_arr = pb.getCameraImage(width=size, height=size,
-                                  viewMatrix=self.view_matrix,
-                                  projectionMatrix=self.proj_matrix,
+                                  viewMatrix=self.view_matrix, 
+                                  projectionMatrix=self.proj_matrix, 
                                   renderer=pb.ER_TINY_RENDERER)
     depthImg = np.asarray(image_arr[3])
 
@@ -76,3 +186,4 @@ class Sensor(object):
     # if to_numpy:
       # points = np.asnumpy(points)
     return points
+  

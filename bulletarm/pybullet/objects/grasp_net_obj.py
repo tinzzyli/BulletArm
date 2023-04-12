@@ -28,8 +28,13 @@ class GraspNetObject(PybulletObject):
         if index >= 0:
             obj_filepath = found_object_directories[index]
         else:
-            index = np.random.choice(np.arange(total_num_objects), 1)[0]
+            # index = np.random.choice(np.arange(total_num_objects), 1)[0]
+            fold_num = abs(index)/10
+            index = np.random.choice(np.delete(np.arange(total_num_objects), np.arange(int((fold_num-0.1)*total_num_objects),int(fold_num*total_num_objects))), 1)[0]
             obj_filepath = found_object_directories[index]
+
+        # f=open("../../../pos_info.txt","a")
+        # f.write("object_index: " + str(index) + ", pos: " + str(pos) + "\n")
 
         color = np.random.uniform(0.6, 1, (4,))
         color[-1] = 1

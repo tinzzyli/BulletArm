@@ -108,7 +108,6 @@ class DQN3DFCN(Base3D):
         rot = self.rzs[rot_idx]
         x = (pixels[:, 0].float() * self.heightmap_resolution + self.workspace[0][0]).reshape(states.size(0), 1)
         y = (pixels[:, 1].float() * self.heightmap_resolution + self.workspace[1][0]).reshape(states.size(0), 1)
-
         actions = torch.cat((x, y, rot), dim=1)
         action_idx = torch.cat((pixels, rot_idx), dim=1)
         return q_value_maps, action_idx, actions

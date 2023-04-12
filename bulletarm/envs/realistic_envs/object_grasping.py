@@ -3,13 +3,14 @@ import math
 import glob
 import numpy as np
 import bulletarm
+import csv
 from bulletarm.envs.base_env import BaseEnv
 from bulletarm.pybullet.utils import constants
 from bulletarm.pybullet.utils.constants import NoValidPositionException
 from bulletarm.pybullet.equipments.tray import Tray
 from scipy.ndimage.interpolation import rotate
 import pybullet as pb
-
+import inspect
 class ObjectGrasping(BaseEnv):
     '''Open loop object grasping task.
 
@@ -24,9 +25,11 @@ class ObjectGrasping(BaseEnv):
         if 'object_scale_range' not in config:
             config['object_scale_range'] = [1, 1]
         if 'num_objects' not in config:
-            config['num_objects'] = 15
+            config['num_objects'] = 1
         if 'max_steps' not in config:
-            config['max_steps'] = 30
+            config['max_steps'] = 50
+        if 'object_index' not in config:
+            config["object_index"] = -1
         config['adjust_gripper_after_lift'] = True
         config['min_object_distance'] = 0.
         config['min_boarder_padding'] = 0.15
@@ -136,6 +139,23 @@ class ObjectGrasping(BaseEnv):
         #   if not self._isObjectWithinWorkspace(obj):
         #     self._removeObject(obj)
 
+        #=== INSPECT CALLER ===#
+        def inspectCaller():
+            caller_frame = inspect.stack()[1]
+            caller_lineno = caller_frame.lineno
+            caller_function = caller_frame.function
+            s = (f"line {caller_lineno}, in function {caller_function}")
+            with open("/Users/tingxi/_BulletArm/BulletArm/bulletarm_baselines/fc_dqn/scripts/actions.txt", "a") as f:
+                f.write(s)
+                f.write("\n")
+
+            with open("/Users/tingxi/_BulletArm/BulletArm/bulletarm_baselines/fc_dqn/scripts/heightmap.txt", "a") as f:
+                f.write(s)
+                f.write("\n")        
+
+        inspectCaller()
+        #=== INSPECT CALLER ===#
+
         obs = self._getObservation(action)
         done = self._checkTermination()
         reward = 1.0 if self.obj_grasped > pre_obj_grasped else 0.0
@@ -176,6 +196,7 @@ class ObjectGrasping(BaseEnv):
                             y = (np.random.rand() - 0.5) * 0.1
                             y += self.workspace[1].mean()
                             randpos = [x, y, 0.40]
+                            # randpos = [0.45163103975431074, -0.01348066127368648, 0.40]
                             # obj = self._generateShapes(constants.RANDOM_HOUSEHOLD, 1, random_orientation=self.random_orientation,
                             #                            pos=[randpos], padding=self.min_boarder_padding,
                             #                            min_distance=self.min_object_distance, model_id=-1)
@@ -183,11 +204,11 @@ class ObjectGrasping(BaseEnv):
                             #                            random_orientation=self.random_orientation,
                             #                            pos=[randpos], padding=self.min_boarder_padding,
                             #                            min_distance=self.min_object_distance, model_id=-1)
-
+# random_orientation=self.random_orientation,
                             obj = self._generateShapes(constants.GRASP_NET_OBJ, 1,
-                                                       random_orientation=self.random_orientation,
+                                                       rot=[pb.getQuaternionFromEuler([0., 0., -np.pi / 4])],
                                                        pos=[randpos], padding=self.min_boarder_padding,
-                                                       min_distance=self.min_object_distance, model_id=-1)
+                                                       min_distance=self.min_object_distance, model_id=self.object_index)
                             pb.changeDynamics(obj[0].object_id, -1, lateralFriction=0.6)
                             self.wait(10)
                     # elif True:
@@ -226,7 +247,7 @@ class ObjectGrasping(BaseEnv):
                             obj = self._generateShapes(constants.GRASP_NET_OBJ, 1,
                                                        rot=[pb.getQuaternionFromEuler([0., 0., -np.pi / 4])],
                                                        pos=[display_pos], padding=self.min_boarder_padding,
-                                                       min_distance=self.min_object_distance, model_id=i)
+                                                       min_distance=self.min_object_distance, model_id=self.object_index)
                             # obj = self._generateShapes(constants.RANDOM_HOUSEHOLD200, 1,
                             #                            rot=[pb.getQuaternionFromEuler([0., 0., -np.pi / 4])],
                             #                            pos=[display_pos], padding=self.min_boarder_padding,
@@ -245,6 +266,20 @@ class ObjectGrasping(BaseEnv):
             self.wait(200)
             self.obj_grasped = 0
             # self.num_in_tray_obj = self.num_obj
+        #=== INSPECT CALLER ===#
+        def inspectCaller():
+            caller_frame = inspect.stack()[1]
+            caller_lineno = caller_frame.lineno
+            caller_function = caller_frame.function
+            s = (f"line {caller_lineno}, in function {caller_function}")
+            with open("/Users/tingxi/_BulletArm/BulletArm/bulletarm_baselines/fc_dqn/scripts/actions.txt", "a") as f:
+                f.write(s)
+                f.write("\n") 
+            with open("/Users/tingxi/_BulletArm/BulletArm/bulletarm_baselines/fc_dqn/scripts/heightmap.txt", "a") as f:
+                f.write(s)
+                f.write("\n") 
+        inspectCaller()
+        #=== INSPECT CALLER ===#
         return self._getObservation()
 
     def isObjInBox(self, obj_pos, tray_pos, tray_size):

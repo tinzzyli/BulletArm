@@ -28,8 +28,16 @@ from bulletarm_baselines.fc_dqn.utils.parameters import *
 from bulletarm_baselines.fc_dqn.utils.torch_utils import augmentBuffer, augmentBufferD4
 from bulletarm_baselines.fc_dqn.scripts.fill_buffer_deconstruct import fillDeconstructUsingRunner
 
-
 ExpertTransition = collections.namedtuple('ExpertTransition', 'state obs action reward next_state next_obs done step_left expert')
+
+def store_action(t,dir):
+    arr = np.array(t)
+    l = list(arr)
+    s = str(l)
+    with open(dir, "a") as f:
+        f.write("action: \n")
+        f.write(s)
+        f.write("\n")
 
 def set_seed(s):
     np.random.seed(s)
@@ -91,7 +99,7 @@ def evaluate(envs, agent, logger):
   if not no_bar:
     eval_bar.close()
 
-def train():
+def train(): 
     eval_thread = None
     start_time = time.time()
     if seed is not None:
@@ -154,6 +162,13 @@ def train():
             while j < planner_episode:
                 plan_actions = planner_envs.getNextAction()
                 planner_actions_star_idx, planner_actions_star = agent.getActionFromPlan(plan_actions)
+                #eps = final_eps
+                #q_value_maps, planner_actions_star_idx, planner_actions_star = agent.getEGreedyActions(states, in_hands, obs, eps)
+                #storing action in txt
+                #input: tensor
+                store_action(planner_actions_star, "/Users/tingxi/_BulletArm/BulletArm/bulletarm_baselines/fc_dqn/scripts/actions.txt")  
+                #raise ValueError("m")
+                #store_in_txt(q_value_maps, "/Users/tingxi/_BulletArm/BulletArm/bulletarm_baselines/fc_dqn/scripts/qMap.txt")  
                 planner_actions_star = torch.cat((planner_actions_star, states.unsqueeze(1)), dim=1)
                 states_, in_hands_, obs_, rewards, dones = planner_envs.step(planner_actions_star, auto_reset=True)
                 buffer_obs = getCurrentObs(in_hands, obs)
@@ -165,7 +180,9 @@ def train():
                 states = copy.copy(states_)
                 obs = copy.copy(obs_)
                 in_hands = copy.copy(in_hands_)
-
+                with open("/Users/tingxi/_BulletArm/BulletArm/bulletarm_baselines/fc_dqn/scripts/actions.txt", "a") as f:
+                   f.write("\n")
+                raise ValueError("m")#testcode
                 for i in range(planner_num_process):
                   if dones[i] and rewards[i]:
                     for t in local_transitions[i]:
@@ -213,7 +230,6 @@ def train():
             eps = exploration.value(logger.num_eps)
         is_expert = 0
         q_value_maps, actions_star_idx, actions_star = agent.getEGreedyActions(states, in_hands, obs, eps)
-
         buffer_obs = getCurrentObs(in_hands, obs)
         actions_star = torch.cat((actions_star, states.unsqueeze(1)), dim=1)
         envs.stepAsync(actions_star, auto_reset=False)
@@ -275,6 +291,7 @@ def train():
     logger.saveCheckPoint(agent.getSaveState(), replay_buffer.getSaveState())
     envs.close()
     eval_envs.close()
+
 
 if __name__ == '__main__':
     train()

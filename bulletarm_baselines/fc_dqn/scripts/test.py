@@ -33,12 +33,12 @@ def test():
     agent.loadModel(load_model_pre)
     agent.eval()
     states, in_hands, obs = envs.reset()
-    test_episode = 1000
+    test_episode = 100
     total = 0
     s = 0
     step_times = []
     pbar = tqdm(total=test_episode)
-    while total < 1000:
+    while total < 100:
         q_value_maps, actions_star_idx, actions_star = agent.getEGreedyActions(states, in_hands, obs, 0, 0)
         # plt.imshow(obs[0, 0])
         # plt.show()
@@ -72,6 +72,11 @@ def test():
 
     # np.save('ranks_dqfd_all.npy', ranks)
     # plotRanks(ranks, 1200)
+    return float(s) / total if total != 0 else 0
 
 if __name__ == '__main__':
-    test()
+    sr_value = test()
+    print(sr_value)
+    print(object_index)
+    f=open("./object_info.txt","a")
+    f.write("index: " + str(object_index) + ", num: " + str(num_objects) + ", SR: " + str(sr_value) + "\n")
