@@ -14,6 +14,9 @@ from typing import Optional, List
 import sys
 import time
 from PIL import Image
+from transforms3d import quaternions
+
+
 class Sensor(object):
   def __init__(self, cam_pos, cam_up_vector, target_pos, target_size, near, far):
     self.view_matrix = pb.computeViewMatrix(
@@ -38,8 +41,6 @@ class Sensor(object):
     )
     self.proj_matrix = pb.computeProjectionMatrixFOV(70, 1, 0.001, 0.3)
 
-
-
   def getHeightmap(self, size, objs, workspace):
     self.workspace = workspace
     self.objs = objs
@@ -53,19 +54,18 @@ class Sensor(object):
         img = np.clip(img*255, 0 ,255).astype('uint8')
         filename = f'gray_image_{int(time.time())}.png'
         img = Image.fromarray(img)
-        img.save("/Users/tingxi/_BulletArm/BulletArm/bulletarm_baselines/fc_dqn/scripts/heightmapPNG/"+filename)
+        img.save("/Users/tingxi/BulletArm/bulletarm_baselines/fc_dqn/scripts/heightmapPNG/"+filename)
         time.sleep(1)
 
     def store_pos(string, l):
       s = str(l)
       s = string + s
-      with open("/Users/tingxi/_BulletArm/BulletArm/bulletarm_baselines/fc_dqn/scripts/actions.txt", "a") as f:
-        f.write(s)
-        f.write("\n")
+      with open("/Users/tingxi/BulletArm/bulletarm_baselines/fc_dqn/scripts/actions.txt", "a") as f:
+        f.write(s+"\n")
 
     def store_heightmap(heightmap):
       heightmap = np.array(heightmap)
-      with open("/Users/tingxi/_BulletArm/BulletArm/bulletarm_baselines/fc_dqn/scripts/heightmap.txt", "a") as f:
+      with open("/Users/tingxi/BulletArm/bulletarm_baselines/fc_dqn/scripts/heightmap.txt", "a") as f:
         np.savetxt(f, heightmap, delimiter=",")
         f.write("\n")      
 
@@ -79,22 +79,33 @@ class Sensor(object):
 
       Note: 
       """
-      dir = "/Users/tingxi/_BulletArm/BulletArm/bulletarm/pybullet/urdf/object/GraspNet1B_object/000/convex.obj"
+      dir = "/Users/tingxi/BulletArm/bulletarm/pybullet/urdf/object/GraspNet1B_object/000/convex.obj"
       o = pyredner.load_obj(dir, return_objects=True)
+      newObj = o[0]
 
       x = self.objs[0].getXPosition()
       y = self.objs[0].getYPosition()
       z = self.objs[0].getZPosition()
-      #randpos = [x, y, 0.40]
-      """set the object to center FIRST"""
 
-      o[0].vertices[:,0:1] += x
-      o[0].vertices[:,1:2] += y
-      o[0].vertices[:,2:3] += z
+      orien = self.objs[0].getRotation()
+      _x, _y, _z, _w = orien
+      orien = _w, _x, _y, _z
+      print(orien)
+      R = quaternions.quat2mat(orien)
+      R = torch.Tensor(R)
+      newObj.vertices = torch.matmul(newObj.vertices, R.T)
+
+      """set the object to center FIRST"""
+      
+      newObj.vertices[:,0:1] += x
+      newObj.vertices[:,1:2] += y
+      newObj.vertices[:,2:3] += z
+
       if if_store: 
-        store_pos("mean position: ", [o[0].vertices[:,0:1].mean(), o[0].vertices[:,1:2].mean(), o[0].vertices[:,2:3].mean()])
+        store_pos("mean position: ", [newObj.vertices[:,0:1].mean(), newObj.vertices[:,1:2].mean(), newObj.vertices[:,2:3].mean()])
         store_pos("original position: ", [x,y,z])
-      return o
+
+      return [newObj]
 
     def rendering(cam_pos, cam_up_vector, target_pos, fov, obj_list):
       
@@ -103,6 +114,7 @@ class Sensor(object):
       target_pos = torch.FloatTensor(target_pos)
       fov = torch.tensor([fov], dtype=torch.float32)
 
+      #cam_pos[2] *= 2.1
       camera = pyredner.Camera(position = cam_pos,
                           look_at = target_pos,
                           up = cam_up_vector,
@@ -111,7 +123,7 @@ class Sensor(object):
                           resolution = (128, 128)
                           )
       
-      print(cam_pos, cam_up_vector, target_pos, fov)
+      print("cam_pos: ", cam_pos, "\ncam_up: ", cam_up_vector, "\ntar_pos: ", target_pos, "\nfov: ", fov)
       scene = pyredner.Scene(camera = camera, objects = obj_list)
       chan_list = [pyredner.channels.depth]
       img = pyredner.render_generic(scene, chan_list)
@@ -134,11 +146,13 @@ class Sensor(object):
     depth = np.abs(depth - np.max(depth)).reshape(size, size)
     #===HERE IS THE ORIGINAL RENDERER===#
 
+    
+
     store_heightmap(img)
     store_heightmap(depth)
     
     save_greyscale_image(img)
-    save_greyscale_image(depth)
+    save_greyscale_image(depth*100.0)
 
     return img
 
