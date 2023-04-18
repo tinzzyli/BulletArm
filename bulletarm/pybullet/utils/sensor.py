@@ -46,16 +46,16 @@ class Sensor(object):
     self.objs = objs
 
     def save_greyscale_image(img):
-        """
-        input: [128, 128] numpy.array 
-        output: N/A
-        """
-        img = np.array(img)
-        img = np.clip(img*255, 0 ,255).astype('uint8')
-        filename = f'gray_image_{int(time.time())}.png'
-        img = Image.fromarray(img)
-        img.save("/Users/tingxi/BulletArm/bulletarm_baselines/fc_dqn/scripts/heightmapPNG/"+filename)
-        time.sleep(1)
+      """
+      input: [128, 128] numpy.array 
+      output: N/A
+      """
+      img = np.array(img)
+      img = np.clip(img*255, 0 ,255).astype('uint8')
+      filename = f'gray_image_{int(time.time())}.png'
+      img = Image.fromarray(img)
+      img.save("/Users/tingxi/BulletArm/bulletarm_baselines/fc_dqn/scripts/heightmapPNG/"+filename)
+      time.sleep(1)
 
     def store_pos(string, l):
       s = str(l)
@@ -76,17 +76,17 @@ class Sensor(object):
         set if storing positions into txt file
       output: 
         List[PyRedner Object] with new random position
-
-      Note: 
       """
       dir = "/Users/tingxi/BulletArm/bulletarm/pybullet/urdf/object/GraspNet1B_object/000/convex.obj"
       o = pyredner.load_obj(dir, return_objects=True)
       newObj = o[0]
 
+      """"position"""
       x = self.objs[0].getXPosition()
       y = self.objs[0].getYPosition()
       z = self.objs[0].getZPosition()
 
+      """quaternion"""
       orien = self.objs[0].getRotation()
       _x, _y, _z, _w = orien
       orien = _w, _x, _y, _z
@@ -95,8 +95,7 @@ class Sensor(object):
       R = torch.Tensor(R)
       newObj.vertices = torch.matmul(newObj.vertices, R.T)
 
-      """set the object to center FIRST"""
-      
+      """first rotate, then set position"""
       newObj.vertices[:,0:1] += x
       newObj.vertices[:,1:2] += y
       newObj.vertices[:,2:3] += z
