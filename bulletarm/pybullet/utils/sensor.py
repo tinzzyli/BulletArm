@@ -52,7 +52,7 @@ class Sensor(object):
       """
       img = np.array(img)
       img = np.clip(img*255, 0 ,255).astype('uint8')
-      filename = f'gray_image_{int(time.time())}.png'
+      filename = f'grayscale_{int(time.time())}.png'
       img = Image.fromarray(img)
       img.save("/Users/tingxi/BulletArm/bulletarm_baselines/fc_dqn/scripts/heightmapPNG/"+filename)
       time.sleep(1)
@@ -81,7 +81,7 @@ class Sensor(object):
       o = pyredner.load_obj(dir, return_objects=True)
       newObj = o[0]
 
-      """"position"""
+      """"get position"""
       x = self.objs[0].getXPosition()
       y = self.objs[0].getYPosition()
       z = self.objs[0].getZPosition()
@@ -90,19 +90,23 @@ class Sensor(object):
       orien = self.objs[0].getRotation()
       _x, _y, _z, _w = orien
       orien = _w, _x, _y, _z
-      print(orien)
+      #print(orien)
       R = quaternions.quat2mat(orien)
       R = torch.Tensor(R)
       newObj.vertices = torch.matmul(newObj.vertices, R.T)
 
-      """first rotate, then set position"""
+      """set scale"""
+      #Noted that scaling factor here is set to be 0.4 only because it makes the pyredner-generated object looks like the original one
+      newObj.vertices *= 0.4
+
+      """set position"""
       newObj.vertices[:,0:1] += x
       newObj.vertices[:,1:2] += y
       newObj.vertices[:,2:3] += z
 
-      if if_store: 
-        store_pos("mean position: ", [newObj.vertices[:,0:1].mean(), newObj.vertices[:,1:2].mean(), newObj.vertices[:,2:3].mean()])
-        store_pos("original position: ", [x,y,z])
+      # if if_store: 
+      #   store_pos("mean position: ", [newObj.vertices[:,0:1].mean(), newObj.vertices[:,1:2].mean(), newObj.vertices[:,2:3].mean()])
+      #   store_pos("original position: ", [x,y,z])
 
       return [newObj]
 
@@ -122,7 +126,7 @@ class Sensor(object):
                           resolution = (128, 128)
                           )
       
-      print("cam_pos: ", cam_pos, "\ncam_up: ", cam_up_vector, "\ntar_pos: ", target_pos, "\nfov: ", fov)
+      #print("cam_pos: ", cam_pos, "\ncam_up: ", cam_up_vector, "\ntar_pos: ", target_pos, "\nfov: ", fov)
       scene = pyredner.Scene(camera = camera, objects = obj_list)
       chan_list = [pyredner.channels.depth]
       img = pyredner.render_generic(scene, chan_list)
@@ -147,11 +151,11 @@ class Sensor(object):
 
     
 
-    store_heightmap(img)
-    store_heightmap(depth)
+    # store_heightmap(img)
+    # store_heightmap(depth*100.0)
     
-    save_greyscale_image(img)
-    save_greyscale_image(depth*100.0)
+    # save_greyscale_image(img)
+    # save_greyscale_image(depth*100.0)
 
     return img
 

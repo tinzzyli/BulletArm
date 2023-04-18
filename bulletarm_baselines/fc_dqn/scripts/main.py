@@ -35,9 +35,7 @@ def store_action(t,dir):
     l = list(arr)
     s = str(l)
     with open(dir, "a") as f:
-        f.write("action: ")
-        f.write(s)
-        f.write("\n")
+        f.write("action: "+s+"\n")
 
 def set_seed(s):
     np.random.seed(s)
@@ -166,11 +164,12 @@ def train():
                 #q_value_maps, planner_actions_star_idx, planner_actions_star = agent.getEGreedyActions(states, in_hands, obs, eps)
                 #storing action in txt
                 #input: tensor
-                store_action(planner_actions_star, "/Users/tingxi/BulletArm/bulletarm_baselines/fc_dqn/scripts/actions.txt")  
+                # store_action(planner_actions_star, "/Users/tingxi/BulletArm/bulletarm_baselines/fc_dqn/scripts/actions.txt")  
                 #raise ValueError("m")
                 #store_in_txt(q_value_maps, "/Users/tingxi/_BulletArm/BulletArm/bulletarm_baselines/fc_dqn/scripts/qMap.txt")  
                 planner_actions_star = torch.cat((planner_actions_star, states.unsqueeze(1)), dim=1)
                 states_, in_hands_, obs_, rewards, dones = planner_envs.step(planner_actions_star, auto_reset=True)
+                # raise ValueError('break point')
                 buffer_obs = getCurrentObs(in_hands, obs)
                 buffer_obs_ = getCurrentObs(in_hands_, obs_)
                 for i in range(planner_num_process):
@@ -180,9 +179,7 @@ def train():
                 states = copy.copy(states_)
                 obs = copy.copy(obs_)
                 in_hands = copy.copy(in_hands_)
-                # with open("/Users/tingxi/BulletArm/bulletarm_baselines/fc_dqn/scripts/actions.txt", "a") as f:
-                #    f.write("\n")
-                raise ValueError("m")#testcode
+
                 for i in range(planner_num_process):
                   if dones[i] and rewards[i]:
                     for t in local_transitions[i]:

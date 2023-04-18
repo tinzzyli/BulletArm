@@ -138,31 +138,26 @@ class ObjectGrasping(BaseEnv):
         # for obj in self.objects:
         #   if not self._isObjectWithinWorkspace(obj):
         #     self._removeObject(obj)
+        #=== INSPECT CALLER ===#
+        # def inspectCaller():
+        #     caller_frame = inspect.stack()[1]
+        #     caller_lineno = caller_frame.lineno
+        #     caller_function = caller_frame.function
+        #     locate_call = (f"line {caller_lineno}, in function {caller_function}")
+        #     with open("/Users/tingxi/BulletArm/bulletarm_baselines/fc_dqn/scripts/actions.txt", "a") as f:
+        #         f.write("\n"+locate_call+"\n")
 
+        #     with open("/Users/tingxi/BulletArm/bulletarm_baselines/fc_dqn/scripts/heightmap.txt", "a") as f:
+        #         f.write("\n"+locate_call+"\n")
 
-
+        # inspectCaller()
+        #=== INSPECT CALLER ===#
         obs = self._getObservation(action)
         done = self._checkTermination()
         reward = 1.0 if self.obj_grasped > pre_obj_grasped else 0.0
 
         self.current_episode_steps += 1
-        #=== INSPECT CALLER ===#
-        def inspectCaller():
-            caller_frame = inspect.stack()[1]
-            caller_lineno = caller_frame.lineno
-            caller_function = caller_frame.function
-            call = (f"line {caller_lineno}, in function {caller_function}")
 
-            with open("/Users/tingxi/BulletArm/bulletarm_baselines/fc_dqn/scripts/actions.txt", "a") as f:
-                f.write(call)
-                f.write("\n")
-
-            with open("/Users/tingxi/BulletArm/bulletarm_baselines/fc_dqn/scripts/heightmap.txt", "a") as f:
-                f.write(call)
-                f.write("\n")        
-
-        inspectCaller()
-        #=== INSPECT CALLER ===#
         return obs, reward, True
 
     def isSimValid(self):
@@ -268,18 +263,18 @@ class ObjectGrasping(BaseEnv):
             self.obj_grasped = 0
             # self.num_in_tray_obj = self.num_obj
         #=== INSPECT CALLER ===#
-        def inspectCaller():
-            caller_frame = inspect.stack()[1]
-            caller_lineno = caller_frame.lineno
-            caller_function = caller_frame.function
-            s = (f"line {caller_lineno}, in function {caller_function}")
-            with open("/Users/tingxi/BulletArm/bulletarm_baselines/fc_dqn/scripts/actions.txt", "a") as f:
-                f.write(s)
-                f.write("\n") 
-            with open("/Users/tingxi/BulletArm/bulletarm_baselines/fc_dqn/scripts/heightmap.txt", "a") as f:
-                f.write(s)
-                f.write("\n") 
-        inspectCaller()
+        # def inspectCaller():
+        #     caller_frame = inspect.stack()[1]
+        #     caller_lineno = caller_frame.lineno
+        #     caller_function = caller_frame.function
+        #     locate_call = (f"line {caller_lineno}, in function {caller_function}")
+        #     with open("/Users/tingxi/BulletArm/bulletarm_baselines/fc_dqn/scripts/actions.txt", "a") as f:
+        #         f.write("\n"+locate_call+"\n")
+
+        #     with open("/Users/tingxi/BulletArm/bulletarm_baselines/fc_dqn/scripts/heightmap.txt", "a") as f:
+        #         f.write("\n"+locate_call+"\n")
+
+        # inspectCaller()
         #=== INSPECT CALLER ===#
         return self._getObservation()
 
