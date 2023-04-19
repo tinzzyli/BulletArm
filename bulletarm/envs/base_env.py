@@ -379,7 +379,7 @@ class BaseEnv:
     return self._isHolding(), in_hand_img, self.heightmap.reshape([1, self.heightmap_size, self.heightmap_size])
 
   def _getHeightmap(self):
-    return self.sensor.getHeightmap(self.heightmap_size, self.objects, self.workspace)
+    return self.sensor.getHeightmap(self.objects, self.object_index, self.heightmap_size, self.scale)
 
   def _getValidPositions(self, border_padding, min_distance, existing_positions, num_shapes, sample_range=None):
     existing_positions_copy = copy.deepcopy(existing_positions)
@@ -528,6 +528,7 @@ class BaseEnv:
     for position, orientation in zip(valid_positions, orientations):
       if not scale:
         scale = npr.choice(np.arange(self.block_scale_range[0], self.block_scale_range[1]+0.01, 0.02))
+      self.scale = scale
 
       if shape_type == constants.CUBE:
         handle = pb_obj_generation.generateCube(position, orientation, scale)
