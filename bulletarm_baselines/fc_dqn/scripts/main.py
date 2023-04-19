@@ -30,12 +30,12 @@ from bulletarm_baselines.fc_dqn.scripts.fill_buffer_deconstruct import fillDecon
 
 ExpertTransition = collections.namedtuple('ExpertTransition', 'state obs action reward next_state next_obs done step_left expert')
 
-def store_action(t,dir):
-    arr = np.array(t)
-    l = list(arr)
-    s = str(l)
-    with open(dir, "a") as f:
-        f.write("action: "+s+"\n")
+# def store_action(t,dir):
+#     arr = np.array(t)
+#     l = list(arr)
+#     s = str(l)
+#     with open(dir, "a") as f:
+#         f.write("action: "+s+"\n")
 
 def set_seed(s):
     np.random.seed(s)
@@ -161,6 +161,7 @@ def train():
                 plan_actions = planner_envs.getNextAction()
                 planner_actions_star_idx, planner_actions_star = agent.getActionFromPlan(plan_actions)
                 #eps = final_eps
+                
                 #q_value_maps, planner_actions_star_idx, planner_actions_star = agent.getEGreedyActions(states, in_hands, obs, eps)
                 #storing action in txt
                 #input: tensor

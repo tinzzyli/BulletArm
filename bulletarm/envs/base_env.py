@@ -528,6 +528,7 @@ class BaseEnv:
     for position, orientation in zip(valid_positions, orientations):
       if not scale:
         scale = npr.choice(np.arange(self.block_scale_range[0], self.block_scale_range[1]+0.01, 0.02))
+      """self.scale will later be used in getHeightmap()"""
       self.scale = scale
 
       if shape_type == constants.CUBE:

@@ -45,19 +45,23 @@ class Sensor(object):
   def getHeightmap(self, objs, object_index, size, scale):
     self.object_index = object_index
     self.objs = objs
+    """
+    0.734375 is 94/128
+    94 is the effective area without tray and 128 is workspace size
+    """
     self.scale = scale * 0.734375
 
-    def save_greyscale_image(img):
-      """
-      input: [128, 128] numpy.array 
-      output: N/A
-      """
-      img = np.array(img)
-      img = np.clip(img*255, 0 ,255).astype('uint8')
-      filename = f'grayscale_{int(time.time())}.png'
-      img = Image.fromarray(img)
-      img.save("./bulletarm_baselines/fc_dqn/scripts/heightmapPNG/"+filename)
-      time.sleep(1)
+    # def save_greyscale_image(img):
+    #   """
+    #   input: [128, 128] numpy.array 
+    #   output: N/A
+    #   """
+    #   img = np.array(img)
+    #   img = np.clip(img*255, 0 ,255).astype('uint8')
+    #   filename = f'grayscale_{int(time.time())}.png'
+    #   img = Image.fromarray(img)
+    #   img.save("./bulletarm_baselines/fc_dqn/scripts/heightmapPNG/"+filename)
+    #   time.sleep(1)
 
     # def store_pos(string, l):
     #   s = str(l)
@@ -72,6 +76,10 @@ class Sensor(object):
     #     f.write("\n")      
 
     def setSingleObjPosition():
+      """
+      In ONE object scenario ONLY:
+      set desired object index in config, e.g. 55
+      """
       object_index = str(self.object_index)
       dir = "./bulletarm/pybullet/urdf/object/GraspNet1B_object/0"+object_index+"/convex.obj"
       o = pyredner.load_obj(dir, return_objects=True)
@@ -82,7 +90,7 @@ class Sensor(object):
       y = self.objs[0].getYPosition()
       z = self.objs[0].getZPosition()
 
-      """quaternion"""
+      """set quaternion"""
       orien = self.objs[0].getRotation()
       _x, _y, _z, _w = orien
       orien = _w, _x, _y, _z
@@ -101,7 +109,7 @@ class Sensor(object):
 
       #store_pos("mean position: ", [newObj.vertices[:,0:1].mean(), newObj.vertices[:,1:2].mean(), newObj.vertices[:,2:3].mean()])
       #store_pos("original position: ", [x,y,z])
-
+      """rendering() needs List[Object] as input"""
       return [newObj]
 
     def rendering(cam_pos, cam_up_vector, target_pos, fov, obj_list):
@@ -123,13 +131,13 @@ class Sensor(object):
       chan_list = [pyredner.channels.depth]
       img = pyredner.render_generic(scene, chan_list)
       img = np.array(img)
+      """reshape [128,128,1] to [128,128]"""
       img = np.squeeze(img, axis=2)
       return img
     
     #===HERE IS THE DIFFERENTIABLE RENDERER===#
     redner_obj_list = setSingleObjPosition()
     img = rendering(self.cam_pos, self.cam_up_vector, self.target_pos, self.fov, redner_obj_list)
-
     #===HERE IS THE DIFFERENTIABLE RENDERER===#
 
     #===HERE IS THE ORIGINAL RENDERER===#
@@ -147,10 +155,11 @@ class Sensor(object):
     # store_heightmap(img)
     # store_heightmap(depth*100.0)
     
-    save_greyscale_image(img)
-    save_greyscale_image(depth*100.0)
+    # save_greyscale_image(img)
+    # save_greyscale_image(depth*100.0)
 
-    return img
+    """make value of each pixel in the same range of the original heightmap"""
+    return img/100.0
 
   def getRGBImg(self, size, objs):
     image_arr = pb.getCameraImage(width=size, height=size,
