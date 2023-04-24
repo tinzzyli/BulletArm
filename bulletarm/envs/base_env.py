@@ -35,6 +35,8 @@ class BaseEnv:
     config: Config used to specify various environment details
   '''
   def __init__(self, config):
+    self.OBJ_SCALE_FOR_PYREDNER = None
+
     # Load the default config and replace any duplicate values with the config
     config = {**env_configs.DEFAULT_CONFIG, **config}
 
@@ -379,7 +381,7 @@ class BaseEnv:
     return self._isHolding(), in_hand_img, self.heightmap.reshape([1, self.heightmap_size, self.heightmap_size])
 
   def _getHeightmap(self):
-    return self.sensor.getHeightmap(self.objects, self.object_index, self.heightmap_size, self.scale)
+    return self.sensor.getHeightmap(self.objects, self.object_index, self.heightmap_size, self.OBJ_SCALE_FOR_PYREDNER)
 
   def _getValidPositions(self, border_padding, min_distance, existing_positions, num_shapes, sample_range=None):
     existing_positions_copy = copy.deepcopy(existing_positions)
@@ -524,12 +526,9 @@ class BaseEnv:
     else:
       orientations = rot
 
-
     for position, orientation in zip(valid_positions, orientations):
       if not scale:
         scale = npr.choice(np.arange(self.block_scale_range[0], self.block_scale_range[1]+0.01, 0.02))
-      """self.scale will later be used in getHeightmap()"""
-      self.scale = scale
 
       if shape_type == constants.CUBE:
         handle = pb_obj_generation.generateCube(position, orientation, scale)
@@ -569,6 +568,8 @@ class BaseEnv:
         handle = pb_obj_generation.generateRandomHouseHoldObj200(position, orientation, scale, model_id)
       elif shape_type == constants.GRASP_NET_OBJ:
         handle = pb_obj_generation.generateGraspNetObject(position, orientation, scale, model_id)
+      
+        self.OBJ_SCALE_FOR_PYREDNER = handle.OBJ_SCALE
 
       else:
         raise NotImplementedError
@@ -582,6 +583,7 @@ class BaseEnv:
       self.object_types[h] = shape_type
 
     self.wait(50)
+
     return shape_handles
 
   def getObjects(self):

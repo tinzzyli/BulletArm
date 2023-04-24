@@ -16,7 +16,8 @@ import time
 from PIL import Image
 from transforms3d import quaternions
 from matplotlib.pyplot import imshow
-
+from bulletarm.pybullet.objects import grasp_net_obj
+from bulletarm.pybullet.objects.grasp_net_obj import GraspNetObject
 
 class Sensor(object):
   def __init__(self, cam_pos, cam_up_vector, target_pos, target_size, near, far):
@@ -45,23 +46,19 @@ class Sensor(object):
   def getHeightmap(self, objs, object_index, size, scale):
     self.object_index = object_index
     self.objs = objs
-    """
-    0.734375 is 94/128
-    94 is the effective area without tray and 128 is workspace size
-    """
-    self.scale = scale * 0.734375
+    self.scale = scale
 
-    # def save_greyscale_image(img):
-    #   """
-    #   input: [128, 128] numpy.array 
-    #   output: N/A
-    #   """
-    #   img = np.array(img)
-    #   img = np.clip(img*255, 0 ,255).astype('uint8')
-    #   filename = f'grayscale_{int(time.time())}.png'
-    #   img = Image.fromarray(img)
-    #   img.save("./bulletarm_baselines/fc_dqn/scripts/heightmapPNG/"+filename)
-    #   time.sleep(1)
+    def save_greyscale_image(img):
+      """
+      input: [128, 128] numpy.array 
+      output: N/A
+      """
+      img = np.array(img)
+      img = np.clip(img*255, 0 ,255).astype('uint8')
+      filename = f'grayscale_{int(time.time())}.png'
+      img = Image.fromarray(img)
+      img.save("./bulletarm_baselines/fc_dqn/scripts/heightmapPNG/"+filename)
+      time.sleep(1)
 
     # def store_pos(string, l):
     #   s = str(l)
@@ -78,17 +75,16 @@ class Sensor(object):
     def setSingleObjPosition():
       """
       In ONE object scenario ONLY:
-      set desired object index in config, e.g. 55
+      set desired object index in config, e.g. 055
       """
-      object_index = str(self.object_index)
-      dir = "./bulletarm/pybullet/urdf/object/GraspNet1B_object/0"+object_index+"/convex.obj"
+      if self.object_index >= 10:
+        object_index = "0"+str(self.object_index)
+      else:
+        object_index = "00"+str(self.object_index)
+      
+      dir = "./bulletarm/pybullet/urdf/object/GraspNet1B_object/"+object_index+"/convex.obj"
       o = pyredner.load_obj(dir, return_objects=True)
       newObj = o[0]
-
-      """"get position"""
-      x = self.objs[0].getXPosition()
-      y = self.objs[0].getYPosition()
-      z = self.objs[0].getZPosition()
 
       """set quaternion"""
       orien = self.objs[0].getRotation()
@@ -99,10 +95,12 @@ class Sensor(object):
       newObj.vertices = torch.matmul(newObj.vertices, R.T)
 
       """set scale"""
-      #Noted that scaling factor here is set to be 0.4 only because it makes the pyredner-generated object looks like the original one
-      newObj.vertices *= self.scale
+      newObj.vertices *= scale
 
       """set position"""
+      x = self.objs[0].getXPosition()
+      y = self.objs[0].getYPosition()
+      z = self.objs[0].getZPosition()
       newObj.vertices[:,0:1] += x
       newObj.vertices[:,1:2] += y
       newObj.vertices[:,2:3] += z
@@ -150,13 +148,11 @@ class Sensor(object):
     depth = np.abs(depth - np.max(depth)).reshape(size, size)
     #===HERE IS THE ORIGINAL RENDERER===#
 
-    
-
     # store_heightmap(img)
     # store_heightmap(depth*100.0)
     
-    # save_greyscale_image(img)
-    # save_greyscale_image(depth*100.0)
+    save_greyscale_image(img)
+    save_greyscale_image(depth*100.0)
 
     """make value of each pixel in the same range of the original heightmap"""
     return img/100.0

@@ -10,6 +10,8 @@ from bulletarm.pybullet.utils.constants import NoValidPositionException
 from bulletarm.pybullet.equipments.tray import Tray
 from scipy.ndimage.interpolation import rotate
 import pybullet as pb
+import bulletarm.envs.configs as env_configs
+
 import inspect
 class ObjectGrasping(BaseEnv):
     '''Open loop object grasping task.
@@ -23,7 +25,8 @@ class ObjectGrasping(BaseEnv):
     def __init__(self, config):
         # env specific parameters
         if 'object_scale_range' not in config:
-            config['object_scale_range'] = [1, 1]
+            # config['object_scale_range'] = {**env_configs.DEFAULT_CONFIG, **config}['object_scale_range']
+            config['object_scale_range'] = [1.,1.]
         if 'num_objects' not in config:
             config['num_objects'] = 1
         if 'max_steps' not in config:
@@ -47,7 +50,9 @@ class ObjectGrasping(BaseEnv):
     def initialize(self):
         super().initialize()
         self.tray.initialize(pos=[self.workspace[0].mean(), self.workspace[1].mean(), 0],
-                             size=[self.bin_size + 0.03, self.bin_size + 0.03, 0.1])
+                             #size=[0,0,0]
+                             size=[self.bin_size + 0.03, self.bin_size + 0.03, 0.1]
+                             )
         self.initialized = True
 
     def _decodeAction(self, action):
@@ -192,6 +197,7 @@ class ObjectGrasping(BaseEnv):
                             y = (np.random.rand() - 0.5) * 0.1
                             y += self.workspace[1].mean()
                             randpos = [x, y, 0.40]
+                            print("randpos: ", randpos)
                             # randpos = [0.45163103975431074, -0.01348066127368648, 0.40]
                             # obj = self._generateShapes(constants.RANDOM_HOUSEHOLD, 1, random_orientation=self.random_orientation,
                             #                            pos=[randpos], padding=self.min_boarder_padding,
@@ -201,7 +207,7 @@ class ObjectGrasping(BaseEnv):
                             #                            pos=[randpos], padding=self.min_boarder_padding,
                             #                            min_distance=self.min_object_distance, model_id=-1)
 # random_orientation=self.random_orientation,
-                            obj = self._generateShapes(constants.GRASP_NET_OBJ, 1,
+                            obj = self._generateShapes(constants.GRASP_NET_OBJ, 1, 
                                                        rot=[pb.getQuaternionFromEuler([0., 0., -np.pi / 4])],
                                                        pos=[randpos], padding=self.min_boarder_padding,
                                                        min_distance=self.min_object_distance, model_id=self.object_index)

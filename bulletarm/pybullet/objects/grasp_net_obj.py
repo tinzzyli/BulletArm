@@ -24,7 +24,6 @@ def get_immediate_subdirectories(a_dir):
 
 class GraspNetObject(PybulletObject):
     def __init__(self, pos, rot, scale, index=-1):
-
         if index >= 0:
             obj_filepath = found_object_directories[index]
         else:
@@ -43,7 +42,9 @@ class GraspNetObject(PybulletObject):
         obj_edge_min = 0.014 * scale  # the minimum edge size of an obj before scaling
         obj_volume_max = 0.0006 * (scale ** 3)  # the maximum volume of an obj before scaling
         obj_scale = scale
-
+        # print("grasp_net_obj pos: ", pos)
+        # print("grasp_net_obj rot: ", rot)
+        # print("grasp_net_obj scale: ", scale)
         while True:
             obj_visual = pb.createVisualShape(pb.GEOM_MESH,
                                               fileName=obj_filepath + 'convex.obj',
@@ -74,7 +75,8 @@ class GraspNetObject(PybulletObject):
                 pb.removeBody(object_id)
             else:
                 break
-
+        print("grasp_net_obj obj_scale", obj_scale)
+        self.OBJ_SCALE = obj_scale
         pb.changeDynamics(object_id,
                           -1,
                           lateralFriction=1,

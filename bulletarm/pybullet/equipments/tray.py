@@ -164,6 +164,14 @@ class Tray:
                       rollingFriction=0.01,
                       linearDamping=0.1)
 
+    #===GET TRAY MESH DATA===#
+    
+   
+    #===GET TRAY MESH DATA===#
+
+
+    
+    
   def reset(self, pos=(0, 0, 0), rot=(0, 0, 0, 1)):
     pb.resetBasePositionAndOrientation(self.id, pos, rot)
 
