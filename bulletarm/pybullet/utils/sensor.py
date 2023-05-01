@@ -47,18 +47,19 @@ class Sensor(object):
     self.object_index = object_index
     self.objs = objs
     self.scale = scale
+    self.size = size
 
-    def save_greyscale_image(img):
-      """
-      input: [128, 128] numpy.array 
-      output: N/A
-      """
-      img = np.array(img)
-      img = np.clip(img*255, 0 ,255).astype('uint8')
-      filename = f'grayscale_{int(time.time())}.png'
-      img = Image.fromarray(img)
-      img.save("./bulletarm_baselines/fc_dqn/scripts/heightmapPNG/"+filename)
-      time.sleep(1)
+    # def save_greyscale_image(img):
+    #   """
+    #   input: [128, 128] numpy.array 
+    #   output: N/A
+    #   """
+    #   img = np.array(img)
+    #   img = np.clip(img*255, 0 ,255).astype('uint8')
+    #   filename = f'grayscale_{int(time.time())}.png'
+    #   img = Image.fromarray(img)
+    #   img.save("./bulletarm_baselines/fc_dqn/scripts/heightmapPNG/"+filename)
+    #   time.sleep(1)
 
     # def store_pos(string, l):
     #   s = str(l)
@@ -75,7 +76,7 @@ class Sensor(object):
     def setSingleObjPosition():
       """
       In ONE object scenario ONLY:
-      set desired object index in config, e.g. 055
+      set desired object index in config, e.g. 55
       """
       if self.object_index >= 10:
         object_index = "0"+str(self.object_index)
@@ -107,10 +108,11 @@ class Sensor(object):
 
       #store_pos("mean position: ", [newObj.vertices[:,0:1].mean(), newObj.vertices[:,1:2].mean(), newObj.vertices[:,2:3].mean()])
       #store_pos("original position: ", [x,y,z])
+
       """rendering() needs List[Object] as input"""
       return [newObj]
 
-    def rendering(cam_pos, cam_up_vector, target_pos, fov, obj_list):
+    def rendering(cam_pos, cam_up_vector, target_pos, fov, obj_list, size):
       
       cam_pos = torch.FloatTensor(cam_pos)
       cam_up_vector = torch.FloatTensor(cam_up_vector)
@@ -122,40 +124,55 @@ class Sensor(object):
                           up = cam_up_vector,
                           fov = fov, # in degree
                           clip_near = 1e-2, # needs to > 0
-                          resolution = (128, 128)
+                          resolution = (size, size)
                           )
       #print("cam_pos: ", cam_pos, "\ncam_up: ", cam_up_vector, "\ntar_pos: ", target_pos, "\nfov: ", fov)
       scene = pyredner.Scene(camera = camera, objects = obj_list)
       chan_list = [pyredner.channels.depth]
       img = pyredner.render_generic(scene, chan_list)
+
+      #==== RETRIEVE PYREDNER GRADIENT ===#
+      grad_img = pyredner.RenderFunction.visualize_screen_gradient(
+      grad_img=img, #
+      seed=42, #random seed
+      scene=scene, # pyredner.Scene
+      num_samples=(4,4), #uses default value of pyredner.generic()
+      max_bounces=1, #uses default value of pyredner.generic()
+      channels=chan_list # pyredner.channels
+      )
+      x_grad, y_grad = grad_img[:,:,:1], grad_img[:,:,1:]
+      # x_grad.shape = y_grad.shape = [128, 128, 1], gradients on x and y axis repectively      
+      #==== RETRIEVE PYREDNER GRADIENT ===#
+
       img = np.array(img)
-      """reshape [128,128,1] to [128,128]"""
+      """reshape [size, size, 1] to [size, size], BY DEFAULT: size=128"""
       img = np.squeeze(img, axis=2)
       return img
     
     #===HERE IS THE DIFFERENTIABLE RENDERER===#
     redner_obj_list = setSingleObjPosition()
-    img = rendering(self.cam_pos, self.cam_up_vector, self.target_pos, self.fov, redner_obj_list)
+    img = rendering(self.cam_pos, self.cam_up_vector, self.target_pos, self.fov, redner_obj_list, self.size)
+    img /= 100.0 # normalization
     #===HERE IS THE DIFFERENTIABLE RENDERER===#
 
     #===HERE IS THE ORIGINAL RENDERER===#
-    image_arr = pb.getCameraImage(width=size, height=size,
+    image_arr = pb.getCameraImage(width=self.size, height=self.size,
                                   viewMatrix=self.view_matrix,
                                   projectionMatrix=self.proj_matrix,
                                   renderer=pb.ER_TINY_RENDERER)
     depth_img = np.array(image_arr[3])
     depth = self.far * self.near / (self.far - (self.far - self.near) * depth_img)
-    depth = np.abs(depth - np.max(depth)).reshape(size, size)
+    depth = np.abs(depth - np.max(depth)).reshape(self.size, self.size)
     #===HERE IS THE ORIGINAL RENDERER===#
 
-    # store_heightmap(img)
-    # store_heightmap(depth*100.0)
+    # store_heightmap(img/100)
+    # store_heightmap(depth)
     
-    save_greyscale_image(img)
-    save_greyscale_image(depth*100.0)
+    # save_greyscale_image(img)
+    # save_greyscale_image(depth*100.0)
 
     """make value of each pixel in the same range of the original heightmap"""
-    return img/100.0
+    return img
 
   def getRGBImg(self, size, objs):
     image_arr = pb.getCameraImage(width=size, height=size,

@@ -30,13 +30,6 @@ from bulletarm_baselines.fc_dqn.scripts.fill_buffer_deconstruct import fillDecon
 
 ExpertTransition = collections.namedtuple('ExpertTransition', 'state obs action reward next_state next_obs done step_left expert')
 
-# def store_action(t,dir):
-#     arr = np.array(t)
-#     l = list(arr)
-#     s = str(l)
-#     with open(dir, "a") as f:
-#         f.write("action: "+s+"\n")
-
 def set_seed(s):
     np.random.seed(s)
     torch.manual_seed(s)
@@ -162,15 +155,10 @@ def train():
                 planner_actions_star_idx, planner_actions_star = agent.getActionFromPlan(plan_actions)
                 #eps = final_eps
 
-                #q_value_maps, planner_actions_star_idx, planner_actions_star = agent.getEGreedyActions(states, in_hands, obs, eps)
-                #storing action in txt
-                #input: tensor
-                # store_action(planner_actions_star, "/Users/tingxi/BulletArm/bulletarm_baselines/fc_dqn/scripts/actions.txt")  
-                #raise ValueError("m")
-                #store_in_txt(q_value_maps, "/Users/tingxi/_BulletArm/BulletArm/bulletarm_baselines/fc_dqn/scripts/qMap.txt")  
                 planner_actions_star = torch.cat((planner_actions_star, states.unsqueeze(1)), dim=1)
                 states_, in_hands_, obs_, rewards, dones = planner_envs.step(planner_actions_star, auto_reset=True)
-                # raise ValueError('break point')
+                raise ValueError('A very specific bad thing happened.')
+
                 buffer_obs = getCurrentObs(in_hands, obs)
                 buffer_obs_ = getCurrentObs(in_hands_, obs_)
                 for i in range(planner_num_process):
