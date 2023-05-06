@@ -1,1 +1,1 @@
-This repo is modified based on BulletArm for adversarial attacks. Most modifications is made in sensor.py.
+This repo is modified based on BulletArm for adversarial attacks. Most modifications are made in sensor.py.
