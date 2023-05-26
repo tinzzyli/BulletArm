@@ -147,7 +147,11 @@ class Sensor(object):
       img = np.array(img)
       """reshape [size, size, 1] to [size, size], BY DEFAULT: size=128"""
       img = np.squeeze(img, axis=2)
-      return img
+      depth = img
+      heightmap = 1 - depth*0.2
+      heightmap = (torch.sinc(heightmap)  + 2.782753405483617826e-08) * 2
+      heightmap = torch.sqrt(heightmap**2) 
+      return heightmap
     
     #===HERE IS THE DIFFERENTIABLE RENDERER===#
     redner_obj_list = setSingleObjPosition()
