@@ -75,7 +75,7 @@ class GraspNetObject(PybulletObject):
                 pb.removeBody(object_id)
             else:
                 break
-        print("grasp_net_obj obj_scale", obj_scale)
+        # print("grasp_net_obj obj_scale", obj_scale)
         self.OBJ_SCALE = obj_scale
         pb.changeDynamics(object_id,
                           -1,

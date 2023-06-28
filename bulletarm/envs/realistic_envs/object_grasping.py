@@ -197,7 +197,7 @@ class ObjectGrasping(BaseEnv):
                             y = (np.random.rand() - 0.5) * 0.1
                             y += self.workspace[1].mean()
                             randpos = [x, y, 0.40]
-                            print("randpos: ", randpos)
+                            # print("randpos: ", randpos)
                             # randpos = [0.45163103975431074, -0.01348066127368648, 0.40]
                             # obj = self._generateShapes(constants.RANDOM_HOUSEHOLD, 1, random_orientation=self.random_orientation,
                             #                            pos=[randpos], padding=self.min_boarder_padding,
@@ -259,7 +259,7 @@ class ObjectGrasping(BaseEnv):
                         #
                         # obj_centers = np.array(obj_centers)
                         # obj_scales = np.array(obj_scales)
-                        print('Number of all objects: ', total_num_objects)
+                        # print('Number of all objects: ', total_num_objects)
                         self.wait(10000)
                 except NoValidPositionException:
                     continue

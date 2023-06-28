@@ -78,12 +78,14 @@ class Sensor(object):
       In ONE object scenario ONLY:
       set desired object index in config, e.g. 55
       """
-      if self.object_index >= 10:
-        object_index = "0"+str(self.object_index)
-      else:
-        object_index = "00"+str(self.object_index)
+      # if self.object_index >= 10:
+      #   object_index = "0"+str(self.object_index)
+      # else:
+      #   object_index = "00"+str(self.object_index)
       
-      dir = "./bulletarm/pybullet/urdf/object/GraspNet1B_object/"+object_index+"/convex.obj"
+      # dir = "./bulletarm/pybullet/urdf/object/GraspNet1B_object/"+object_index+"/convex.obj"
+      dir = "./bulletarm/pybullet/urdf/object/GraspNet1B_object/055/convex.obj"
+
       o = pyredner.load_obj(dir, return_objects=True)
       newObj = o[0]
 
@@ -144,14 +146,19 @@ class Sensor(object):
       # x_grad.shape = y_grad.shape = [128, 128, 1], gradients on x and y axis repectively      
       #==== RETRIEVE PYREDNER GRADIENT ===#
 
-      img = np.array(img)
+
       """reshape [size, size, 1] to [size, size], BY DEFAULT: size=128"""
+      img = np.array(img)
       img = np.squeeze(img, axis=2)
-      depth = img
-      heightmap = 1 - depth*0.2
-      heightmap = (torch.sinc(heightmap)  + 2.782753405483617826e-08) * 2
-      heightmap = torch.sqrt(heightmap**2) 
-      return heightmap
+
+      return img
+      # depth = img
+      # heightmap = 1 - depth*0.2
+      # heightmap = (torch.sinc(heightmap)  + 2.782753405483617826e-08) * 2
+      # heightmap = torch.sqrt(heightmap**2) 
+      # heightmap = np.array(heightmap)
+      # heightmap = np.squeeze(heightmap, axis=2)
+      # return heightmap
     
     #===HERE IS THE DIFFERENTIABLE RENDERER===#
     redner_obj_list = setSingleObjPosition()
