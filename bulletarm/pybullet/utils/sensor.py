@@ -146,7 +146,6 @@ class Sensor(object):
       # x_grad.shape = y_grad.shape = [128, 128, 1], gradients on x and y axis repectively      
       #==== RETRIEVE PYREDNER GRADIENT ===#
 
-
       """reshape [size, size, 1] to [size, size], BY DEFAULT: size=128"""
       # img = np.array(img)
       # img = np.squeeze(img, axis=2)
@@ -162,6 +161,17 @@ class Sensor(object):
     
     #===HERE IS THE DIFFERENTIABLE RENDERER===#
     redner_obj_list = setSingleObjPosition()
+
+    #append tray into rendering list
+    tray_dir = "./tray.obj"
+    t = pyredner.load_obj(tray_dir, return_objects=True)
+    tray = t[0]   
+    tray.vertices /= 1000
+    tray.vertices[:,0:1] +=  0.5
+    tray.vertices[:,1:2] += -0.0
+    tray.vertices[:,2:3] += -0.0
+    redner_obj_list.append(tray)
+
     img = rendering(self.cam_pos, self.cam_up_vector, self.target_pos, self.fov, redner_obj_list, self.size)
     img /= 100.0 # normalization
     #===HERE IS THE DIFFERENTIABLE RENDERER===#
