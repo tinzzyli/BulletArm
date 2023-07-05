@@ -64,6 +64,10 @@ def evaluate(envs, agent, logger):
     eval_bar = tqdm(total=num_eval_episodes)
   while evaled < num_eval_episodes:
     q_value_maps, actions_star_idx, actions_star = agent.getEGreedyActions(states, in_hands, obs, 0)
+    qmaps = q_value_maps
+    qmaps = qmaps.numpy()
+    file_path = ""
+    np.savetxt(file_path, qmaps)
     actions_star = torch.cat((actions_star, states.unsqueeze(1)), dim=1)
     states_, in_hands_, obs_, rewards, dones = envs.step(actions_star, auto_reset=True)
     rewards = rewards.numpy()
@@ -157,7 +161,7 @@ def train():
 
                 planner_actions_star = torch.cat((planner_actions_star, states.unsqueeze(1)), dim=1)
                 states_, in_hands_, obs_, rewards, dones = planner_envs.step(planner_actions_star, auto_reset=True)
-                # raise ValueError('A very specific bad thing happened.')
+                # raise ValueError('breakpoint 1, means nothing.')
 
                 buffer_obs = getCurrentObs(in_hands, obs)
                 buffer_obs_ = getCurrentObs(in_hands_, obs_)
