@@ -61,11 +61,10 @@ class Sensor(object):
     #   img.save("./bulletarm_baselines/fc_dqn/scripts/heightmapPNG/"+filename)
     #   time.sleep(1)
 
-    # def store_pos(string, l):
-    #   s = str(l)
-    #   s = string + s
-    #   with open("/Users/tingxi/BulletArm/bulletarm_baselines/fc_dqn/scripts/actions.txt", "a") as f:
-    #     f.write(s+"\n")
+    def store_pos(pos):
+      s = str(pos)
+      with open("./position.txt", "a") as f:
+        f.write(s+"\n")
 
     # def store_heightmap(heightmap):
     #   heightmap = np.array(heightmap)
@@ -78,13 +77,13 @@ class Sensor(object):
       In ONE object scenario ONLY:
       set desired object index in config, e.g. 55
       """
-      # if self.object_index >= 10:
-      #   object_index = "0"+str(self.object_index)
-      # else:
-      #   object_index = "00"+str(self.object_index)
+      if self.object_index >= 10:
+        object_index = "0"+str(self.object_index)
+      else:
+        object_index = "00"+str(self.object_index)
       
-      # dir = "./bulletarm/pybullet/urdf/object/GraspNet1B_object/"+object_index+"/convex.obj"
-      dir = "./bulletarm/pybullet/urdf/object/GraspNet1B_object/055/convex.obj"
+      dir = "./bulletarm/pybullet/urdf/object/GraspNet1B_object/"+object_index+"/convex.obj"
+      # dir = "./bulletarm/pybullet/urdf/object/GraspNet1B_object/055/convex.obj"
 
       o = pyredner.load_obj(dir, return_objects=True)
       newObj = o[0]
@@ -108,8 +107,7 @@ class Sensor(object):
       newObj.vertices[:,1:2] += y
       newObj.vertices[:,2:3] += z
 
-      #store_pos("mean position: ", [newObj.vertices[:,0:1].mean(), newObj.vertices[:,1:2].mean(), newObj.vertices[:,2:3].mean()])
-      #store_pos("original position: ", [x,y,z])
+      store_pos([x,y,z])
 
       """rendering() needs List[Object] as input"""
       return [newObj]

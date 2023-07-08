@@ -64,10 +64,7 @@ def evaluate(envs, agent, logger):
     eval_bar = tqdm(total=num_eval_episodes)
   while evaled < num_eval_episodes:
     q_value_maps, actions_star_idx, actions_star = agent.getEGreedyActions(states, in_hands, obs, 0)
-    qmaps = q_value_maps
-    qmaps = qmaps.numpy()
-    file_path = ""
-    np.savetxt(file_path, qmaps)
+
     actions_star = torch.cat((actions_star, states.unsqueeze(1)), dim=1)
     states_, in_hands_, obs_, rewards, dones = envs.step(actions_star, auto_reset=True)
     rewards = rewards.numpy()
@@ -137,7 +134,10 @@ def train():
         replay_buffer = QLearningBuffer(buffer_size)
     exploration = LinearSchedule(schedule_timesteps=explore, initial_p=init_eps, final_p=final_eps)
 
+    with open("./position.txt", "a") as f:
+        f.write("reset 1 outside of loop"+"\n")
     states, in_hands, obs = envs.reset()
+    
 
     if load_sub:
         logger.loadCheckPoint(os.path.join(base_dir, load_sub, 'checkpoint'), agent.loadFromState, replay_buffer.loadFromState)
@@ -149,17 +149,25 @@ def train():
             planner_envs = envs
             planner_num_process = num_processes
             j = 0
+            with open("./position.txt", "a") as f:
+                f.write("reset 2 outside of loop"+"\n")
             states, in_hands, obs = planner_envs.reset()
             s = 0
             if not no_bar:
                 planner_bar = tqdm(total=planner_episode)
             local_transitions = [[] for _ in range(planner_num_process)]
-            while j < planner_episode:
+            while j < planner_episode: #default 200
+                with open("./position.txt", "a") as f:
+                    f.write("get next action"+"\n")
                 plan_actions = planner_envs.getNextAction()
+                with open("./position.txt", "a") as f:
+                    f.write("get action from plan"+"\n")
                 planner_actions_star_idx, planner_actions_star = agent.getActionFromPlan(plan_actions)
                 #eps = final_eps
 
                 planner_actions_star = torch.cat((planner_actions_star, states.unsqueeze(1)), dim=1)
+                with open("./position.txt", "a") as f:
+                    f.write("step"+"\n")
                 states_, in_hands_, obs_, rewards, dones = planner_envs.step(planner_actions_star, auto_reset=True)
                 # raise ValueError('breakpoint 1, means nothing.')
 
@@ -219,19 +227,34 @@ def train():
         else:
             eps = exploration.value(logger.num_eps)
         is_expert = 0
+        with open("./position.txt", "a") as f:
+            f.write("get greedy actions"+"\n")
         q_value_maps, actions_star_idx, actions_star = agent.getEGreedyActions(states, in_hands, obs, eps)
+        qmaps = q_value_maps
+        file_path = "./qmaps.txt"
+        with open(file_path, "a") as f:
+            for qmap in qmaps:
+                for q in qmap:
+                    qmap_str = str(q)
+                    f.write(qmap_str)
+                f.write("\n")
         buffer_obs = getCurrentObs(in_hands, obs)
         actions_star = torch.cat((actions_star, states.unsqueeze(1)), dim=1)
+        with open("./position.txt", "a") as f:
+            f.write("step async"+"\n")
         envs.stepAsync(actions_star, auto_reset=False)
 
         if len(replay_buffer) >= training_offset:
             for training_iter in range(training_iters):
                 train_step(agent, replay_buffer, logger)
-
+        with open("./position.txt", "a") as f:
+            f.write("step wait"+"\n")
         states_, in_hands_, obs_, rewards, dones = envs.stepWait()
 
         done_idxes = torch.nonzero(dones).squeeze(1)
         if done_idxes.shape[0] != 0:
+            with open("./position.txt", "a") as f:
+                f.write("reset envs"+"\n")
             reset_states_, reset_in_hands_, reset_obs_ = envs.reset_envs(done_idxes)
             for j, idx in enumerate(done_idxes):
                 states_[idx] = reset_states_[j]
