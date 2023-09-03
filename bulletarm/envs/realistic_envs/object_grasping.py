@@ -143,20 +143,6 @@ class ObjectGrasping(BaseEnv):
         # for obj in self.objects:
         #   if not self._isObjectWithinWorkspace(obj):
         #     self._removeObject(obj)
-        #=== INSPECT CALLER ===#
-        # def inspectCaller():
-        #     caller_frame = inspect.stack()[1]
-        #     caller_lineno = caller_frame.lineno
-        #     caller_function = caller_frame.function
-        #     locate_call = (f"line {caller_lineno}, in function {caller_function}")
-        #     with open("/Users/tingxi/BulletArm/bulletarm_baselines/fc_dqn/scripts/actions.txt", "a") as f:
-        #         f.write("\n"+locate_call+"\n")
-
-        #     with open("/Users/tingxi/BulletArm/bulletarm_baselines/fc_dqn/scripts/heightmap.txt", "a") as f:
-        #         f.write("\n"+locate_call+"\n")
-
-        # inspectCaller()
-        #=== INSPECT CALLER ===#
         obs = self._getObservation(action)
         done = self._checkTermination()
         reward = 1.0 if self.obj_grasped > pre_obj_grasped else 0.0
@@ -164,6 +150,18 @@ class ObjectGrasping(BaseEnv):
         self.current_episode_steps += 1
 
         return obs, reward, True
+    
+    def stepWithGradient(self, action):
+        pre_obj_grasped = self.obj_grasped
+        self.takeAction(action)
+        self.wait(100)
+        obs = self._getObservationWithGradient(action)
+        done = self._checkTermination()
+        reward = 1.0 if self.obj_grasped > pre_obj_grasped else 0.0
+
+        self.current_episode_steps += 1
+
+        return obs, reward, True 
 
     def isSimValid(self):
         for obj in self.objects:
@@ -269,21 +267,12 @@ class ObjectGrasping(BaseEnv):
             self.wait(200)
             self.obj_grasped = 0
             # self.num_in_tray_obj = self.num_obj
-        #=== INSPECT CALLER ===#
-        # def inspectCaller():
-        #     caller_frame = inspect.stack()[1]
-        #     caller_lineno = caller_frame.lineno
-        #     caller_function = caller_frame.function
-        #     locate_call = (f"line {caller_lineno}, in function {caller_function}")
-        #     with open("/Users/tingxi/BulletArm/bulletarm_baselines/fc_dqn/scripts/actions.txt", "a") as f:
-        #         f.write("\n"+locate_call+"\n")
-
-        #     with open("/Users/tingxi/BulletArm/bulletarm_baselines/fc_dqn/scripts/heightmap.txt", "a") as f:
-        #         f.write("\n"+locate_call+"\n")
-
-        # inspectCaller()
-        #=== INSPECT CALLER ===#
         return self._getObservation()
+
+    def resetWithGradient(self):
+        
+        _ = self.reset()
+        return self._getObservationWithGradient()
 
     def isObjInBox(self, obj_pos, tray_pos, tray_size):
         tray_range = self.tray_range(tray_pos, tray_size)
@@ -323,6 +312,9 @@ class ObjectGrasping(BaseEnv):
         state, in_hand, obs = super(ObjectGrasping, self)._getObservation()
         return 0, np.zeros_like(in_hand), obs
 
+    def _getObservationWithGradient(self, action=None):
+        state, in_hand, obs, REDNER_OBJ_LIST, OBJ_XYZ_POSITION,  OBJ_ROTATION = super(ObjectGrasping, self)._getObservationWithGradient()
+        return 0, np.zeros_like(in_hand), obs, REDNER_OBJ_LIST, OBJ_XYZ_POSITION,  OBJ_ROTATION
 
 def createObjectGrasping(config):
     return ObjectGrasping(config)

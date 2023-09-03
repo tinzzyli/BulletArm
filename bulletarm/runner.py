@@ -474,6 +474,20 @@ class SingleRunner(object):
       return (states, hand_obs, obs), rewards, dones, metadata
     else:
       return (states, hand_obs, obs), rewards, dones
+    
+  def stepWithGradient(self, action, auto_reset=True):
+    results = self.env.stepWithGradient(action)
+    if len(results) == 3:
+      metadata = None
+      obs, rewards, dones = results
+    else:
+      obs, rewards, dones, metadata = results
+    states, hand_obs, obs, REDNER_OBJ_LIST, OBJ_XYZ_POSITION, OBJ_ROTATION = obs
+
+    if metadata:
+      return (states, hand_obs, obs), REDNER_OBJ_LIST, OBJ_XYZ_POSITION, OBJ_ROTATION, rewards, dones, metadata
+    else:
+      return (states, hand_obs, obs), REDNER_OBJ_LIST, OBJ_XYZ_POSITION, OBJ_ROTATION, rewards, dones
 
   def reset(self):
     '''
@@ -483,6 +497,9 @@ class SingleRunner(object):
       numpy.array: Observation
     '''
     return self.env.reset()
+  
+  def resetWithGradient(self):
+    return self.env.resetWithGradient()
 
   def save(self):
     '''

@@ -16,6 +16,7 @@ class Base3D(BaseAgent):
         self.aug_type = 'se2'
 
     def getActionFromPlan(self, plan):
+
         x = plan[:, 0:1]
         y = plan[:, 1:2]
         rot = plan[:, 2:3]

@@ -21,6 +21,8 @@ from bulletarm.pybullet.objects.grasp_net_obj import GraspNetObject
 
 class Sensor(object):
   def __init__(self, cam_pos, cam_up_vector, target_pos, target_size, near, far):
+
+    # print(cam_pos, cam_up_vector, target_pos, target_size, near, far)
     self.view_matrix = pb.computeViewMatrix(
       cameraEyePosition=cam_pos,
       cameraUpVector=cam_up_vector,
@@ -43,124 +45,79 @@ class Sensor(object):
     )
     self.proj_matrix = pb.computeProjectionMatrixFOV(70, 1, 0.001, 0.3)
 
+  def importSingleObject(self, scale):
+    
+    # if self.object_index >= 10:
+    #   object_index = "0"+str(self.object_index)
+    # else:
+    #   object_index = "00"+str(self.object_index)
+    # dir = "./bulletarm/pybullet/urdf/object/GraspNet1B_object/"+object_index+"/convex.obj"
+    dir = "./bulletarm/pybullet/urdf/object/GraspNet1B_object/055/convex.obj"
+
+    o = pyredner.load_obj(dir, return_objects=True)
+    newObj = o[0]
+
+    orien = self.objs[0].getRotation()
+    _x, _y, _z, _w = orien
+    orien = _w, _x, _y, _z
+    OBJ_ROTATION = _w, _x, _y, _z
+    R = quaternions.quat2mat(orien)
+    R = torch.Tensor(R)
+
+    x = self.objs[0].getXPosition()
+    y = self.objs[0].getYPosition()
+    z = self.objs[0].getZPosition()
+    OBJ_XYZ_POSITION = torch.tensor([x,y,z])
+    OBJ_XYZ_POSITION.requires_grad = True
+    x,y,z = OBJ_XYZ_POSITION
+
+    new_vertices = newObj.vertices.clone()
+    new_vertices = torch.matmul(new_vertices, R.T)
+    new_vertices *= scale
+    new_vertices[:,0:1] += x
+    new_vertices[:,1:2] += y
+    new_vertices[:,2:3] += z
+    newObj.vertices = new_vertices
+
+    # print(scale, OBJ_ROTATION, OBJ_XYZ_POSITION)
+
+    return [newObj], OBJ_XYZ_POSITION, OBJ_ROTATION
+  
+  def rendering(self, cam_pos, cam_up_vector, target_pos, fov, obj_list, size):
+    
+    cam_pos = torch.FloatTensor(cam_pos)
+    cam_up_vector = torch.FloatTensor(cam_up_vector)
+    target_pos = torch.FloatTensor(target_pos)
+    fov = torch.tensor([fov], dtype=torch.float32)
+
+    camera = pyredner.Camera(position = cam_pos,
+                        look_at = target_pos,
+                        up = cam_up_vector,
+                        fov = fov, # in degree
+                        clip_near = 1e-2, # needs to > 0
+                        resolution = (size, size)
+                        )
+    scene = pyredner.Scene(camera = camera, objects = obj_list)
+    chan_list = [pyredner.channels.depth]
+    depth_img = pyredner.render_generic(scene, chan_list)
+    near = 0.09
+    far = 0.010
+    depth = near * far /(far - depth_img)
+    heightmap = torch.abs(depth - torch.max(depth))
+    heightmap =  heightmap*37821.71428571428 - 3407.3605408838816
+    heightmap = torch.relu(heightmap)
+    heightmap = torch.where(heightmap > 1.0, 6e-3, heightmap) 
+    return heightmap.reshape(128,128)
+  
   def getHeightmap(self, objs, object_index, size, scale):
     self.object_index = object_index
     self.objs = objs
     self.scale = scale
-    self.size = size
+    self.size = size      
 
-    # def save_greyscale_image(img):
-    #   """
-    #   input: [128, 128] numpy.array 
-    #   output: N/A
-    #   """
-    #   img = np.array(img)
-    #   img = np.clip(img*255, 0 ,255).astype('uint8')
-    #   filename = f'grayscale_{int(time.time())}.png'
-    #   img = Image.fromarray(img)
-    #   img.save("./bulletarm_baselines/fc_dqn/scripts/heightmapPNG/"+filename)
-    #   time.sleep(1)
-
-    def store_pos(pos):
-      s = str(pos)
-      with open("./position.txt", "a") as f:
-        f.write(s+"\n")
-
-    # def store_heightmap(heightmap):
-    #   heightmap = np.array(heightmap)
-    #   with open("/Users/tingxi/BulletArm/bulletarm_baselines/fc_dqn/scripts/heightmap.txt", "a") as f:
-    #     np.savetxt(f, heightmap, delimiter=",")
-    #     f.write("\n")      
-
-    def setSingleObjPosition():
-      """
-      In ONE object scenario ONLY:
-      set desired object index in config, e.g. 55
-      """
-      if self.object_index >= 10:
-        object_index = "0"+str(self.object_index)
-      else:
-        object_index = "00"+str(self.object_index)
-      
-      dir = "./bulletarm/pybullet/urdf/object/GraspNet1B_object/"+object_index+"/convex.obj"
-      # dir = "./bulletarm/pybullet/urdf/object/GraspNet1B_object/055/convex.obj"
-
-      o = pyredner.load_obj(dir, return_objects=True)
-      newObj = o[0]
-
-      """set quaternion"""
-      orien = self.objs[0].getRotation()
-      _x, _y, _z, _w = orien
-      orien = _w, _x, _y, _z
-      R = quaternions.quat2mat(orien)
-      R = torch.Tensor(R)
-      newObj.vertices = torch.matmul(newObj.vertices, R.T)
-
-      """set scale"""
-      newObj.vertices *= scale
-
-      """set position"""
-      x = self.objs[0].getXPosition()
-      y = self.objs[0].getYPosition()
-      z = self.objs[0].getZPosition()
-      newObj.vertices[:,0:1] += x
-      newObj.vertices[:,1:2] += y
-      newObj.vertices[:,2:3] += z
-
-      store_pos([x,y,z])
-
-      """rendering() needs List[Object] as input"""
-      return [newObj]
-
-    def rendering(cam_pos, cam_up_vector, target_pos, fov, obj_list, size):
-      
-      cam_pos = torch.FloatTensor(cam_pos)
-      cam_up_vector = torch.FloatTensor(cam_up_vector)
-      target_pos = torch.FloatTensor(target_pos)
-      fov = torch.tensor([fov], dtype=torch.float32)
-
-      camera = pyredner.Camera(position = cam_pos,
-                          look_at = target_pos,
-                          up = cam_up_vector,
-                          fov = fov, # in degree
-                          clip_near = 1e-2, # needs to > 0
-                          resolution = (size, size)
-                          )
-      #print("cam_pos: ", cam_pos, "\ncam_up: ", cam_up_vector, "\ntar_pos: ", target_pos, "\nfov: ", fov)
-      scene = pyredner.Scene(camera = camera, objects = obj_list)
-      chan_list = [pyredner.channels.depth]
-      img = pyredner.render_generic(scene, chan_list)
-
-      #==== RETRIEVE PYREDNER GRADIENT ===#
-      grad_img = pyredner.RenderFunction.visualize_screen_gradient(
-      grad_img=img, #
-      seed=42, #random seed
-      scene=scene, # pyredner.Scene
-      num_samples=(4,4), #uses default value of pyredner.generic()
-      max_bounces=1, #uses default value of pyredner.generic()
-      channels=chan_list # pyredner.channels
-      )
-      x_grad, y_grad = grad_img[:,:,:1], grad_img[:,:,1:]
-      # x_grad.shape = y_grad.shape = [128, 128, 1], gradients on x and y axis repectively      
-      #==== RETRIEVE PYREDNER GRADIENT ===#
-
-      """reshape [size, size, 1] to [size, size], BY DEFAULT: size=128"""
-      # img = np.array(img)
-      # img = np.squeeze(img, axis=2)
-
-      # return img
-      depth = img
-      heightmap = 1 - depth*0.2
-      heightmap = (torch.sinc(heightmap)  + 2.782753405483617826e-08) * 2
-      heightmap = torch.sqrt(heightmap**2) 
-      heightmap = np.array(heightmap)
-      heightmap = np.squeeze(heightmap, axis=2)
-      return heightmap
-    
     #===HERE IS THE DIFFERENTIABLE RENDERER===#
-    redner_obj_list = setSingleObjPosition()
+    REDNER_OBJ_LIST, _, _ = self.importSingleObject(scale=self.scale)
 
-    #append tray into rendering list
     tray_dir = "./tray.obj"
     t = pyredner.load_obj(tray_dir, return_objects=True)
     tray = t[0]   
@@ -168,30 +125,41 @@ class Sensor(object):
     tray.vertices[:,0:1] +=  0.5
     tray.vertices[:,1:2] += -0.0
     tray.vertices[:,2:3] += -0.0
-    redner_obj_list.append(tray)
+    REDNER_OBJ_LIST.append(tray)
 
-    img = rendering(self.cam_pos, self.cam_up_vector, self.target_pos, self.fov, redner_obj_list, self.size)
-    img /= 100.0 # normalization
+    img = self.rendering(self.cam_pos, self.cam_up_vector, self.target_pos, self.fov, REDNER_OBJ_LIST, self.size)
+    img = img.detach().numpy()
     #===HERE IS THE DIFFERENTIABLE RENDERER===#
 
     #===HERE IS THE ORIGINAL RENDERER===#
-    image_arr = pb.getCameraImage(width=self.size, height=self.size,
-                                  viewMatrix=self.view_matrix,
-                                  projectionMatrix=self.proj_matrix,
-                                  renderer=pb.ER_TINY_RENDERER)
-    depth_img = np.array(image_arr[3])
-    depth = self.far * self.near / (self.far - (self.far - self.near) * depth_img)
-    depth = np.abs(depth - np.max(depth)).reshape(self.size, self.size)
+    # image_arr = pb.getCameraImage(width=self.size, height=self.size,
+    #                               viewMatrix=self.view_matrix,
+    #                               projectionMatrix=self.proj_matrix,
+    #                               renderer=pb.ER_TINY_RENDERER)
+    # depth_img = np.array(image_arr[3])
+    # depth = self.far * self.near / (self.far - (self.far - self.near) * depth_img)
+    # depth = np.abs(depth - np.max(depth)).reshape(self.size, self.size)
     #===HERE IS THE ORIGINAL RENDERER===#
-
-    # store_heightmap(img/100)
-    # store_heightmap(depth)
-    
-    # save_greyscale_image(img)
-    # save_greyscale_image(depth*100.0)
-
-    """make value of each pixel in the same range of the original heightmap"""
     return img
+  
+  def getHeightmapWithGradient(self, objs, object_index, size, scale):
+    self.object_index = object_index
+    self.objs = objs
+    self.scale = scale
+    self.size = size      
+    REDNER_OBJ_LIST, OBJ_XYZ_POSITION, OBJ_ROTATION = self.importSingleObject(scale=self.scale)
+    tray_dir = "./tray.obj"
+    t = pyredner.load_obj(tray_dir, return_objects=True)
+    tray = t[0]   
+    tray.vertices /= 1000
+    tray.vertices[:,0:1] +=  0.5
+    tray.vertices[:,1:2] += -0.0
+    tray.vertices[:,2:3] += -0.0
+    REDNER_OBJ_LIST.append(tray)
+    img = self.rendering(self.cam_pos, self.cam_up_vector, self.target_pos, self.fov, REDNER_OBJ_LIST, self.size)
+    return img, REDNER_OBJ_LIST, OBJ_XYZ_POSITION,  OBJ_ROTATION
+  
+
 
   def getRGBImg(self, size, objs):
     image_arr = pb.getCameraImage(width=size, height=size,

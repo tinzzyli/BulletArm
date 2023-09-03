@@ -7,8 +7,9 @@ import collections
 from tqdm import tqdm
 import datetime
 import threading
-
+import pyredner
 import torch
+from transforms3d import quaternions
 
 import numpy as np
 import matplotlib
@@ -27,6 +28,7 @@ from bulletarm_baselines.fc_dqn.utils.env_wrapper import EnvWrapper
 from bulletarm_baselines.fc_dqn.utils.parameters import *
 from bulletarm_baselines.fc_dqn.utils.torch_utils import augmentBuffer, augmentBufferD4
 from bulletarm_baselines.fc_dqn.scripts.fill_buffer_deconstruct import fillDeconstructUsingRunner
+
 
 ExpertTransition = collections.namedtuple('ExpertTransition', 'state obs action reward next_state next_obs done step_left expert')
 
@@ -64,7 +66,6 @@ def evaluate(envs, agent, logger):
     eval_bar = tqdm(total=num_eval_episodes)
   while evaled < num_eval_episodes:
     q_value_maps, actions_star_idx, actions_star = agent.getEGreedyActions(states, in_hands, obs, 0)
-
     actions_star = torch.cat((actions_star, states.unsqueeze(1)), dim=1)
     states_, in_hands_, obs_, rewards, dones = envs.step(actions_star, auto_reset=True)
     rewards = rewards.numpy()
@@ -91,7 +92,7 @@ def evaluate(envs, agent, logger):
   if not no_bar:
     eval_bar.close()
 
-def train(): 
+def train():
     eval_thread = None
     start_time = time.time()
     if seed is not None:
@@ -134,10 +135,7 @@ def train():
         replay_buffer = QLearningBuffer(buffer_size)
     exploration = LinearSchedule(schedule_timesteps=explore, initial_p=init_eps, final_p=final_eps)
 
-    with open("./position.txt", "a") as f:
-        f.write("reset 1 outside of loop"+"\n")
     states, in_hands, obs = envs.reset()
-    
 
     if load_sub:
         logger.loadCheckPoint(os.path.join(base_dir, load_sub, 'checkpoint'), agent.loadFromState, replay_buffer.loadFromState)
@@ -149,28 +147,17 @@ def train():
             planner_envs = envs
             planner_num_process = num_processes
             j = 0
-            with open("./position.txt", "a") as f:
-                f.write("reset 2 outside of loop"+"\n")
             states, in_hands, obs = planner_envs.reset()
             s = 0
             if not no_bar:
                 planner_bar = tqdm(total=planner_episode)
             local_transitions = [[] for _ in range(planner_num_process)]
-            while j < planner_episode: #default 200
-                with open("./position.txt", "a") as f:
-                    f.write("get next action"+"\n")
+            while j < planner_episode:
                 plan_actions = planner_envs.getNextAction()
-                with open("./position.txt", "a") as f:
-                    f.write("get action from plan"+"\n")
+                # plan_actions = plan_actions.unsqueeze(dim=0)
                 planner_actions_star_idx, planner_actions_star = agent.getActionFromPlan(plan_actions)
-                #eps = final_eps
-
                 planner_actions_star = torch.cat((planner_actions_star, states.unsqueeze(1)), dim=1)
-                with open("./position.txt", "a") as f:
-                    f.write("step"+"\n")
                 states_, in_hands_, obs_, rewards, dones = planner_envs.step(planner_actions_star, auto_reset=True)
-                # raise ValueError('breakpoint 1, means nothing.')
-
                 buffer_obs = getCurrentObs(in_hands, obs)
                 buffer_obs_ = getCurrentObs(in_hands_, obs_)
                 for i in range(planner_num_process):
@@ -227,34 +214,20 @@ def train():
         else:
             eps = exploration.value(logger.num_eps)
         is_expert = 0
-        with open("./position.txt", "a") as f:
-            f.write("get greedy actions"+"\n")
         q_value_maps, actions_star_idx, actions_star = agent.getEGreedyActions(states, in_hands, obs, eps)
-        qmaps = q_value_maps
-        file_path = "./qmaps.txt"
-        with open(file_path, "a") as f:
-            for qmap in qmaps:
-                for q in qmap:
-                    qmap_str = str(q)
-                    f.write(qmap_str)
-                f.write("\n")
+
         buffer_obs = getCurrentObs(in_hands, obs)
         actions_star = torch.cat((actions_star, states.unsqueeze(1)), dim=1)
-        with open("./position.txt", "a") as f:
-            f.write("step async"+"\n")
         envs.stepAsync(actions_star, auto_reset=False)
 
         if len(replay_buffer) >= training_offset:
             for training_iter in range(training_iters):
                 train_step(agent, replay_buffer, logger)
-        with open("./position.txt", "a") as f:
-            f.write("step wait"+"\n")
+
         states_, in_hands_, obs_, rewards, dones = envs.stepWait()
 
         done_idxes = torch.nonzero(dones).squeeze(1)
         if done_idxes.shape[0] != 0:
-            with open("./position.txt", "a") as f:
-                f.write("reset envs"+"\n")
             reset_states_, reset_in_hands_, reset_obs_ = envs.reset_envs(done_idxes)
             for j, idx in enumerate(done_idxes):
                 states_[idx] = reset_states_[j]
@@ -306,5 +279,58 @@ def train():
     eval_envs.close()
 
 
+
+
+
+
+def untargeted_pgd_attack(epsilon=0.1, alpha=0.01, iters=10):
+    envs = EnvWrapper(num_processes, env, env_config, planner_config)
+
+    #NOTE: find out the difference between test=True and test=False
+    #NOTE: find out which to use, eval() or train(), in this case
+    agent = createAgent(test=True)
+    agent.eval()
+    _states, _in_hands, _obs, REDNER_OBJ_LIST, OBJ_XYZ_POSITION, OBJ_ROTATION = envs.resetWithGradient() 
+    # print("in main function, pos requires grad: ", OBJ_XYZ_POSITION.requires_grad, OBJ_XYZ_POSITION.grad)
+    states = _states.unsqueeze(dim = 0)
+    in_hands = _in_hands.unsqueeze(dim = 0)
+    obs = _obs.unsqueeze(dim = 0)
+
+    # _loss = obs.sum()
+    # _loss.backward()
+    # x_grad, y_grad, z_grad = OBJ_XYZ_POSITION.grad
+    # print(x_grad,y_grad,z_grad)
+    # raise ValueError("breakpoint")
+    q_value_maps_list = []
+    position_list = []
+
+    print("epsilon: ", epsilon)
+    print("alpha: ", alpha)
+    print("iters: ", iters)
+    
+    for _ in range(iters):
+        q_value_maps, _, _ = agent.getEGreedyActionsWithGradient(states, in_hands, obs, 0)
+        
+        q_value_maps_list.append(q_value_maps)
+        #NOTE: find out what optimizer/optimzing strategy/loss function we should use
+        loss = q_value_maps.sum()
+        loss.backward()
+        x_grad, y_grad, z_grad = OBJ_XYZ_POSITION.grad
+        print(x_grad,y_grad,z_grad)
+        # OBJ_XYZ_POSITION.grad.zero_()
+
+        ori_position = OBJ_XYZ_POSITION.data
+        adv_position = OBJ_XYZ_POSITION + alpha * OBJ_XYZ_POSITION.grad.sign()
+        eta = torch.clamp(adv_position - ori_position, min=-epsilon, max=epsilon)
+        adv_position = torch.clamp(ori_position + eta, min=0, max=1).detach_()
+        position_list.append(adv_position)
+        OBJ_XYZ_POSITION = adv_position
+        
+        
+    print("end")
+    return q_value_maps, OBJ_XYZ_POSITION, adv_position
+
+
 if __name__ == '__main__':
-    train()
+    untargeted_pgd_attack(iters=1)
+    # train()

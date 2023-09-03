@@ -88,6 +88,33 @@ class DQN3DASR(Base3D):
         action_idx, actions = self.decodeActions(pixels, a2_id)
 
         return q_value_maps, action_idx, actions
+    
+    def getEGreedyActionsWithGradient(self, states, in_hand, obs, eps, coef=0.):
+        q_value_maps, obs_encoding = self.forwardFCN(states, in_hand, obs, to_cpu=True)
+        with torch.no_grad():
+            pixels = torch_utils.argmax2d(q_value_maps).long()
+            q2_output = self.forwardQ2(states, in_hand, obs, obs_encoding, pixels, to_cpu=True)
+            a2_id = torch.argmax(q2_output, 1)
+
+        rand = torch.tensor(np.random.uniform(0, 1, states.size(0)))
+        rand_mask = rand < eps
+
+        if type(obs) is tuple:
+            hm, ih = obs
+        else:
+            hm = obs
+        for i, m in enumerate(rand_mask):
+            if m:
+                pixel_candidates = torch.nonzero(hm[i, 0]>-0.01)
+                rand_pixel = pixel_candidates[np.random.randint(pixel_candidates.size(0))]
+                pixels[i] = rand_pixel
+
+        rand_a2 = torch.randint_like(torch.empty(rand_mask.sum()), 0, self.a2_size)
+        a2_id[rand_mask] = rand_a2.long()
+
+        action_idx, actions = self.decodeActions(pixels, a2_id)
+
+        return q_value_maps, action_idx, actions
 
     def calcTDLoss(self):
         batch_size, states, obs, action_idx, rewards, next_states, next_obs, non_final_masks, step_lefts, is_experts = self._loadLossCalcDict()

@@ -11,7 +11,17 @@ class EnvWrapper:
         in_hands = torch.tensor(in_hands).float()
         obs = torch.tensor(obs).float()
         return states, in_hands, obs
-
+    
+    def resetWithGradient(self):
+        (states, in_hands, obs, REDNER_OBJ_LIST, OBJ_XYZ_POSITION, OBJ_ROTATION) = self.envs.resetWithGradient()
+        states = torch.tensor(states).float()
+        in_hands = torch.tensor(in_hands).float()
+        obs = obs.float()
+        OBJ_XYZ_POSITION = OBJ_XYZ_POSITION.float()
+        # print(obs.grad)
+        
+        return states, in_hands, obs, REDNER_OBJ_LIST, OBJ_XYZ_POSITION, OBJ_ROTATION
+    
     def getNextAction(self):
         return torch.tensor(self.envs.getNextAction()).float()
 
@@ -24,6 +34,17 @@ class EnvWrapper:
         rewards = torch.tensor(rewards).float()
         dones = torch.tensor(dones).float()
         return states_, in_hands_, obs_, rewards, dones
+    
+    def stepWithGradient(self, actions, auto_reset=False):
+        actions = actions.cpu().numpy()
+        (states_, in_hands_, obs_), OBJ_XYZ_POSITION, rewards, dones = self.envs.stepWithGradient(actions, auto_reset)
+        states_ = torch.tensor(states_).float()
+        in_hands_ = torch.tensor(in_hands_).float()
+        obs_ = obs_.clone().float()
+        OBJ_XYZ_POSITION = OBJ_XYZ_POSITION.clone().float()
+        rewards = torch.tensor(rewards).float()
+        dones = torch.tensor(dones).float()
+        return states_, in_hands_, obs_, OBJ_XYZ_POSITION, rewards, dones
 
     def stepAsync(self, actions, auto_reset=False):
         actions = actions.cpu().numpy()
