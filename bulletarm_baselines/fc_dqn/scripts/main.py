@@ -278,59 +278,106 @@ def train():
     envs.close()
     eval_envs.close()
 
+def render(obj_list):
+    
+    cam_look_at = torch.tensor([0.5, 0.0, 0.0])
+    cam_position = torch.tensor([0.5, 0.0, 10.0])
+    camera = pyredner.Camera(position = cam_position,
+                        look_at = cam_look_at,
+                        up = torch.tensor([-1.0, 0.0, 0.0]),
+                        fov = torch.tensor([2.291525676350207]), # in degree
+                        clip_near = 1e-2, # needs to > 0
+                        resolution = (128, 128),
+                        )
+    scene = pyredner.Scene(camera = camera, objects = obj_list)
+    chan_list = [pyredner.channels.depth]
+    depth_img = pyredner.render_generic(scene, chan_list)
+    # return depth_img.reshape(128,128)
+    near = 0.09
+    far = 0.010
+    depth = near * far /(far - depth_img)
+    heightmap = torch.abs(depth - torch.max(depth))
+    heightmap =  heightmap*37821.71428571428 - 3407.3605408838816
+    heightmap = torch.relu(heightmap)
+    heightmap = torch.where(heightmap > 1.0, 6e-3, heightmap) 
+
+    return heightmap.reshape(128,128)
 
 
 
 
-
-def untargeted_pgd_attack(epsilon=0.1, alpha=0.01, iters=10):
+def untargeted_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
+    torch.set_printoptions(precision=10)
     envs = EnvWrapper(num_processes, env, env_config, planner_config)
 
     #NOTE: find out the difference between test=True and test=False
     #NOTE: find out which to use, eval() or train(), in this case
-    agent = createAgent(test=True)
+    agent = createAgent(test=False) # if test=True, gradient equals to ZERO
     agent.eval()
-    _states, _in_hands, _obs, REDNER_OBJ_LIST, OBJ_XYZ_POSITION, OBJ_ROTATION = envs.resetWithGradient() 
-    # print("in main function, pos requires grad: ", OBJ_XYZ_POSITION.requires_grad, OBJ_XYZ_POSITION.grad)
-    states = _states.unsqueeze(dim = 0)
-    in_hands = _in_hands.unsqueeze(dim = 0)
-    obs = _obs.unsqueeze(dim = 0)
+    states, in_hands, obs, REDNER_OBJ_LIST, OBJ_XYZ_POSITION, OBJ_ROTATION = envs.resetWithGradient() 
+    states = states.unsqueeze(dim = 0)
+    in_hands = in_hands.unsqueeze(dim = 0)
+    obs = obs.unsqueeze(dim = 0)
 
-    # _loss = obs.sum()
-    # _loss.backward()
-    # x_grad, y_grad, z_grad = OBJ_XYZ_POSITION.grad
-    # print(x_grad,y_grad,z_grad)
-    # raise ValueError("breakpoint")
     q_value_maps_list = []
     position_list = []
 
+    if not z_epsilon:
+        z_epsilon = epsilon * 1e-04
+    
     print("epsilon: ", epsilon)
+    print("z_epsilon: ", z_epsilon)
     print("alpha: ", alpha)
     print("iters: ", iters)
     
-    for _ in range(iters):
-        q_value_maps, _, _ = agent.getEGreedyActionsWithGradient(states, in_hands, obs, 0)
-        
-        q_value_maps_list.append(q_value_maps)
-        #NOTE: find out what optimizer/optimzing strategy/loss function we should use
-        loss = q_value_maps.sum()
-        loss.backward()
-        x_grad, y_grad, z_grad = OBJ_XYZ_POSITION.grad
-        print(x_grad,y_grad,z_grad)
-        # OBJ_XYZ_POSITION.grad.zero_()
+    for iter in range(iters):
+        print("iter number: ", iter+1)
 
-        ori_position = OBJ_XYZ_POSITION.data
-        adv_position = OBJ_XYZ_POSITION + alpha * OBJ_XYZ_POSITION.grad.sign()
-        eta = torch.clamp(adv_position - ori_position, min=-epsilon, max=epsilon)
-        adv_position = torch.clamp(ori_position + eta, min=0, max=1).detach_()
-        position_list.append(adv_position)
-        OBJ_XYZ_POSITION = adv_position
-        
-        
-    print("end")
-    return q_value_maps, OBJ_XYZ_POSITION, adv_position
+        q_value_maps, _, _ = agent.getEGreedyActionsWithGradient(states, in_hands, obs, 0)
+        q_value_maps_list.append(q_value_maps)
+        loss = q_value_maps.sum()
+        loss.backward(retain_graph=True)
+
+        with torch.no_grad():
+            x_grad, y_grad, z_grad = OBJ_XYZ_POSITION.grad.clone()
+            OBJ_XYZ_POSITION.grad.zero_()
+            
+            print("gradient: ", [x_grad, y_grad, z_grad])
+            x,y,z = OBJ_XYZ_POSITION.clone().detach()
+            print("OG position: ", [x,y,z])
+            # step length should be within a certain range
+            x_eta = torch.clamp(x_grad.sign(), min = -epsilon,   max = epsilon).detach()
+            y_eta = torch.clamp(y_grad.sign(), min = -epsilon,   max = epsilon).detach()
+            z_eta = torch.clamp(z_grad.sign(), min = -z_epsilon, max = z_epsilon).detach()
+            print("eta: ", [x_eta, y_eta, z_eta])
+            # coordinate boudary of the object, please do not change these values
+            # valid range of x and y is 0.2 while for z the range is 0.000025
+            # accumulated change should not exceed the boundaries
+            adv_position = torch.tensor([
+                torch.clamp(x + x_eta, min =  0.4, max = 0.6).detach(),
+                torch.clamp(y + y_eta, min = -0.1, max = 0.1).detach(),
+                torch.clamp(z + z_eta, min =  0.013800, max = 0.013825).detach()
+            ])
+            position_list.append(adv_position)
+            print("ADV position: ", adv_position)
+
+        OBJ_XYZ_POSITION = adv_position.clone().detach()
+        OBJ_XYZ_POSITION.requires_grad = True
+        x_adv, y_adv, z_adv = OBJ_XYZ_POSITION.clone()
+
+        new_vertices = REDNER_OBJ_LIST[0].vertices.clone().detach()
+        new_vertices[:,0:1] += (x_adv - x)
+        new_vertices[:,1:2] += (y_adv - y)
+        new_vertices[:,2:3] += (z_adv - z)
+        REDNER_OBJ_LIST[0].vertices = new_vertices.clone()
+
+        obs = render(obj_list=REDNER_OBJ_LIST)
+        obs = obs.reshape(1,1,128,128)
+
+    return q_value_maps_list, position_list
 
 
 if __name__ == '__main__':
-    untargeted_pgd_attack(iters=1)
+    untargeted_pgd_attack(iters=2)
+    print("end")
     # train()
