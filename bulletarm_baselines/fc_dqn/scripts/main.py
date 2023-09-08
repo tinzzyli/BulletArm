@@ -329,39 +329,44 @@ def untargeted_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
     print("z_epsilon: ", z_epsilon)
     print("alpha: ", alpha)
     print("iters: ", iters)
+
     
     for iter in range(iters):
         print("iter number: ", iter+1)
 
         q_value_maps, _, _ = agent.getEGreedyActionsWithGradient(states, in_hands, obs, 0)
-        q_value_maps_list.append(q_value_maps)
         loss = q_value_maps.sum()
-        loss.backward(retain_graph=True)
+        # maps -> encode -> decode -> action
+        # loss.backward()
+        grad = torch.autograd.grad(loss, adv_img, retain_graph=False, create_graph=False)[0]
 
-        with torch.no_grad():
-            x_grad, y_grad, z_grad = OBJ_XYZ_POSITION.grad.clone()
-            OBJ_XYZ_POSITION.grad.zero_()
-            
-            print("gradient: ", [x_grad, y_grad, z_grad])
-            x,y,z = OBJ_XYZ_POSITION.clone().detach()
-            print("OG position: ", [x,y,z])
-            # step length should be within a certain range
-            x_eta = torch.clamp(x_grad.sign(), min = -epsilon,   max = epsilon).detach()
-            y_eta = torch.clamp(y_grad.sign(), min = -epsilon,   max = epsilon).detach()
-            z_eta = torch.clamp(z_grad.sign(), min = -z_epsilon, max = z_epsilon).detach()
-            print("eta: ", [x_eta, y_eta, z_eta])
-            # coordinate boudary of the object, please do not change these values
-            # valid range of x and y is 0.2 while for z the range is 0.000025
-            # accumulated change should not exceed the boundaries
-            adv_position = torch.tensor([
-                torch.clamp(x + x_eta, min =  0.4, max = 0.6).detach(),
-                torch.clamp(y + y_eta, min = -0.1, max = 0.1).detach(),
-                torch.clamp(z + z_eta, min =  0.013800, max = 0.013825).detach()
-            ])
-            position_list.append(adv_position)
-            print("ADV position: ", adv_position)
+        # with torch.no_grad():
+        x_grad, y_grad, z_grad = OBJ_XYZ_POSITION.grad.clone()
+        OBJ_XYZ_POSITION.grad.zero_()
+        x,y,z = OBJ_XYZ_POSITION.clone().detach()
+        # step length should be within a certain range
+        x_eta = torch.clamp(x_grad.sign(), min = -epsilon,   max = epsilon)
+        y_eta = torch.clamp(y_grad.sign(), min = -epsilon,   max = epsilon)
+        z_eta = torch.clamp(z_grad.sign(), min = -z_epsilon, max = z_epsilon)
+        # coordinate boudary of the object, please do not change these values
+        # valid range of x and y is 0.2 while for z the range is 0.000025
+        # accumulated change should not exceed the boundaries
+        adv_position = torch.tensor([
+            torch.clamp(x + x_eta, min =  0.4, max = 0.6),
+            torch.clamp(y + y_eta, min = -0.1, max = 0.1),
+            torch.clamp(z + z_eta, min =  0.013800, max = 0.013825)
+        ])
+        position_list.append(adv_position)
+        q_value_maps_list.append(q_value_maps)
 
-        OBJ_XYZ_POSITION = adv_position.clone().detach()
+        for net in agent.networks:
+            net.zero_grad()
+        for net in agent.target_networks:
+            net.zero_grad()
+        for optimizer in agent.optimizers:
+            optimizer.zero_grad()
+        
+        OBJ_XYZ_POSITION = adv_position.clone()
         OBJ_XYZ_POSITION.requires_grad = True
         x_adv, y_adv, z_adv = OBJ_XYZ_POSITION.clone()
 
@@ -370,14 +375,25 @@ def untargeted_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
         new_vertices[:,1:2] += (y_adv - y)
         new_vertices[:,2:3] += (z_adv - z)
         REDNER_OBJ_LIST[0].vertices = new_vertices.clone()
-
-        obs = render(obj_list=REDNER_OBJ_LIST)
-        obs = obs.reshape(1,1,128,128)
+        
+        
+        # obs = render(obj_list=REDNER_OBJ_LIST)
+        # obs = obs.reshape(1,1,128,128)
+        in_hands = in_hands.clone().detach()
+        states = states.clone().detach()
+        obs = obs.clone().detach()
+        # obs.requires_grad = True
+        print("gradient: ", [x_grad, y_grad, z_grad])
+        print("OG position: ", [x,y,z])
+        print("eta: ", [x_eta, y_eta, z_eta])
+        print("ADV position: ", [x_adv, y_adv, z_adv])
 
     return q_value_maps_list, position_list
 
 
 if __name__ == '__main__':
-    untargeted_pgd_attack(iters=2)
+    map, pos = untargeted_pgd_attack(iters=25)
+    np_pos = [p.numpy() for p in pos]
+    np.save("/Users/tingxi/BulletArm/np_pos.txt", np.pos)
     print("end")
     # train()
