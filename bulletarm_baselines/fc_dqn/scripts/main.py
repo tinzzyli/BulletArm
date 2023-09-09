@@ -278,7 +278,7 @@ def train():
     envs.close()
     eval_envs.close()
 
-def render(obj_list):
+def rendering(obj_list):
     
     cam_look_at = torch.tensor([0.5, 0.0, 0.0])
     cam_position = torch.tensor([0.5, 0.0, 10.0])
@@ -314,7 +314,7 @@ def untargeted_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
     #NOTE: find out which to use, eval() or train(), in this case
     agent = createAgent(test=False) # if test=True, gradient equals to ZERO
     agent.eval()
-    states, in_hands, obs, REDNER_OBJ_LIST, OBJ_XYZ_POSITION, OBJ_ROTATION = envs.resetWithGradient() 
+    states, in_hands, obs, rendering_list, xyz_position, quat_rotation = envs.resetWithGradient() 
     states = states.unsqueeze(dim = 0)
     in_hands = in_hands.unsqueeze(dim = 0)
     obs = obs.unsqueeze(dim = 0)
@@ -330,20 +330,38 @@ def untargeted_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
     print("alpha: ", alpha)
     print("iters: ", iters)
 
+    obs = obs.clone().detach()
+    in_hands = in_hands.clone().detach()
+    states = states.clone().detach()
+    xyz_position = xyz_position.clone().detach()
+    rendering_list[0].vertices = rendering_list[0].vertices.clone().detach()
+    ORI_VERTICES = rendering_list[0].vertices.clone().detach()
+    ORI_VERTICES[:,0:1] -= xyz_position[0]
+    ORI_VERTICES[:,1:2] -= xyz_position[1]
+    ORI_VERTICES[:,2:3] -= xyz_position[2]
+    ORI_VERTICES.requires_grad = False
     
     for iter in range(iters):
         print("iter number: ", iter+1)
+        xyz_position.requires_grad = True
+        new_vertices = ORI_VERTICES.clone()
+        new_vertices[:,0:1] += xyz_position[0]
+        new_vertices[:,1:2] += xyz_position[1]
+        new_vertices[:,2:3] += xyz_position[2]
+        rendering_list[0].vertices = new_vertices.clone()
 
+        obs = rendering(obj_list=rendering_list) 
+        obs = obs.reshape(1,1,128,128)    
         q_value_maps, _, _ = agent.getEGreedyActionsWithGradient(states, in_hands, obs, 0)
         loss = q_value_maps.sum()
         # maps -> encode -> decode -> action
         # loss.backward()
-        grad = torch.autograd.grad(loss, adv_img, retain_graph=False, create_graph=False)[0]
+        x_grad, y_grad, z_grad = torch.autograd.grad(loss, xyz_position, retain_graph=False, create_graph=False)[0]
 
         # with torch.no_grad():
-        x_grad, y_grad, z_grad = OBJ_XYZ_POSITION.grad.clone()
-        OBJ_XYZ_POSITION.grad.zero_()
-        x,y,z = OBJ_XYZ_POSITION.clone().detach()
+        # x_grad, y_grad, z_grad = xyz_position.grad.clone()
+        # xyz_position.grad.zero_()
+        x,y,z = xyz_position.clone().detach()
         # step length should be within a certain range
         x_eta = torch.clamp(x_grad.sign(), min = -epsilon,   max = epsilon)
         y_eta = torch.clamp(y_grad.sign(), min = -epsilon,   max = epsilon)
@@ -359,34 +377,23 @@ def untargeted_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
         position_list.append(adv_position)
         q_value_maps_list.append(q_value_maps)
 
-        for net in agent.networks:
-            net.zero_grad()
-        for net in agent.target_networks:
-            net.zero_grad()
-        for optimizer in agent.optimizers:
-            optimizer.zero_grad()
-        
-        OBJ_XYZ_POSITION = adv_position.clone()
-        OBJ_XYZ_POSITION.requires_grad = True
-        x_adv, y_adv, z_adv = OBJ_XYZ_POSITION.clone()
-
-        new_vertices = REDNER_OBJ_LIST[0].vertices.clone().detach()
-        new_vertices[:,0:1] += (x_adv - x)
-        new_vertices[:,1:2] += (y_adv - y)
-        new_vertices[:,2:3] += (z_adv - z)
-        REDNER_OBJ_LIST[0].vertices = new_vertices.clone()
-        
-        
-        # obs = render(obj_list=REDNER_OBJ_LIST)
-        # obs = obs.reshape(1,1,128,128)
-        in_hands = in_hands.clone().detach()
-        states = states.clone().detach()
-        obs = obs.clone().detach()
-        # obs.requires_grad = True
         print("gradient: ", [x_grad, y_grad, z_grad])
-        print("OG position: ", [x,y,z])
+        print("OG position: ", xyz_position)
         print("eta: ", [x_eta, y_eta, z_eta])
-        print("ADV position: ", [x_adv, y_adv, z_adv])
+        print("ADV position: ", adv_position)        
+        xyz_position = adv_position.clone().detach()
+        obs = obs.clone().detach()
+        q_value_maps = q_value_maps.clone().detach()
+        rendering_list[0].vertices = rendering_list[0].vertices.clone().detach()
+        new_vertices = new_vertices.clone().detach()
+
+        # for net in agent.networks:
+        #     net.zero_grad()
+        # for net in agent.target_networks:
+        #     net.zero_grad()
+        # for optimizer in agent.optimizers:
+        #     optimizer.zero_grad()
+
 
     return q_value_maps_list, position_list
 
