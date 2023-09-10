@@ -98,7 +98,7 @@ class R2ConvDF(torch.nn.Module):
                                                     basis_filter=basis_filter,
                                                     recompute=False,
                                                     maximum_offset=None,
-                                                    maximum_frequency=maximum_frequency
+                                                    maximum_frequency=maximum_frequency,
                                                     basis_generator=None)
 
         # self.weights = None
