@@ -5,3 +5,12 @@ pybullet>=2.7.1
 scikit-image>=0.14.2
 scipy>=1.2.1
 tqdm
+torch==1.13.0
+transforms3d
+matplotlib
+opencv-python
+dill
+e2cnn
+tensorboard
+more_itertools
+torchvision
