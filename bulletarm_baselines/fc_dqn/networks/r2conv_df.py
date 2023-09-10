@@ -90,15 +90,15 @@ class R2ConvDF(torch.nn.Module):
                                                                                    None,
                                                                                    dilation,
                                                                                    None)
-        self._basisexpansion = BlocksBasisExpansion(in_type, 
-                                                    out_type,
+        self._basisexpansion = BlocksBasisExpansion(in_type=in_type, 
+                                                    out_type=out_type,
                                                     points=grid,
                                                     sigma=sigma,
                                                     rings=rings,
-                                                    maximum_offset=None,
-                                                    maximum_frequency=maximum_frequency,
                                                     basis_filter=basis_filter,
-                                                    recompute=False)
+                                                    recompute=False,
+                                                    maximum_offset=None,
+                                                    maximum_frequency=maximum_frequency)
 
         # self.weights = None
 
