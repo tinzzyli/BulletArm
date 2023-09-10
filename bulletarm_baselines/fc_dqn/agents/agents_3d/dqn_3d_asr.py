@@ -89,7 +89,7 @@ class DQN3DASR(Base3D):
 
         return q_value_maps, action_idx, actions
     
-    def getEGreedyActionsWithGradient(self, states, in_hand, obs, eps, coef=0.):
+    def getEGreedyActionsAttack(self, states, in_hand, obs, eps, coef=0.):
         q_value_maps, obs_encoding = self.forwardFCN(states, in_hand, obs, to_cpu=True)
         with torch.no_grad():
             pixels = torch_utils.argmax2d(q_value_maps).long()

@@ -381,9 +381,9 @@ class BaseEnv:
 
     return self._isHolding(), in_hand_img, self.heightmap.reshape([1, self.heightmap_size, self.heightmap_size])
 
-  def _getObservationWithGradient(self, action=None):
+  def _getObservationAttack(self, action=None):
     old_heightmap = copy.copy(self.heightmap)
-    self.heightmap, REDNER_OBJ_LIST, OBJ_XYZ_POSITION, OBJ_ROTATION = self._getHeightmapWithGradient()
+    self.heightmap, ORI_OBJECT_LIST, params = self._getHeightmapAttack()
 
     if action is None or self._isHolding() == False:
       in_hand_img = self.getEmptyInHand()
@@ -391,14 +391,14 @@ class BaseEnv:
       motion_primative, x, y, z, rot = self._decodeAction(action)
       in_hand_img = self.getInHandImage(old_heightmap, x, y, z, rot, self.heightmap)
 
-    return self._isHolding(), in_hand_img, self.heightmap.reshape([1, self.heightmap_size, self.heightmap_size]), REDNER_OBJ_LIST, OBJ_XYZ_POSITION,  OBJ_ROTATION
+    return self._isHolding(), in_hand_img, self.heightmap.reshape([1, self.heightmap_size, self.heightmap_size]), ORI_OBJECT_LIST, params
   
 
   def _getHeightmap(self):
     return self.sensor.getHeightmap(self.objects, self.object_index, self.heightmap_size, self.OBJ_SCALE_FOR_PYREDNER)
   
-  def _getHeightmapWithGradient(self):
-    return self.sensor.getHeightmapWithGradient(self.objects, self.object_index, self.heightmap_size, self.OBJ_SCALE_FOR_PYREDNER)
+  def _getHeightmapAttack(self):
+    return self.sensor.getHeightmapAttack(self.objects, self.object_index, self.heightmap_size, self.OBJ_SCALE_FOR_PYREDNER)
 
   def _getValidPositions(self, border_padding, min_distance, existing_positions, num_shapes, sample_range=None):
     existing_positions_copy = copy.deepcopy(existing_positions)

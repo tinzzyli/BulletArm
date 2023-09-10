@@ -12,15 +12,15 @@ class EnvWrapper:
         obs = torch.tensor(obs).float()
         return states, in_hands, obs
     
-    def resetWithGradient(self):
-        (states, in_hands, obs, REDNER_OBJ_LIST, OBJ_XYZ_POSITION, OBJ_ROTATION) = self.envs.resetWithGradient()
+    def resetAttack(self):
+        (states, in_hands, obs, ORI_OBJECT_LIST, params) = self.envs.resetAttack()
         states = torch.tensor(states).float()
         in_hands = torch.tensor(in_hands).float()
-        obs = obs.float()
-        OBJ_XYZ_POSITION = OBJ_XYZ_POSITION.float()
-        # print(obs.grad)
+        obs = torch.tensor(obs).float()
+        # ORI_OBJECT_LIST = ORI_OBJECT_LIST.clone()
+        params = [torch.tensor(param) for param in params]
         
-        return states, in_hands, obs, REDNER_OBJ_LIST, OBJ_XYZ_POSITION, OBJ_ROTATION
+        return states, in_hands, obs, ORI_OBJECT_LIST, params
     
     def getNextAction(self):
         return torch.tensor(self.envs.getNextAction()).float()
@@ -35,16 +35,16 @@ class EnvWrapper:
         dones = torch.tensor(dones).float()
         return states_, in_hands_, obs_, rewards, dones
     
-    def stepWithGradient(self, actions, auto_reset=False):
-        actions = actions.cpu().numpy()
-        (states_, in_hands_, obs_), OBJ_XYZ_POSITION, rewards, dones = self.envs.stepWithGradient(actions, auto_reset)
-        states_ = torch.tensor(states_).float()
-        in_hands_ = torch.tensor(in_hands_).float()
-        obs_ = obs_.clone().float()
-        OBJ_XYZ_POSITION = OBJ_XYZ_POSITION.clone().float()
-        rewards = torch.tensor(rewards).float()
-        dones = torch.tensor(dones).float()
-        return states_, in_hands_, obs_, OBJ_XYZ_POSITION, rewards, dones
+    # def stepAttack(self, actions, auto_reset=False):
+    #     actions = actions.cpu().numpy()
+    #     (states_, in_hands_, obs_), OBJ_XYZ_POSITION, rewards, dones = self.envs.stepAttack(actions, auto_reset)
+    #     states_ = torch.tensor(states_).float()
+    #     in_hands_ = torch.tensor(in_hands_).float()
+    #     obs_ = obs_.clone().float()
+    #     OBJ_XYZ_POSITION = OBJ_XYZ_POSITION.clone().float()
+    #     rewards = torch.tensor(rewards).float()
+    #     dones = torch.tensor(dones).float()
+    #     return states_, in_hands_, obs_, OBJ_XYZ_POSITION, rewards, dones
 
     def stepAsync(self, actions, auto_reset=False):
         actions = actions.cpu().numpy()

@@ -151,11 +151,11 @@ class ObjectGrasping(BaseEnv):
 
         return obs, reward, True
     
-    def stepWithGradient(self, action):
+    def stepAttack(self, action):
         pre_obj_grasped = self.obj_grasped
         self.takeAction(action)
         self.wait(100)
-        obs = self._getObservationWithGradient(action)
+        obs = self._getObservationAttack(action)
         done = self._checkTermination()
         reward = 1.0 if self.obj_grasped > pre_obj_grasped else 0.0
 
@@ -269,10 +269,10 @@ class ObjectGrasping(BaseEnv):
             # self.num_in_tray_obj = self.num_obj
         return self._getObservation()
 
-    def resetWithGradient(self):
+    def resetAttack(self):
         
         _ = self.reset()
-        return self._getObservationWithGradient()
+        return self._getObservationAttack()
 
     def isObjInBox(self, obj_pos, tray_pos, tray_size):
         tray_range = self.tray_range(tray_pos, tray_size)
@@ -312,9 +312,9 @@ class ObjectGrasping(BaseEnv):
         state, in_hand, obs = super(ObjectGrasping, self)._getObservation()
         return 0, np.zeros_like(in_hand), obs
 
-    def _getObservationWithGradient(self, action=None):
-        state, in_hand, obs, REDNER_OBJ_LIST, OBJ_XYZ_POSITION,  OBJ_ROTATION = super(ObjectGrasping, self)._getObservationWithGradient()
-        return 0, np.zeros_like(in_hand), obs, REDNER_OBJ_LIST, OBJ_XYZ_POSITION,  OBJ_ROTATION
+    def _getObservationAttack(self, action=None):
+        state, in_hand, obs, ORI_OBJECT_LIST, params = super(ObjectGrasping, self)._getObservationAttack()
+        return 0, np.zeros_like(in_hand), obs, ORI_OBJECT_LIST, params
 
 def createObjectGrasping(config):
     return ObjectGrasping(config)

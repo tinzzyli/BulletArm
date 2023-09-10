@@ -314,7 +314,7 @@ def untargeted_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
     #NOTE: find out which to use, eval() or train(), in this case
     agent = createAgent(test=False) # if test=True, gradient equals to ZERO
     agent.eval()
-    states, in_hands, obs, rendering_list, xyz_position, quat_rotation = envs.resetWithGradient() 
+    states, in_hands, obs, ORI_OBJECT_LIST, params = envs.resetAttack() 
     states = states.unsqueeze(dim = 0)
     in_hands = in_hands.unsqueeze(dim = 0)
     obs = obs.unsqueeze(dim = 0)
@@ -330,29 +330,31 @@ def untargeted_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
     print("alpha: ", alpha)
     print("iters: ", iters)
 
+    # params: [xyz_position, quat_rotation, scale]
     obs = obs.clone().detach()
     in_hands = in_hands.clone().detach()
     states = states.clone().detach()
-    xyz_position = xyz_position.clone().detach()
-    rendering_list[0].vertices = rendering_list[0].vertices.clone().detach()
-    ORI_VERTICES = rendering_list[0].vertices.clone().detach()
-    ORI_VERTICES[:,0:1] -= xyz_position[0]
-    ORI_VERTICES[:,1:2] -= xyz_position[1]
-    ORI_VERTICES[:,2:3] -= xyz_position[2]
-    ORI_VERTICES.requires_grad = False
+    xyz_position = params[0].clone().detach()
+    quat_rotation = params[1].clone().detach()
+    scale = params[2].clone().detach()
+    ORI_VERTICES = ORI_OBJECT_LIST[0].vertices.clone().detach()
     
     for iter in range(iters):
         print("iter number: ", iter+1)
         xyz_position.requires_grad = True
         new_vertices = ORI_VERTICES.clone()
+        new_vertices *= scale
+        R = quaternions.quat2mat(quat_rotation)
+        R = torch.Tensor(R)
+        new_vertices = torch.matmul(new_vertices, R.T)
         new_vertices[:,0:1] += xyz_position[0]
         new_vertices[:,1:2] += xyz_position[1]
         new_vertices[:,2:3] += xyz_position[2]
-        rendering_list[0].vertices = new_vertices.clone()
+        ORI_OBJECT_LIST[0].vertices = new_vertices.clone()
 
-        obs = rendering(obj_list=rendering_list) 
+        obs = rendering(obj_list=ORI_OBJECT_LIST) 
         obs = obs.reshape(1,1,128,128)    
-        q_value_maps, _, _ = agent.getEGreedyActionsWithGradient(states, in_hands, obs, 0)
+        q_value_maps, _, _ = agent.getEGreedyActionsAttack(states, in_hands, obs, 0)
         loss = q_value_maps.sum()
         # maps -> encode -> decode -> action
         # loss.backward()
@@ -382,9 +384,11 @@ def untargeted_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
         print("eta: ", [x_eta, y_eta, z_eta])
         print("ADV position: ", adv_position)        
         xyz_position = adv_position.clone().detach()
+        quat_rotation = quat_rotation.clone().detach()
+        scale *= scale.clone().detach()
         obs = obs.clone().detach()
         q_value_maps = q_value_maps.clone().detach()
-        rendering_list[0].vertices = rendering_list[0].vertices.clone().detach()
+        ORI_OBJECT_LIST[0].vertices = ORI_OBJECT_LIST[0].vertices.clone().detach()
         new_vertices = new_vertices.clone().detach()
 
         # for net in agent.networks:

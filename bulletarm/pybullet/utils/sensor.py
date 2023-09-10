@@ -55,33 +55,33 @@ class Sensor(object):
     dir = "./bulletarm/pybullet/urdf/object/GraspNet1B_object/055/convex.obj"
 
     o = pyredner.load_obj(dir, return_objects=True)
-    newObj = o[0]
+    new_obj = o[0]
 
     orien = self.objs[0].getRotation()
     _x, _y, _z, _w = orien
     orien = _w, _x, _y, _z
-    OBJ_ROTATION = _w, _x, _y, _z
+    quat_rotation = np.array([_w, _x, _y, _z])
     R = quaternions.quat2mat(orien)
     R = torch.Tensor(R)
 
     x = self.objs[0].getXPosition()
     y = self.objs[0].getYPosition()
     z = self.objs[0].getZPosition()
-    OBJ_XYZ_POSITION = torch.tensor([x,y,z])
-    OBJ_XYZ_POSITION.requires_grad = True
-    x,y,z = OBJ_XYZ_POSITION
+    xyz_position = np.array([x, y, z])
 
-    new_vertices = newObj.vertices.clone()
-    new_vertices = torch.matmul(new_vertices, R.T)
+    new_vertices = new_obj.vertices.clone()
+    ORI_OBJECT = o[0]
     new_vertices *= scale
+    scale = np.copy(scale)
+    new_vertices = torch.matmul(new_vertices, R.T)
     new_vertices[:,0:1] += x
     new_vertices[:,1:2] += y
     new_vertices[:,2:3] += z
-    newObj.vertices = new_vertices
+    new_obj.vertices = new_vertices
 
-    # print(scale, OBJ_ROTATION, OBJ_XYZ_POSITION)
+    # print(scale, quat_rotation, xyz_position)
 
-    return [newObj], OBJ_XYZ_POSITION, OBJ_ROTATION
+    return [new_obj], [ORI_OBJECT], [xyz_position, quat_rotation, scale]
   
   def rendering(self, cam_pos, cam_up_vector, target_pos, fov, obj_list, size):
     
@@ -116,7 +116,7 @@ class Sensor(object):
     self.size = size      
 
     #===HERE IS THE DIFFERENTIABLE RENDERER===#
-    REDNER_OBJ_LIST, _, _ = self.importSingleObject(scale=self.scale)
+    rendering_list, _, _ = self.importSingleObject(scale=self.scale)
 
     tray_dir = "./tray.obj"
     t = pyredner.load_obj(tray_dir, return_objects=True)
@@ -125,9 +125,9 @@ class Sensor(object):
     tray.vertices[:,0:1] +=  0.5
     tray.vertices[:,1:2] += -0.0
     tray.vertices[:,2:3] += -0.0
-    REDNER_OBJ_LIST.append(tray)
+    rendering_list.append(tray)
 
-    img = self.rendering(self.cam_pos, self.cam_up_vector, self.target_pos, self.fov, REDNER_OBJ_LIST, self.size)
+    img = self.rendering(self.cam_pos, self.cam_up_vector, self.target_pos, self.fov, rendering_list, self.size)
     img = img.detach().numpy()
     #===HERE IS THE DIFFERENTIABLE RENDERER===#
 
@@ -142,12 +142,12 @@ class Sensor(object):
     #===HERE IS THE ORIGINAL RENDERER===#
     return img
   
-  def getHeightmapWithGradient(self, objs, object_index, size, scale):
+  def getHeightmapAttack(self, objs, object_index, size, scale):
     self.object_index = object_index
     self.objs = objs
     self.scale = scale
     self.size = size      
-    REDNER_OBJ_LIST, OBJ_XYZ_POSITION, OBJ_ROTATION = self.importSingleObject(scale=self.scale)
+    rendering_list, ORI_OBJECT_LIST, params = self.importSingleObject(scale=self.scale)
     tray_dir = "./tray.obj"
     t = pyredner.load_obj(tray_dir, return_objects=True)
     tray = t[0]   
@@ -155,9 +155,9 @@ class Sensor(object):
     tray.vertices[:,0:1] +=  0.5
     tray.vertices[:,1:2] += -0.0
     tray.vertices[:,2:3] += -0.0
-    REDNER_OBJ_LIST.append(tray)
-    img = self.rendering(self.cam_pos, self.cam_up_vector, self.target_pos, self.fov, REDNER_OBJ_LIST, self.size)
-    return img, REDNER_OBJ_LIST, OBJ_XYZ_POSITION,  OBJ_ROTATION
+    rendering_list.append(tray)
+    img = self.rendering(self.cam_pos, self.cam_up_vector, self.target_pos, self.fov, rendering_list, self.size)
+    return img, ORI_OBJECT_LIST, params
   
 
 
