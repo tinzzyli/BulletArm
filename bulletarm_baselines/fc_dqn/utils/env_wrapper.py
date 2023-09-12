@@ -19,6 +19,7 @@ class EnvWrapper:
         obs = torch.tensor(obs).float()
         # ORI_OBJECT_LIST = ORI_OBJECT_LIST.clone()
         params = [torch.tensor(param) for param in params]
+        # params = [param.float() for param in params]
         
         return states, in_hands, obs, ORI_OBJECT_LIST, params
     

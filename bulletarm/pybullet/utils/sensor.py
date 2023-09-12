@@ -37,6 +37,13 @@ class Sensor(object):
     self.fov = np.degrees(2 * np.arctan((target_size / 2) / self.far))
     self.proj_matrix = pb.computeProjectionMatrixFOV(self.fov, 1, self.near, self.far)
 
+    if torch.cuda.is_available():
+        device = torch.device("cuda")
+    else:
+        device = torch.device("cpu")
+
+    self.device = device
+
   def setCamMatrix(self, cam_pos, cam_up_vector, target_pos):
     self.view_matrix = pb.computeViewMatrix(
       cameraEyePosition=[cam_pos[0], cam_pos[1], cam_pos[2]],
@@ -63,6 +70,8 @@ class Sensor(object):
     quat_rotation = np.array([_w, _x, _y, _z])
     R = quaternions.quat2mat(orien)
     R = torch.Tensor(R)
+    R = R.to(self.device)
+    R = R.float()
 
     x = self.objs[0].getXPosition()
     y = self.objs[0].getYPosition()
@@ -70,6 +79,8 @@ class Sensor(object):
     xyz_position = np.array([x, y, z])
 
     new_vertices = new_obj.vertices.clone()
+    new_vertices = new_vertices.to(self.device)
+    new_vertices = new_vertices.float()
     ORI_OBJECT = o[0]
     new_vertices *= scale
     scale = np.copy(scale)
@@ -89,6 +100,11 @@ class Sensor(object):
     cam_up_vector = torch.FloatTensor(cam_up_vector)
     target_pos = torch.FloatTensor(target_pos)
     fov = torch.tensor([fov], dtype=torch.float32)
+
+    cam_pos = cam_pos.to(self.device)
+    cam_up_vector = cam_up_vector.to(self.device)
+    target_pos = target_pos.to(self.device)
+    fov = fov.to(self.device)
 
     camera = pyredner.Camera(position = cam_pos,
                         look_at = target_pos,
@@ -121,6 +137,7 @@ class Sensor(object):
     tray_dir = "./tray.obj"
     t = pyredner.load_obj(tray_dir, return_objects=True)
     tray = t[0]   
+    tray.vertices = tray.vertices.to(self.device)
     tray.vertices /= 1000
     tray.vertices[:,0:1] +=  0.5
     tray.vertices[:,1:2] += -0.0

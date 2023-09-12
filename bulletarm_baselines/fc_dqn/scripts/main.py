@@ -307,6 +307,12 @@ def rendering(obj_list):
 
 
 def untargeted_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
+
+    if torch.cuda.is_available():
+        device = torch.device("cuda")
+    else:
+        device = torch.device("cpu")    
+
     torch.set_printoptions(precision=10)
     envs = EnvWrapper(num_processes, env, env_config, planner_config)
 
@@ -342,10 +348,20 @@ def untargeted_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
     for iter in range(iters):
         print("iter number: ", iter+1)
         xyz_position.requires_grad = True
+        xyz_position = xyz_position.to(device)
+        xyz_position = xyz_position.float()
+        scale = scale.to(device)
+        scale = scale.float()
         new_vertices = ORI_VERTICES.clone()
+        new_vertices = new_vertices.to(device)
+        new_vertices = new_vertices.float()
+
         new_vertices *= scale
         R = quaternions.quat2mat(quat_rotation)
         R = torch.Tensor(R)
+        R = R.to(device)
+        R = R.float()
+
         new_vertices = torch.matmul(new_vertices, R.T)
         new_vertices[:,0:1] += xyz_position[0]
         new_vertices[:,1:2] += xyz_position[1]
@@ -375,7 +391,7 @@ def untargeted_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
             torch.clamp(x + x_eta, min =  0.4, max = 0.6),
             torch.clamp(y + y_eta, min = -0.1, max = 0.1),
             torch.clamp(z + z_eta, min =  0.013800, max = 0.013825)
-        ])
+        ], device=device)
         position_list.append(adv_position)
         q_value_maps_list.append(q_value_maps)
 
