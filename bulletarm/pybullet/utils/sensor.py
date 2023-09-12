@@ -145,7 +145,7 @@ class Sensor(object):
     rendering_list.append(tray)
 
     img = self.rendering(self.cam_pos, self.cam_up_vector, self.target_pos, self.fov, rendering_list, self.size)
-    img = img.detach().numpy()
+    img = img.cpu().detach().numpy()
     #===HERE IS THE DIFFERENTIABLE RENDERER===#
 
     #===HERE IS THE ORIGINAL RENDERER===#
