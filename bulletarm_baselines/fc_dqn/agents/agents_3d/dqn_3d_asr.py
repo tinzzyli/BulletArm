@@ -4,6 +4,7 @@ import torch.nn.functional as F
 from copy import deepcopy
 from bulletarm_baselines.fc_dqn.agents.agents_3d.base_3d import Base3D
 from bulletarm_baselines.fc_dqn.utils import torch_utils
+import torch.nn as nn
 
 
 class DQN3DASR(Base3D):
@@ -89,12 +90,44 @@ class DQN3DASR(Base3D):
 
         return q_value_maps, action_idx, actions
     
+
+    def soft_argmax(self, voxels):
+        """
+        credits to:
+        https://github.com/Fdevmsy/PyTorch-Soft-Argmax/tree/master
+        Arguments: voxel patch in shape (batch_size, channel, H, W, depth)
+        Return: 3D coordinates in shape (batch_size, channel, 3)
+        """
+        # assert voxels.dim()==5
+        # alpha is here to make the largest element really big, so it
+        # would become very close to 1 after softmax
+        alpha = 1000.0 
+        N,C,H,W = voxels.shape
+        soft_max = nn.functional.softmax(voxels.view(N,C,-1)*alpha,dim=2)
+        soft_max = soft_max.view(voxels.shape)
+        indices_kernel = torch.arange(start=0,end=H*W).unsqueeze(0)
+        indices_kernel = indices_kernel.view((H,W))
+        conv = soft_max*indices_kernel
+        indices = conv.sum(1).sum(1).sum(1)
+        # z = indices%D
+        y = (indices).floor()%W
+        x = (((indices).floor())/W).floor()%H
+        coords = torch.stack([x,y],dim=1)
+        return coords    
+    
+
     def getEGreedyActionsAttack(self, states, in_hand, obs, eps, coef=0.):
         
         q_value_maps, obs_encoding = self.forwardFCN(states, in_hand, obs, to_cpu=True)
-        pixels = torch_utils.argmax2d(q_value_maps).long()
+        q_value_maps = q_value_maps.reshape(1,1,128,128)
+        # pixels = torch_utils.argmax2d(q_value_maps).long()
+        pixels = self.soft_argmax(q_value_maps)
         q2_output = self.forwardQ2(states, in_hand, obs, obs_encoding, pixels, to_cpu=True)
-        a2_id = torch.argmax(q2_output, 1)
+        # a2_id = torch.argmax(q2_output, 1)
+        q2_output = q2_output.reshape(1,1,1,16)
+        a2_id = self.soft_argmax(q2_output)
+        a2_id = a2_id[0][1:]
+        
 
         rand = torch.tensor(np.random.uniform(0, 1, states.size(0)))
         rand_mask = rand < eps

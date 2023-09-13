@@ -9,6 +9,7 @@ import datetime
 import threading
 import pyredner
 import torch
+import torch.nn as nn
 from transforms3d import quaternions
 
 import numpy as np
@@ -310,6 +311,7 @@ def rendering(obj_list):
 
 
 
+
 def untargeted_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
     # to avoid potential errors, run code in single process
     # single runner has only step function, no stepAsync and stepWait
@@ -377,6 +379,13 @@ def untargeted_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
         obs = rendering(obj_list=ORI_OBJECT_LIST) 
         obs = obs.reshape(1,1,128,128)    
         q_value_maps, action_idx, actions = agent.getEGreedyActionsAttack(states, in_hands, obs, 0)
+        
+        """
+        because torch.argmax and torch_utils.argmax2d inside of getEGreedyActionsAttack is not differentiable, I use:
+        soft_argmax(voxels):
+        in dqn_3d_asr.py
+        a soft argmax method for 1D/2D/3D
+        """
         loss = actions.sum()
         # maps -> encode -> decode -> action
         # loss.backward()
