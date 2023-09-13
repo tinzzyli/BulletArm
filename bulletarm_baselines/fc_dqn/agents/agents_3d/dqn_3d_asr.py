@@ -113,7 +113,7 @@ class DQN3DASR(Base3D):
         y = (indices).floor()%W
         x = (((indices).floor())/W).floor()%H
         coords = torch.stack([x,y],dim=1)
-        return coords    
+        return coords.long() 
     
 
     def getEGreedyActionsAttack(self, states, in_hand, obs, eps, coef=0.):
