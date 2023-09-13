@@ -380,7 +380,6 @@ def untargeted_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
         obs = obs.reshape(1,1,128,128)    
         q_value_maps, action_idx, actions = agent.getEGreedyActionsAttack(states, in_hands, obs, 0)
         
-        actions = actions.reshape(1,1,1,3)
         actions = torch.cat((actions, states.unsqueeze(1)), dim=1)
 
         envs.step(actions)
