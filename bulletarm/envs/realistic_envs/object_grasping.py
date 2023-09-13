@@ -144,6 +144,10 @@ class ObjectGrasping(BaseEnv):
         #   if not self._isObjectWithinWorkspace(obj):
         #     self._removeObject(obj)
         obs = self._getObservation(action)
+        if self.robot.holding_obj == None:
+            print("not holding")
+        else:
+            print("holding")
         done = self._checkTermination()
         reward = 1.0 if self.obj_grasped > pre_obj_grasped else 0.0
 
@@ -156,6 +160,11 @@ class ObjectGrasping(BaseEnv):
         self.takeAction(action)
         self.wait(100)
         obs = self._getObservationAttack(action)
+        if self.robot.holding_obj == None:
+            print("not holding")
+        else:
+            print("holding")
+        
         done = self._checkTermination()
         reward = 1.0 if self.obj_grasped > pre_obj_grasped else 0.0
 
@@ -304,8 +313,11 @@ class ObjectGrasping(BaseEnv):
                 self.obj_grasped += 1
                 self._removeObject(obj)
                 if self.obj_grasped == self.num_obj or len(self.objects) == 0:
+                    print("termination: ", True)
                     return True
+                print("termination: ", False)
                 return False
+        print("termination: ", False)
         return False
 
     def _getObservation(self, action=None):

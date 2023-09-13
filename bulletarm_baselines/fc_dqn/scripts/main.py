@@ -154,7 +154,11 @@ def train():
             local_transitions = [[] for _ in range(planner_num_process)]
             while j < planner_episode:
                 plan_actions = planner_envs.getNextAction()
-                # plan_actions = plan_actions.unsqueeze(dim=0)
+                if num_processes == 0:
+                    plan_actions = plan_actions.unsqueeze(dim=0)
+                    states = states.unsqueeze(dim=0)
+                    in_hands = in_hands.unsqueeze(dim=0)
+                    obs = obs.unsqueeze(dim=0)
                 planner_actions_star_idx, planner_actions_star = agent.getActionFromPlan(plan_actions)
                 planner_actions_star = torch.cat((planner_actions_star, states.unsqueeze(1)), dim=1)
                 states_, in_hands_, obs_, rewards, dones = planner_envs.step(planner_actions_star, auto_reset=True)
@@ -307,6 +311,8 @@ def rendering(obj_list):
 
 
 def untargeted_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
+    # to avoid potential errors, run code in single process
+    # single runner has only step function, no stepAsync and stepWait
 
     if torch.cuda.is_available():
         device = torch.device("cuda")
@@ -330,7 +336,7 @@ def untargeted_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
 
     if not z_epsilon:
         z_epsilon = epsilon * 1e-04
-    
+    print("PGD attack is running on: ", device)
     print("epsilon: ", epsilon)
     print("z_epsilon: ", z_epsilon)
     print("alpha: ", alpha)
@@ -370,8 +376,8 @@ def untargeted_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
 
         obs = rendering(obj_list=ORI_OBJECT_LIST) 
         obs = obs.reshape(1,1,128,128)    
-        q_value_maps, _, _ = agent.getEGreedyActionsAttack(states, in_hands, obs, 0)
-        loss = q_value_maps.sum()
+        q_value_maps, action_idx, actions = agent.getEGreedyActionsAttack(states, in_hands, obs, 0)
+        loss = actions.sum()
         # maps -> encode -> decode -> action
         # loss.backward()
         x_grad, y_grad, z_grad = torch.autograd.grad(loss, xyz_position, retain_graph=False, create_graph=False)[0]
@@ -420,7 +426,8 @@ def untargeted_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
 
 if __name__ == '__main__':
     map, pos = untargeted_pgd_attack(iters=25)
-    np_pos = [p.numpy() for p in pos]
-    np.save("/Users/tingxi/BulletArm/np_pos.txt", np.pos)
-    print("end")
+    # np_pos = [p.numpy() for p in pos]
+    # np.save("/Users/tingxi/BulletArm/np_pos.txt", np.pos)
+    
     # train()
+    print("end")
