@@ -12,7 +12,7 @@ class DQN3DASR(Base3D):
                  patch_size=24, num_rz=8, rz_range=(0, 7*np.pi/8)):
         super().__init__(workspace, heightmap_size, device, lr, gamma, sl, num_primitives, patch_size, num_rz, rz_range)
         self.num_rz = num_rz
-        self.rzs = torch.from_numpy(np.linspace(rz_range[0], rz_range[1], num_rz)).float()
+        self.rzs = torch.from_numpy(np.linspace(rz_range[0], rz_range[1], num_rz)).float().to(self.device)
         self.a2_size = num_rz
 
         self.q2 = None
