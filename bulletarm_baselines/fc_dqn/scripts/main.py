@@ -360,6 +360,8 @@ def untargeted_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
         new_vertices = new_vertices.to(device)
         new_vertices = new_vertices.float()
 
+        print("xyz_position.is_cuda, scale.is_cuda, new_vertices.is_cuda", xyz_position.is_cuda, scale.is_cuda, new_vertices.is_cuda)
+
         new_vertices *= scale
         R = quaternions.quat2mat(quat_rotation)
         R = torch.Tensor(R)
@@ -375,6 +377,8 @@ def untargeted_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
         obs = rendering(obj_list=ORI_OBJECT_LIST) 
         obs = obs.reshape(1,1,128,128)    
         q_value_maps, action_idx, actions = agent.getEGreedyActionsAttack(states, in_hands, obs, 0)
+
+        print("new_vertices.is_cuda, obs.is_cuda, q_value_maps.is_cuda", new_vertices.is_cuda, obs.is_cuda, q_value_maps.is_cuda)
         
         loss = q_value_maps.sum()
 
