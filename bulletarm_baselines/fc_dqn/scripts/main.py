@@ -376,10 +376,10 @@ def untargeted_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
         obs = obs.reshape(1,1,128,128)    
         q_value_maps, action_idx, actions = agent.getEGreedyActionsAttack(states, in_hands, obs, 0)
         
-        actions = torch.cat((actions, states.unsqueeze(1)), dim=1)
-        actions = actions.reshape(4)
-        loss = actions.sum()
-        envs.step(actions.detach())
+        loss = q_value_maps.sum()
+
+
+
         """
         because torch.argmax and torch_utils.argmax2d inside of getEGreedyActionsAttack is not differentiable, I use:
         soft_argmax(voxels):
@@ -387,8 +387,10 @@ def untargeted_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
         a soft argmax method for 1D/2D/3D
         """
         
-        # maps -> encode -> decode -> action
-        # loss.backward()
+        # actions = torch.cat((actions, states.unsqueeze(1)), dim=1)
+        # actions = actions.reshape(4)
+        # loss = actions.sum()
+        # envs.step(actions.detach())
         x_grad, y_grad, z_grad = torch.autograd.grad(loss, xyz_position, retain_graph=False, create_graph=False)[0]
 
         # with torch.no_grad():
