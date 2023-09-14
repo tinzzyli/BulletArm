@@ -155,11 +155,7 @@ def train():
             local_transitions = [[] for _ in range(planner_num_process)]
             while j < planner_episode:
                 plan_actions = planner_envs.getNextAction()
-                if num_processes == 0:
-                    plan_actions = plan_actions.unsqueeze(dim=0)
-                    states = states.unsqueeze(dim=0)
-                    in_hands = in_hands.unsqueeze(dim=0)
-                    obs = obs.unsqueeze(dim=0)
+
                 planner_actions_star_idx, planner_actions_star = agent.getActionFromPlan(plan_actions)
                 planner_actions_star = torch.cat((planner_actions_star, states.unsqueeze(1)), dim=1)
                 states_, in_hands_, obs_, rewards, dones = planner_envs.step(planner_actions_star, auto_reset=True)
@@ -381,7 +377,7 @@ def untargeted_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
         q_value_maps, action_idx, actions = agent.getEGreedyActionsAttack(states, in_hands, obs, 0)
         
         actions = torch.cat((actions, states.unsqueeze(1)), dim=1)
-
+        actions = actions.reshape(4)
         envs.step(actions)
         """
         because torch.argmax and torch_utils.argmax2d inside of getEGreedyActionsAttack is not differentiable, I use:

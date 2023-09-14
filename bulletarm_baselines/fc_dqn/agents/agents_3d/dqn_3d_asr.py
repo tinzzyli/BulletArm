@@ -98,35 +98,40 @@ class DQN3DASR(Base3D):
         Arguments: voxel patch in shape (batch_size, channel, H, W, depth)
         Return: 3D coordinates in shape (batch_size, channel, 3)
         """
-        # assert voxels.dim()==5
+        assert voxels.dim()==5
         # alpha is here to make the largest element really big, so it
         # would become very close to 1 after softmax
         alpha = 1000.0 
-        N,C,H,W = voxels.shape
+        N,C,H,W,D = voxels.shape
         soft_max = nn.functional.softmax(voxels.view(N,C,-1)*alpha,dim=2)
         soft_max = soft_max.view(voxels.shape)
-        indices_kernel = torch.arange(start=0,end=H*W).unsqueeze(0)
-        indices_kernel = indices_kernel.view((H,W))
+        indices_kernel = torch.arange(start=0,end=H*W*D).unsqueeze(0)
+        indices_kernel = indices_kernel.view((H,W,D))
         conv = soft_max*indices_kernel
-        indices = conv.sum(1).sum(1).sum(1)
-        # z = indices%D
-        y = (indices).floor()%W
-        x = (((indices).floor())/W).floor()%H
-        coords = torch.stack([x,y],dim=1)
-        return coords.long() 
+        indices = conv.sum(2).sum(2).sum(2)
+        z = indices%D
+        y = (indices/D).floor()%W
+        x = (((indices/D).floor())/W).floor()%H
+        coords = torch.stack([x,y,z],dim=2)
+        return torch.div(coords, 1, rounding_mode='floor')
     
 
     def getEGreedyActionsAttack(self, states, in_hand, obs, eps, coef=0.):
         
         q_value_maps, obs_encoding = self.forwardFCN(states, in_hand, obs, to_cpu=True)
-        q_value_maps = q_value_maps.reshape(1,1,128,128)
+        q_value_maps = q_value_maps.reshape(1,1,128,128,1)
         # pixels = torch_utils.argmax2d(q_value_maps).long()
-        pixels = self.soft_argmax(q_value_maps)
+
+        pixels = self.soft_argmax(q_value_maps)[:,:,:2].squeeze(dim=0)
+
         q2_output = self.forwardQ2(states, in_hand, obs, obs_encoding, pixels, to_cpu=True)
         # a2_id = torch.argmax(q2_output, 1)
-        q2_output = q2_output.reshape(1,1,1,16)
-        a2_id = self.soft_argmax(q2_output)
-        a2_id = a2_id[0][1:]
+        q2_output = q2_output.reshape(1,1,1,16,1)
+        a2_id = self.soft_argmax(q2_output).reshape(1)
+        
+        print("q2_output.requires_grad: ", q2_output.requires_grad)
+        print("a2_id.requires_grad: ", a2_id.requires_grad)
+        print("pixels.requires_grad: ", pixels.requires_grad)
         
 
         rand = torch.tensor(np.random.uniform(0, 1, states.size(0)))
@@ -145,7 +150,11 @@ class DQN3DASR(Base3D):
         rand_a2 = torch.randint_like(torch.empty(rand_mask.sum()), 0, self.a2_size)
         a2_id[rand_mask] = rand_a2.long()
 
+        print("a2_id.requires_grad: ", a2_id.requires_grad)
+
         action_idx, actions = self.decodeActions(pixels, a2_id)
+
+        print("actions.requires_grad: ", actions.requires_grad)
 
         return q_value_maps, action_idx, actions
 

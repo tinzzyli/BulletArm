@@ -878,6 +878,7 @@ class BaseEnv:
 
     """
     primative_idx, x_idx, y_idx, z_idx, rot_idx = map(lambda a: self.action_sequence.find(a), ['p', 'x', 'y', 'z', 'r'])
+
     motion_primative = action[primative_idx] if primative_idx != -1 else 0
     x = action[x_idx]
     y = action[y_idx]

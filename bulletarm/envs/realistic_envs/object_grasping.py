@@ -66,6 +66,7 @@ class ObjectGrasping(BaseEnv):
     """
         primative_idx, x_idx, y_idx, z_idx, rot_idx = map(lambda a: self.action_sequence.find(a),
                                                           ['p', 'x', 'y', 'z', 'r'])
+        print("action: ", action)
         motion_primative = action[primative_idx] if primative_idx != -1 else 0
         if self.action_sequence.count('r') <= 1:
             rz = action[rot_idx] if rot_idx != -1 else 0
@@ -145,9 +146,9 @@ class ObjectGrasping(BaseEnv):
         #     self._removeObject(obj)
         obs = self._getObservation(action)
         if self.robot.holding_obj == None:
-            print("not holding")
+            print("#=== not holding ===#")
         else:
-            print("holding")
+            print("#=== holding ===#")
         done = self._checkTermination()
         reward = 1.0 if self.obj_grasped > pre_obj_grasped else 0.0
 
@@ -159,12 +160,7 @@ class ObjectGrasping(BaseEnv):
         pre_obj_grasped = self.obj_grasped
         self.takeAction(action)
         self.wait(100)
-        obs = self._getObservationAttack(action)
-        if self.robot.holding_obj == None:
-            print("not holding")
-        else:
-            print("holding")
-        
+        obs = self._getObservationAttack(action)        
         done = self._checkTermination()
         reward = 1.0 if self.obj_grasped > pre_obj_grasped else 0.0
 
@@ -313,11 +309,8 @@ class ObjectGrasping(BaseEnv):
                 self.obj_grasped += 1
                 self._removeObject(obj)
                 if self.obj_grasped == self.num_obj or len(self.objects) == 0:
-                    print("termination: ", True)
                     return True
-                print("termination: ", False)
                 return False
-        print("termination: ", False)
         return False
 
     def _getObservation(self, action=None):
