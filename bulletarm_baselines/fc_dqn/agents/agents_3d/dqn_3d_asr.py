@@ -57,7 +57,7 @@ class DQN3DASR(Base3D):
 
     def decodeA2(self, a2_id):
         rz_id = a2_id.reshape(a2_id.size(0), 1).to(self.device)
-        rz = self.rzs[rz_id].reshape(a2_id.size(0), 1).to(self.device)
+        rz = self.rzs[rz_id].reshape(a2_id.size(0).to(self.device), 1).to(self.device)
         return rz_id, rz
 
     def decodeActions(self, pixels, a2_id):
