@@ -121,13 +121,11 @@ class DQN3DASR(Base3D):
         q_value_maps, obs_encoding = self.forwardFCN(states, in_hand, obs, to_cpu=True)
         q_value_maps = q_value_maps.reshape(1,1,128,128,1)
         # pixels = torch_utils.argmax2d(q_value_maps).long()
-
+        # while making pixels as a part of the computational graph, we leave a2_id not requires gradient
         pixels = self.soft_argmax(q_value_maps)[:,:,:2].squeeze(dim=0)
 
         q2_output = self.forwardQ2(states, in_hand, obs, obs_encoding, pixels, to_cpu=True)
-        # a2_id = torch.argmax(q2_output, 1)
-        q2_output = q2_output.reshape(1,1,1,16,1)
-        a2_id = self.soft_argmax(q2_output).reshape(1)
+        a2_id = torch.argmax(q2_output, 1)
         
         print("q2_output.requires_grad: ", q2_output.requires_grad)
         print("a2_id.requires_grad: ", a2_id.requires_grad)
