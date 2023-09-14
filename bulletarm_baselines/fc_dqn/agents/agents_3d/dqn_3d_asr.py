@@ -129,12 +129,12 @@ class DQN3DASR(Base3D):
         q_value_maps = q_value_maps.reshape(1,1,128,128,1)
         # pixels = torch_utils.argmax2d(q_value_maps).long()
         # while making pixels as a part of the computational graph, we leave a2_id not requires gradient
-        pixels = self.soft_argmax(q_value_maps)[:,:,:2].squeeze(dim=0)
+        pixels = self.soft_argmax(q_value_maps)[:,:,:2].squeeze(dim=0).to(self.device)
 
-        q2_output = self.forwardQ2(states, in_hand, obs, obs_encoding, pixels, to_cpu=False)
+        q2_output = self.forwardQ2(states, in_hand, obs, obs_encoding, pixels, to_cpu=False).to(self.device)
         a2_id = torch.argmax(q2_output, 1).to(self.device)
 
-        rand = torch.tensor(np.random.uniform(0, 1, states.size(0)))
+        rand = torch.tensor(np.random.uniform(0, 1, states.size(0))).to(self.device)
         rand_mask = rand < eps
 
         if type(obs) is tuple:
@@ -151,7 +151,7 @@ class DQN3DASR(Base3D):
         a2_id[rand_mask] = rand_a2.long()
 
 
-        action_idx, actions = self.decodeActions(pixels, a2_id)
+        action_idx, actions = self.decodeActions(pixels, a2_id).to(self.device)
 
         return q_value_maps, action_idx, actions
 
