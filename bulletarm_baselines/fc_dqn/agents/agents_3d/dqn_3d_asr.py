@@ -19,6 +19,11 @@ class DQN3DASR(Base3D):
         self.target_q2 = None
         self.q2_optimizer = None
 
+        if torch.cuda.is_available():
+            self.device = torch.device("cuda")
+        else:
+            self.device = torch.device("cpu")  
+
     def initNetwork(self, q1, q2):
         self.fcn = q1
         self.q2 = q2
@@ -98,18 +103,15 @@ class DQN3DASR(Base3D):
         Arguments: voxel patch in shape (batch_size, channel, H, W, depth)
         Return: 3D coordinates in shape (batch_size, channel, 3)
         """
-        if torch.cuda.is_available():
-            device = torch.device("cuda")
-        else:
-            device = torch.device("cpu")  
+
         assert voxels.dim()==5
         # alpha is here to make the largest element really big, so it
         # would become very close to 1 after softmax
         alpha = 1000.0 
         N,C,H,W,D = voxels.shape
-        soft_max = nn.functional.softmax(voxels.view(N,C,-1)*alpha,dim=2).to(device)
+        soft_max = nn.functional.softmax(voxels.view(N,C,-1)*alpha,dim=2).to(self.device)
         soft_max = soft_max.view(voxels.shape)
-        indices_kernel = torch.arange(start=0,end=H*W*D).unsqueeze(0).to(device)
+        indices_kernel = torch.arange(start=0,end=H*W*D).unsqueeze(0).to(self.device)
         indices_kernel = indices_kernel.view((H,W,D))
         conv = soft_max*indices_kernel
         indices = conv.sum(2).sum(2).sum(2)
@@ -130,7 +132,7 @@ class DQN3DASR(Base3D):
         pixels = self.soft_argmax(q_value_maps)[:,:,:2].squeeze(dim=0)
 
         q2_output = self.forwardQ2(states, in_hand, obs, obs_encoding, pixels, to_cpu=False)
-        a2_id = torch.argmax(q2_output, 1)      
+        a2_id = torch.argmax(q2_output, 1).to(self.device)
 
         rand = torch.tensor(np.random.uniform(0, 1, states.size(0)))
         rand_mask = rand < eps
@@ -145,7 +147,7 @@ class DQN3DASR(Base3D):
                 rand_pixel = pixel_candidates[np.random.randint(pixel_candidates.size(0))]
                 pixels[i] = rand_pixel
 
-        rand_a2 = torch.randint_like(torch.empty(rand_mask.sum()), 0, self.a2_size)
+        rand_a2 = torch.randint_like(torch.empty(rand_mask.sum()), 0, self.a2_size).to(self.device)
         a2_id[rand_mask] = rand_a2.long()
 
 
