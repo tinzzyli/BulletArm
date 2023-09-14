@@ -98,14 +98,18 @@ class DQN3DASR(Base3D):
         Arguments: voxel patch in shape (batch_size, channel, H, W, depth)
         Return: 3D coordinates in shape (batch_size, channel, 3)
         """
+        if torch.cuda.is_available():
+            device = torch.device("cuda")
+        else:
+            device = torch.device("cpu")  
         assert voxels.dim()==5
         # alpha is here to make the largest element really big, so it
         # would become very close to 1 after softmax
         alpha = 1000.0 
         N,C,H,W,D = voxels.shape
-        soft_max = nn.functional.softmax(voxels.view(N,C,-1)*alpha,dim=2)
+        soft_max = nn.functional.softmax(voxels.view(N,C,-1)*alpha,dim=2).to(device)
         soft_max = soft_max.view(voxels.shape)
-        indices_kernel = torch.arange(start=0,end=H*W*D).unsqueeze(0)
+        indices_kernel = torch.arange(start=0,end=H*W*D).unsqueeze(0).to(device)
         indices_kernel = indices_kernel.view((H,W,D))
         conv = soft_max*indices_kernel
         indices = conv.sum(2).sum(2).sum(2)
