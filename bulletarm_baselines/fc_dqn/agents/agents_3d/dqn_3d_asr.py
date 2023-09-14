@@ -118,13 +118,13 @@ class DQN3DASR(Base3D):
 
     def getEGreedyActionsAttack(self, states, in_hand, obs, eps, coef=0.):
         
-        q_value_maps, obs_encoding = self.forwardFCN(states, in_hand, obs, to_cpu=True)
+        q_value_maps, obs_encoding = self.forwardFCN(states, in_hand, obs, to_cpu=False)
         q_value_maps = q_value_maps.reshape(1,1,128,128,1)
         # pixels = torch_utils.argmax2d(q_value_maps).long()
         # while making pixels as a part of the computational graph, we leave a2_id not requires gradient
         pixels = self.soft_argmax(q_value_maps)[:,:,:2].squeeze(dim=0)
 
-        q2_output = self.forwardQ2(states, in_hand, obs, obs_encoding, pixels, to_cpu=True)
+        q2_output = self.forwardQ2(states, in_hand, obs, obs_encoding, pixels, to_cpu=False)
         a2_id = torch.argmax(q2_output, 1)      
 
         rand = torch.tensor(np.random.uniform(0, 1, states.size(0)))
