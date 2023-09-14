@@ -56,16 +56,16 @@ class DQN3DASR(Base3D):
         return q2_output
 
     def decodeA2(self, a2_id):
-        rz_id = a2_id.reshape(a2_id.size(0), 1)
-        rz = self.rzs[rz_id].reshape(a2_id.size(0), 1)
+        rz_id = a2_id.reshape(a2_id.size(0), 1).to(self.device)
+        rz = self.rzs[rz_id].reshape(a2_id.size(0), 1).to(self.device)
         return rz_id, rz
 
     def decodeActions(self, pixels, a2_id):
-        rz_id, rz = self.decodeA2(a2_id)
-        x = (pixels[:, 0].float() * self.heightmap_resolution + self.workspace[0][0]).reshape(pixels.size(0), 1)
-        y = (pixels[:, 1].float() * self.heightmap_resolution + self.workspace[1][0]).reshape(pixels.size(0), 1)
-        actions = torch.cat((x, y, rz), dim=1)
-        action_idx = torch.cat((pixels, rz_id), dim=1)
+        rz_id, rz = self.decodeA2(a2_id).to(self.device)
+        x = (pixels[:, 0].float() * self.heightmap_resolution + self.workspace[0][0]).reshape(pixels.size(0), 1).to(self.device)
+        y = (pixels[:, 1].float() * self.heightmap_resolution + self.workspace[1][0]).reshape(pixels.size(0), 1).to(self.device)
+        actions = torch.cat((x, y, rz), dim=1).to(self.device)
+        action_idx = torch.cat((pixels, rz_id), dim=1).to(self.device)
         return action_idx, actions
 
     def getEGreedyActions(self, states, in_hand, obs, eps, coef=0.):
@@ -145,10 +145,10 @@ class DQN3DASR(Base3D):
             if m:
                 pixel_candidates = torch.nonzero(hm[i, 0]>-0.01)
                 rand_pixel = pixel_candidates[np.random.randint(pixel_candidates.size(0))]
-                pixels[i] = rand_pixel
+                pixels[i] = rand_pixel.to(self.device)
 
         rand_a2 = torch.randint_like(torch.empty(rand_mask.sum()), 0, self.a2_size).to(self.device)
-        a2_id[rand_mask] = rand_a2.long()
+        a2_id[rand_mask] = rand_a2.long().to(self.device)
 
 
         action_idx, actions = self.decodeActions(pixels, a2_id).to(self.device)
