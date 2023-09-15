@@ -131,7 +131,7 @@ class ObjectGrasping(BaseEnv):
 
     def step(self, action):
         pre_obj_grasped = self.obj_grasped
-        print("obj grasping action is on cuda: ", action.is_cuda)
+        print("obj grasping action is on cuda: ", action.device)
         self.takeAction(action)
         self.wait(100)
         # remove obj that above a threshold hight

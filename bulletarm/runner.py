@@ -462,7 +462,7 @@ class SingleRunner(object):
       (numpy.array, numpy.array, numpy.array): (observations, rewards, done flags)
     '''
     results = self.env.step(action)
-    print("runner action is on cuda: ", action.is_cuda)
+    print("runner action is on cuda: ", action.device)
 
     if len(results) == 3:
       metadata = None

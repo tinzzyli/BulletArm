@@ -289,7 +289,7 @@ class BaseEnv:
     return obs, reward, done
 
   def takeAction(self, action):
-    print("base env actions is on cuda: ", action.is_cuda)
+    print("base env actions is on cuda: ", action.device)
     motion_primative, x, y, z, rot = self._decodeAction(action)
     self.last_action = action
     self.last_obj = self.robot.holding_obj
