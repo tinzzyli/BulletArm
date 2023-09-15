@@ -15,7 +15,7 @@ class DQN3DASR(Base3D):
             self.device = torch.device("cuda")
         else:
             self.device = torch.device("cpu")  
-        self.num_rz = num_rz.to(self.device)
+        self.num_rz = num_rz
         self.rzs = torch.from_numpy(np.linspace(rz_range[0], rz_range[1], num_rz)).float().to(self.device)
         self.a2_size = num_rz
 
