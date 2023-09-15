@@ -34,6 +34,10 @@ def worker(remote, parent_remote, env_fn, planner_fn=None):
       cmd, data = remote.recv()
       if cmd == 'step':
         res = env.step(data)
+        res = res[:5]
+        remote.send(res)
+      elif cmd == 'step_async_attack':
+        res = env.stepAttack(data)
         remote.send(res)
       elif cmd == 'simulate':
         res = env.simulate(data)
@@ -85,7 +89,7 @@ def worker(remote, parent_remote, env_fn, planner_fn=None):
         remote.close()
         break
       else:
-        raise NotImplementerError
+        raise NotImplementedError
   except KeyboardInterrupt:
     print('MultiRunner worker: caught keyboard interrupt')
 
@@ -165,7 +169,7 @@ class MultiRunner(object):
       if auto_reset:
         remote.send(('step_auto_reset', action))
       else:
-        remote.send(('step', action))
+        remote.send(('step_async_attack', action))
     self.waiting = True
 
   def stepWait(self):
