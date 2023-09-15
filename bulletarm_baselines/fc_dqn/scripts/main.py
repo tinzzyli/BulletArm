@@ -393,7 +393,6 @@ def vanilla_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
         obs = rendering(obj_list=ORI_OBJECT_LIST) 
         obs = obs.reshape(1,1,128,128)    
         q_value_maps, _, actions = agent.getEGreedyActionsAttack(states, in_hands, obs, 0)
-
         """ model """
         
         """ autograd """
@@ -402,14 +401,17 @@ def vanilla_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
         grad = torch.autograd.grad(outputs=loss, 
                                    inputs=(xyz_position, R), 
                                    grad_outputs=None, 
-                                   allow_unused=False, 
+                                   allow_unused=True, 
                                    retain_graph=False, 
                                    create_graph=False)
         x_grad, y_grad, z_grad = grad[0]
         rot_grad = grad[1]
+
         actions = torch.cat((actions, states.unsqueeze(1)), dim=1)
         actions = actions.reshape(4)
         _, _, _, _, _, metadata = envs.stepAttack(actions.detach())
+
+
         R.grad.zero_()
         """ autograd """
 
@@ -454,7 +456,6 @@ def vanilla_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
 
     logging.shutdown()
 
-    assert 1==0
     return 0
 
 
