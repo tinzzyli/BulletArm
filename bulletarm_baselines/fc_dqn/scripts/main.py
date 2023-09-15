@@ -362,7 +362,12 @@ def vanilla_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
     quat_rotation = params[1].clone().detach()
     scale = params[2].clone().detach()
     ORI_VERTICES = ORI_OBJECT_LIST[0].vertices.clone().detach().to(device)
-    
+    R = quaternions.quat2mat(quat_rotation)
+    R = torch.Tensor(R)    
+    R = R.to(device)
+    R = R.float()
+    R = R.T
+
     for iter in range(iters):
         logger.info('Iteration '+str(iter)+'/'+str(iters))
         xyz_position.requires_grad = True
@@ -374,12 +379,9 @@ def vanilla_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
         new_vertices = new_vertices.to(device)
         new_vertices = new_vertices.float()
 
+
+        """ model """
         new_vertices *= scale
-        R = quaternions.quat2mat(quat_rotation)
-        R = torch.Tensor(R)
-        R = R.to(device)
-        R = R.float()
-        R = R.T
         R.requires_grad = True
 
         new_vertices = torch.matmul(new_vertices, R)
@@ -392,13 +394,9 @@ def vanilla_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
         obs = obs.reshape(1,1,128,128)    
         q_value_maps, _, actions = agent.getEGreedyActionsAttack(states, in_hands, obs, 0)
 
-        """
-        because torch.argmax() and torch_utils.argmax2d() inside of getEGreedyActionsAttack is not differentiable, I use:
-        soft_argmax(voxels):
-        in dqn_3d_asr.py
-        a soft argmax method for 1D/2D/3D
-        """
+        """ model """
         
+        """ autograd """
         MSE = nn.MSELoss()
         loss = MSE(actions.detach(), xyz_position)        
         grad = torch.autograd.grad(outputs=loss, 
@@ -412,10 +410,10 @@ def vanilla_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
         actions = torch.cat((actions, states.unsqueeze(1)), dim=1)
         actions = actions.reshape(4)
         _, _, _, _, _, metadata = envs.stepAttack(actions.detach())
+        R.grad.zero_()
+        """ autograd """
 
-        # with torch.no_grad():
-        # x_grad, y_grad, z_grad = xyz_position.grad.clone()
-        # xyz_position.grad.zero_()
+        """ attack on position """
         x,y,z = xyz_position.clone().detach()
         # step length should be within a certain range
         x_eta = torch.clamp(x_grad.sign(), min = -epsilon,   max = epsilon)
@@ -429,6 +427,9 @@ def vanilla_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
             torch.clamp(y + y_eta, min = -0.1, max = 0.1),
             torch.clamp(z + z_eta, min =  0.013800, max = 0.013825)
         ], device=device)
+        """ attack on position """
+
+
 
         logger.debug("gradient: "+str([x_grad, y_grad, z_grad]))
         logger.debug("OG position: "+str(xyz_position))
