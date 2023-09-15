@@ -454,7 +454,8 @@ def vanilla_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
 
     logging.shutdown()
 
-    return 
+    assert 1==0
+    return 0
 
 
 if __name__ == '__main__':
