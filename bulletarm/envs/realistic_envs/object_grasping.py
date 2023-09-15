@@ -103,9 +103,6 @@ class ObjectGrasping(BaseEnv):
         :return: safe z
         """
         row_pixel, col_pixel = self._getPixelsFromPos(x, y)
-
-        print(type(row_pixel), type(col_pixel),  type(self.in_hand_size), type(self.heightmap), self.heightmap.shape)
-
         # local_region is as large as ih_img
         local_region = self.heightmap[int(row_pixel - self.in_hand_size / 2): int(row_pixel + self.in_hand_size / 2),
                        int(col_pixel - self.in_hand_size / 2): int(col_pixel + self.in_hand_size / 2)]
@@ -134,7 +131,6 @@ class ObjectGrasping(BaseEnv):
 
     def step(self, action):
         pre_obj_grasped = self.obj_grasped
-        print("obj grasping action is on cuda: ", isinstance(action, torch.Tensor))
         self.takeAction(action)
         self.wait(100)
         # remove obj that above a threshold hight

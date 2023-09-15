@@ -462,7 +462,6 @@ class SingleRunner(object):
       (numpy.array, numpy.array, numpy.array): (observations, rewards, done flags)
     '''
     results = self.env.step(action)
-    print("runner action is on cuda: ", isinstance(action, torch.Tensor))
 
     if len(results) == 3:
       metadata = None

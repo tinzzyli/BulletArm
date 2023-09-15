@@ -126,7 +126,6 @@ class DQN3DASR(Base3D):
     def getEGreedyActionsAttack(self, states, in_hand, obs, eps, coef=0.):
         
         q_value_maps, obs_encoding = self.forwardFCN(states, in_hand, obs, to_cpu=False)
-        print("in getEGreedy q maps on cuda: ", q_value_maps.is_cuda)
         q_value_maps = q_value_maps.reshape(1,1,128,128,1)
         # pixels = torch_utils.argmax2d(q_value_maps).long()
         # while making pixels as a part of the computational graph, we leave a2_id not requires gradient
