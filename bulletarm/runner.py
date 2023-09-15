@@ -487,18 +487,10 @@ class SingleRunner(object):
       (numpy.array, numpy.array, numpy.array): (observations, rewards, done flags)
     '''
     results = self.env.stepAttack(action)
-
-    if len(results) == 3:
-      metadata = None
-      obs, rewards, dones = results
-    else:
-      obs, rewards, dones, metadata = results
+    obs, rewards, dones, metadata = results
     states, hand_obs, obs = obs
+    return (states, hand_obs, obs), rewards, dones, metadata
 
-    if metadata:
-      return (states, hand_obs, obs), rewards, dones, metadata
-    else:
-      return (states, hand_obs, obs), rewards, dones
 
   def reset(self):
     '''
