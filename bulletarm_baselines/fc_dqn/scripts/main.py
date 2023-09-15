@@ -410,9 +410,6 @@ def vanilla_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
         actions = torch.cat((actions, states.unsqueeze(1)), dim=1)
         actions = actions.reshape(4)
         _, _, _, _, _, metadata = envs.stepAttack(actions.detach())
-
-
-        R.grad.zero_()
         """ autograd """
 
         """ attack on position """
