@@ -11,7 +11,7 @@ from bulletarm.pybullet.equipments.tray import Tray
 from scipy.ndimage.interpolation import rotate
 import pybullet as pb
 import bulletarm.envs.configs as env_configs
-
+import torch
 import inspect
 class ObjectGrasping(BaseEnv):
     '''Open loop object grasping task.
@@ -131,7 +131,7 @@ class ObjectGrasping(BaseEnv):
 
     def step(self, action):
         pre_obj_grasped = self.obj_grasped
-        print("obj grasping action is on cuda: ", action.device)
+        print("obj grasping action is on cuda: ", isinstance(action, torch.Tensor))
         self.takeAction(action)
         self.wait(100)
         # remove obj that above a threshold hight

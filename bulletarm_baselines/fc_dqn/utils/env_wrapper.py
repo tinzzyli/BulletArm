@@ -28,7 +28,7 @@ class EnvWrapper:
 
     def step(self, actions, auto_reset=False):
         actions = actions.cpu().numpy()
-        print("env wrapper actions is on cuda: ", actions.device)
+        print("env wrapper actions is on cuda: ", isinstance(actions, torch.Tensor))
         (states_, in_hands_, obs_), rewards, dones = self.envs.step(actions, auto_reset)
         states_ = torch.tensor(states_).float()
         in_hands_ = torch.tensor(in_hands_).float()

@@ -1,7 +1,7 @@
 '''
 .. moduleauthor: Colin Kohler <github.com/ColinKohler>
 '''
-
+import torch
 import os
 import pickle
 import copy
@@ -289,7 +289,7 @@ class BaseEnv:
     return obs, reward, done
 
   def takeAction(self, action):
-    print("base env actions is on cuda: ", action.device)
+    print("base env actions is on cuda: ", isinstance(action, torch.Tensor))
     motion_primative, x, y, z, rot = self._decodeAction(action)
     self.last_action = action
     self.last_obj = self.robot.holding_obj

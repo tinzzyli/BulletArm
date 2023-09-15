@@ -1,7 +1,7 @@
 '''
 .. moduleauthor: Colin Kohler <github.com/ColinKohler>
 '''
-
+import torch
 import numpy as np
 from multiprocessing import Process, Pipe
 import os
@@ -462,7 +462,7 @@ class SingleRunner(object):
       (numpy.array, numpy.array, numpy.array): (observations, rewards, done flags)
     '''
     results = self.env.step(action)
-    print("runner action is on cuda: ", action.device)
+    print("runner action is on cuda: ", isinstance(action, torch.Tensor))
 
     if len(results) == 3:
       metadata = None
