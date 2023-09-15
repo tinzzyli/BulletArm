@@ -62,7 +62,7 @@ class DQN3DASR(Base3D):
         return rz_id, rz
 
     def decodeActions(self, pixels, a2_id):
-        rz_id, rz = self.decodeA2(a2_id).to(self.device)
+        rz_id, rz = self.decodeA2(a2_id)
         x = (pixels[:, 0].float() * self.heightmap_resolution + self.workspace[0][0]).reshape(pixels.size(0), 1).to(self.device)
         y = (pixels[:, 1].float() * self.heightmap_resolution + self.workspace[1][0]).reshape(pixels.size(0), 1).to(self.device)
         actions = torch.cat((x, y, rz), dim=1).to(self.device)
