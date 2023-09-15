@@ -475,19 +475,30 @@ class SingleRunner(object):
     else:
       return (states, hand_obs, obs), rewards, dones
     
-  # def stepAttack(self, action, auto_reset=True):
-  #   results = self.env.stepAttack(action)
-  #   if len(results) == 3:
-  #     metadata = None
-  #     obs, rewards, dones = results
-  #   else:
-  #     obs, rewards, dones, metadata = results
-  #   states, hand_obs, obs, REDNER_OBJ_LIST, OBJ_XYZ_POSITION, OBJ_ROTATION = obs
+  def stepAttack(self, action, auto_reset=True):
+    '''
+    Step the environment.
 
-  #   if metadata:
-  #     return (states, hand_obs, obs), REDNER_OBJ_LIST, OBJ_XYZ_POSITION, OBJ_ROTATION, rewards, dones, metadata
-  #   else:
-  #     return (states, hand_obs, obs), REDNER_OBJ_LIST, OBJ_XYZ_POSITION, OBJ_ROTATION, rewards, dones
+    Args:
+      action (numpy.array): Action to take in the environment
+      auto_reset (bool): Reset the environment after an episode ends
+
+    Returns:
+      (numpy.array, numpy.array, numpy.array): (observations, rewards, done flags)
+    '''
+    results = self.env.stepAttack(action)
+
+    if len(results) == 3:
+      metadata = None
+      obs, rewards, dones = results
+    else:
+      obs, rewards, dones, metadata = results
+    states, hand_obs, obs = obs
+
+    if metadata:
+      return (states, hand_obs, obs), rewards, dones, metadata
+    else:
+      return (states, hand_obs, obs), rewards, dones
 
   def reset(self):
     '''

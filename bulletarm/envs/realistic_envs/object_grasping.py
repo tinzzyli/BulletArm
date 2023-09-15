@@ -144,10 +144,7 @@ class ObjectGrasping(BaseEnv):
         #   if not self._isObjectWithinWorkspace(obj):
         #     self._removeObject(obj)
         obs = self._getObservation(action)
-        if self.robot.holding_obj == None:
-            print("#=== NOT holding ===#")
-        else:
-            print("#=== holding ===#")
+
         done = self._checkTermination()
         reward = 1.0 if self.obj_grasped > pre_obj_grasped else 0.0
 
@@ -155,17 +152,28 @@ class ObjectGrasping(BaseEnv):
 
         return obs, reward, True
     
-    # def stepAttack(self, action):
-    #     pre_obj_grasped = self.obj_grasped
-    #     self.takeAction(action)
-    #     self.wait(100)
-    #     obs = self._getObservationAttack(action)        
-    #     done = self._checkTermination()
-    #     reward = 1.0 if self.obj_grasped > pre_obj_grasped else 0.0
+    def stepAttack(self, action):
+        pre_obj_grasped = self.obj_grasped
+        self.takeAction(action)
+        self.wait(100)
+        # remove obj that above a threshold hight
+        # for obj in self.objects:
+        #   if obj.getPosition()[2] > self.pick_pre_offset:
+        #     # self.objects.remove(obj)
+        #     # pb.removeBody(obj.object_id)
+        #     self._removeObject(obj)
 
-    #     self.current_episode_steps += 1
+        # for obj in self.objects:
+        #   if not self._isObjectWithinWorkspace(obj):
+        #     self._removeObject(obj)
+        obs = self._getObservation(action)
 
-    #     return obs, reward, True 
+        done = self._checkTermination()
+        reward = 1.0 if self.obj_grasped > pre_obj_grasped else 0.0
+
+        self.current_episode_steps += 1
+
+        return obs, reward, True, self.robot.holding_obj
 
     def isSimValid(self):
         for obj in self.objects:

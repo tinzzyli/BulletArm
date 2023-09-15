@@ -410,7 +410,7 @@ def vanilla_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
                                                      create_graph=False)[0]
         actions = torch.cat((actions, states.unsqueeze(1)), dim=1)
         actions = actions.reshape(4)
-        _ = envs.step(actions.detach())
+        _,_,_,_,_,metadata = envs.stepAttack(actions.detach())
 
         # with torch.no_grad():
         # x_grad, y_grad, z_grad = xyz_position.grad.clone()
@@ -433,7 +433,8 @@ def vanilla_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
         logger.debug("gradient: "+str([x_grad, y_grad, z_grad]))
         logger.debug("OG position: "+str(xyz_position))
         logger.debug("eta: "+str([x_eta, y_eta, z_eta]))
-        logger.debug("ADV position: "+str([x_eta, y_eta, z_eta]))       
+        logger.debug("ADV position: "+str([x_eta, y_eta, z_eta])) 
+        logger.debug("successful grasp: "+str(metadata))      
         xyz_position = adv_position.clone().detach()
         quat_rotation = quat_rotation.clone().detach()
         scale *= scale.clone().detach()
