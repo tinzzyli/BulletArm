@@ -152,7 +152,7 @@ class DQN3DASR(Base3D):
         a2_id[rand_mask] = rand_a2.long().to(self.device)
 
 
-        action_idx, actions = self.decodeActions(pixels, a2_id).to(self.device)
+        action_idx, actions = self.decodeActions(pixels, a2_id)
 
         return q_value_maps, action_idx, actions
 
