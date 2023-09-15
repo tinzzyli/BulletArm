@@ -11,7 +11,11 @@ class DQN3DASR(Base3D):
     def __init__(self, workspace, heightmap_size, device, lr=1e-4, gamma=0.9, sl=False, num_primitives=1,
                  patch_size=24, num_rz=8, rz_range=(0, 7*np.pi/8)):
         super().__init__(workspace, heightmap_size, device, lr, gamma, sl, num_primitives, patch_size, num_rz, rz_range)
-        self.num_rz = num_rz
+        if torch.cuda.is_available():
+            self.device = torch.device("cuda")
+        else:
+            self.device = torch.device("cpu")  
+        self.num_rz = num_rz.to(self.device)
         self.rzs = torch.from_numpy(np.linspace(rz_range[0], rz_range[1], num_rz)).float().to(self.device)
         self.a2_size = num_rz
 
@@ -19,10 +23,7 @@ class DQN3DASR(Base3D):
         self.target_q2 = None
         self.q2_optimizer = None
 
-        if torch.cuda.is_available():
-            self.device = torch.device("cuda")
-        else:
-            self.device = torch.device("cpu")  
+
 
     def initNetwork(self, q1, q2):
         self.fcn = q1
