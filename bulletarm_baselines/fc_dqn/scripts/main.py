@@ -11,7 +11,8 @@ import pyredner
 import torch
 import torch.nn as nn
 from transforms3d import quaternions
-
+import logging
+import time
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')
@@ -309,6 +310,16 @@ def rendering(obj_list):
 
 
 def untargeted_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
+    log_file_name = f'auto_generated_log_{int(time.time())}.log'
+
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.FileHandler(log_file_name, mode='w'),  # 使用唯一的文件名
+        ]
+    )
+    logger = logging.getLogger(__name__)
     # to avoid potential errors, run code in single process
     # single runner has only step function, no stepAsync and stepWait
 
@@ -394,6 +405,8 @@ def untargeted_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
         actions = torch.cat((actions, states.unsqueeze(1)), dim=1)
         actions = actions.reshape(4)
         _ = envs.step(actions.detach())
+
+
         
         
 
@@ -435,12 +448,13 @@ def untargeted_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
         # for optimizer in agent.optimizers:
         #     optimizer.zero_grad()
 
+    logging.shutdown()
 
-    return q_value_maps_list, position_list
+    return 
 
 
 if __name__ == '__main__':
-    map, pos = untargeted_pgd_attack(iters=25)
+    untargeted_pgd_attack(iters=25)
     # np_pos = [p.numpy() for p in pos]
     # np.save("/Users/tingxi/BulletArm/np_pos.txt", np.pos)
     
