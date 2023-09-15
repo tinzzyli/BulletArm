@@ -105,7 +105,9 @@ class ObjectGrasping(BaseEnv):
         row_pixel, col_pixel = self._getPixelsFromPos(x, y)
         # local_region is as large as ih_img
         local_region = self.heightmap[int(row_pixel - self.in_hand_size / 2): int(row_pixel + self.in_hand_size / 2),
-                       int(col_pixel - self.in_hand_size / 2): int(col_pixel + self.in_hand_size / 2)].detach().cpu()
+                       int(col_pixel - self.in_hand_size / 2): int(col_pixel + self.in_hand_size / 2)]
+        
+        print(type(row_pixel), type(col_pixel), type(local_region), type(self.in_hand_size), type(self.heightmap))
         local_region = rotate(local_region, angle=-rz * 180 / np.pi, reshape=False)
         patch = local_region[int(self.in_hand_size / 2 - 16):int(self.in_hand_size / 2 + 16),
                 int(self.in_hand_size / 2 - 4):int(self.in_hand_size / 2 + 4)]
