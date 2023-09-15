@@ -309,17 +309,23 @@ def rendering(obj_list):
 
 
 
-def untargeted_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
-    log_file_name = f'auto_generated_log_{int(time.time())}.log'
+def vanilla_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
+    logger = logging.getLogger('my_logger')
+    logger.setLevel(logging.DEBUG)
 
-    logging.basicConfig(
-        level=logging.DEBUG,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        handlers=[
-            logging.FileHandler(log_file_name, mode='w'),  # 使用唯一的文件名
-        ]
-    )
-    logger = logging.getLogger(__name__)
+    log_dir = './outputAttack/VanillaPGD'  
+    os.makedirs(log_dir, exist_ok=True)  
+    log_file_name = f'auto_generated_log_{int(time.time())}.log'
+    log_file_path = os.path.join(log_dir, log_file_name)
+
+    file_handler = logging.FileHandler(log_file_path, mode='a')
+
+    
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    file_handler.setFormatter(formatter)
+
+    logger.addHandler(file_handler)
+
     # to avoid potential errors, run code in single process
     # single runner has only step function, no stepAsync and stepWait
 
@@ -345,11 +351,11 @@ def untargeted_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
 
     if not z_epsilon:
         z_epsilon = epsilon * 1e-04
-    print("PGD attack is running on: ", device)
-    print("epsilon: ", epsilon)
-    print("z_epsilon: ", z_epsilon)
-    print("alpha: ", alpha)
-    print("iters: ", iters)
+
+    logger.info('\n device: '+str(device)+
+                '\n epsilon: '+str(epsilon)+
+                '\n alpha: '+str(alpha)+
+                '\n iters: '+str(iters))
 
     # params: [xyz_position, quat_rotation, scale]
     obs = obs.clone().detach().to(device)
@@ -361,7 +367,7 @@ def untargeted_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
     ORI_VERTICES = ORI_OBJECT_LIST[0].vertices.clone().detach().to(device)
     
     for iter in range(iters):
-        print("iter number: ", iter+1)
+        logger.info('Iteration '+str(iter)+'/'+str(iters))
         xyz_position.requires_grad = True
         xyz_position = xyz_position.to(device)
         xyz_position = xyz_position.float()
@@ -406,10 +412,6 @@ def untargeted_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
         actions = actions.reshape(4)
         _ = envs.step(actions.detach())
 
-
-        
-        
-
         # with torch.no_grad():
         # x_grad, y_grad, z_grad = xyz_position.grad.clone()
         # xyz_position.grad.zero_()
@@ -428,11 +430,10 @@ def untargeted_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
         ], device=device)
         position_list.append(adv_position)
         q_value_maps_list.append(q_value_maps)
-
-        print("gradient: ", [x_grad, y_grad, z_grad])
-        print("OG position: ", xyz_position)
-        print("eta: ", [x_eta, y_eta, z_eta])
-        print("ADV position: ", adv_position)        
+        logger.debug("gradient: "+str([x_grad, y_grad, z_grad]))
+        logger.debug("OG position: "+str(xyz_position))
+        logger.debug("eta: "+str([x_eta, y_eta, z_eta]))
+        logger.debug("ADV position: "+str([x_eta, y_eta, z_eta]))       
         xyz_position = adv_position.clone().detach()
         quat_rotation = quat_rotation.clone().detach()
         scale *= scale.clone().detach()
@@ -447,6 +448,7 @@ def untargeted_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
         #     net.zero_grad()
         # for optimizer in agent.optimizers:
         #     optimizer.zero_grad()
+    logger.removeHandler(file_handler)
 
     logging.shutdown()
 
@@ -454,7 +456,7 @@ def untargeted_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
 
 
 if __name__ == '__main__':
-    untargeted_pgd_attack(iters=25)
+    vanilla_pgd_attack(iters=25)
     # np_pos = [p.numpy() for p in pos]
     # np.save("/Users/tingxi/BulletArm/np_pos.txt", np.pos)
     
