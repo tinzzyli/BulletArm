@@ -346,9 +346,6 @@ def vanilla_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
     in_hands = in_hands.unsqueeze(dim = 0)
     obs = obs.unsqueeze(dim = 0)
 
-    q_value_maps_list = []
-    position_list = []
-
     if not z_epsilon:
         z_epsilon = epsilon * 1e-04
 
@@ -382,9 +379,10 @@ def vanilla_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
         R = torch.Tensor(R)
         R = R.to(device)
         R = R.float()
+        R = R.T
         R.requires_grad = True
 
-        new_vertices = torch.matmul(new_vertices, R.T)
+        new_vertices = torch.matmul(new_vertices, R)
         new_vertices[:,0:1] += xyz_position[0]
         new_vertices[:,1:2] += xyz_position[1]
         new_vertices[:,2:3] += xyz_position[2]
@@ -392,7 +390,7 @@ def vanilla_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
 
         obs = rendering(obj_list=ORI_OBJECT_LIST) 
         obs = obs.reshape(1,1,128,128)    
-        q_value_maps, action_idx, actions = agent.getEGreedyActionsAttack(states, in_hands, obs, 0)
+        q_value_maps, _, actions = agent.getEGreedyActionsAttack(states, in_hands, obs, 0)
 
         """
         because torch.argmax() and torch_utils.argmax2d() inside of getEGreedyActionsAttack is not differentiable, I use:
@@ -413,7 +411,7 @@ def vanilla_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
         rot_grad = grad[1]
         actions = torch.cat((actions, states.unsqueeze(1)), dim=1)
         actions = actions.reshape(4)
-        _,_,_,_,_,metadata = envs.stepAttack(actions.detach())
+        _, _, _, _, _, metadata = envs.stepAttack(actions.detach())
 
         # with torch.no_grad():
         # x_grad, y_grad, z_grad = xyz_position.grad.clone()
@@ -431,8 +429,7 @@ def vanilla_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
             torch.clamp(y + y_eta, min = -0.1, max = 0.1),
             torch.clamp(z + z_eta, min =  0.013800, max = 0.013825)
         ], device=device)
-        position_list.append(adv_position)
-        q_value_maps_list.append(q_value_maps)
+
         logger.debug("gradient: "+str([x_grad, y_grad, z_grad]))
         logger.debug("OG position: "+str(xyz_position))
         logger.debug("eta: "+str([x_eta, y_eta, z_eta]))
