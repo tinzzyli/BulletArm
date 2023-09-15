@@ -345,7 +345,7 @@ def untargeted_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
     in_hands = in_hands.clone().detach().to(device)
     states = states.clone().detach().to(device)
     xyz_position = params[0].clone().detach().to(device)
-    quat_rotation = params[1].clone().detach().to(device)
+    quat_rotation = params[1].clone().detach()
     scale = params[2].clone().detach()
     ORI_VERTICES = ORI_OBJECT_LIST[0].vertices.clone().detach().to(device)
     
