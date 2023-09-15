@@ -156,6 +156,7 @@ class ObjectGrasping(BaseEnv):
         pre_obj_grasped = self.obj_grasped
         self.takeAction(action)
         self.wait(100)
+        hold = self.robot.holding_obj
         # remove obj that above a threshold hight
         # for obj in self.objects:
         #   if obj.getPosition()[2] > self.pick_pre_offset:
@@ -173,7 +174,7 @@ class ObjectGrasping(BaseEnv):
 
         self.current_episode_steps += 1
 
-        return obs, reward, True, self.robot.holding_obj
+        return obs, reward, True, hold
 
     def isSimValid(self):
         for obj in self.objects:

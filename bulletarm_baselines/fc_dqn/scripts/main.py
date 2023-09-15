@@ -378,6 +378,7 @@ def vanilla_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
         new_vertices = new_vertices.float()
 
         new_vertices *= scale
+        quat_rotation.requires_grad = True
         R = quaternions.quat2mat(quat_rotation)
         R = torch.Tensor(R)
         R = R.to(device)
