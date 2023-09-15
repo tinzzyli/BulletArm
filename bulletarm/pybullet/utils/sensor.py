@@ -174,6 +174,7 @@ class Sensor(object):
     tray.vertices[:,2:3] += -0.0
     rendering_list.append(tray)
     img = self.rendering(self.cam_pos, self.cam_up_vector, self.target_pos, self.fov, rendering_list, self.size)
+    img = img.cpu().detach().numpy()
     return img, ORI_OBJECT_LIST, params
   
 

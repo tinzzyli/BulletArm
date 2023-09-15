@@ -385,8 +385,6 @@ class BaseEnv:
   def _getObservationAttack(self, action=None):
     old_heightmap = copy.copy(self.heightmap)
     self.heightmap, ORI_OBJECT_LIST, params = self._getHeightmapAttack()
-    print("in base env, heightmap type: ", type(self.heightmap))
-
     if action is None or self._isHolding() == False:
       in_hand_img = self.getEmptyInHand()
     else:
