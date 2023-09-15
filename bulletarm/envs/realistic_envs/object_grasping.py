@@ -131,6 +131,7 @@ class ObjectGrasping(BaseEnv):
 
     def step(self, action):
         pre_obj_grasped = self.obj_grasped
+        print("obj grasping action is on cuda: ", action.is_cuda)
         self.takeAction(action)
         self.wait(100)
         # remove obj that above a threshold hight
@@ -155,17 +156,17 @@ class ObjectGrasping(BaseEnv):
 
         return obs, reward, True
     
-    def stepAttack(self, action):
-        pre_obj_grasped = self.obj_grasped
-        self.takeAction(action)
-        self.wait(100)
-        obs = self._getObservationAttack(action)        
-        done = self._checkTermination()
-        reward = 1.0 if self.obj_grasped > pre_obj_grasped else 0.0
+    # def stepAttack(self, action):
+    #     pre_obj_grasped = self.obj_grasped
+    #     self.takeAction(action)
+    #     self.wait(100)
+    #     obs = self._getObservationAttack(action)        
+    #     done = self._checkTermination()
+    #     reward = 1.0 if self.obj_grasped > pre_obj_grasped else 0.0
 
-        self.current_episode_steps += 1
+    #     self.current_episode_steps += 1
 
-        return obs, reward, True 
+    #     return obs, reward, True 
 
     def isSimValid(self):
         for obj in self.objects:

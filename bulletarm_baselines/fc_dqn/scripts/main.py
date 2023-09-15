@@ -390,13 +390,11 @@ def untargeted_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
         in dqn_3d_asr.py
         a soft argmax method for 1D/2D/3D
         """
-        
+        print("main function actions is on cuda: ", actions.is_cuda)
         actions = torch.cat((actions, states.unsqueeze(1)), dim=1)
         actions = actions.reshape(4)
         loss = actions.sum()
-        actions = actions.to('cpu')
-        actions = actions.detach()
-        _ = envs.step(actions)
+        _ = envs.step(actions.detach())
         x_grad, y_grad, z_grad = torch.autograd.grad(loss, xyz_position, retain_graph=False, create_graph=False)[0]
 
         # with torch.no_grad():
