@@ -336,16 +336,25 @@ def trainAttack():
             planner_num_process = num_processes
             j = 0
             states, in_hands, obs, _, _ = planner_envs.resetAttack()
+            states = states.unsqueeze(dim = 0)
+            in_hands = in_hands.unsqueeze(dim = 0)
+            obs = obs.unsqueeze(dim = 0)
+
             s = 0
             if not no_bar:
                 planner_bar = tqdm(total=planner_episode)
             local_transitions = [[] for _ in range(planner_num_process)]
             while j < planner_episode:
                 plan_actions = planner_envs.getNextAction()
+                plan_actions = plan_actions.unsqueeze(dim=0)
 
                 planner_actions_star_idx, planner_actions_star = agent.getActionFromPlan(plan_actions)
                 planner_actions_star = torch.cat((planner_actions_star, states.unsqueeze(1)), dim=1)
                 states_, in_hands_, obs_, rewards, dones, _ = planner_envs.stepAttack(planner_actions_star, auto_reset=True)
+                states_ = states_.unsqueeze(dim=0)
+                in_hands_ = in_hands_.unsqueeze(dim=0)
+                obs_ = obs_.unsqueeze(dim=0)
+                
                 buffer_obs = getCurrentObs(in_hands, obs)
                 buffer_obs_ = getCurrentObs(in_hands_, obs_)
                 for i in range(planner_num_process):
@@ -406,17 +415,25 @@ def trainAttack():
 
         buffer_obs = getCurrentObs(in_hands, obs)
         actions_star = torch.cat((actions_star, states.unsqueeze(1)), dim=1)
-        envs.stepAsync(actions_star, auto_reset=False)
+
+        # envs.stepAsync(actions_star, auto_reset=False)
 
         if len(replay_buffer) >= training_offset:
             for training_iter in range(training_iters):
                 train_step(agent, replay_buffer, logger)
 
-        states_, in_hands_, obs_, rewards, dones = envs.stepWait()
+        states_, in_hands_, obs_, rewards, dones, _ = envs.stepAttack(actions_star, auto_reset=False)
+        states_ = states_.unsqueeze(dim=0)
+        in_hands_ = in_hands_.unsqueeze(dim=0)
+        obs_ = obs_.unsqueeze(dim=0)
 
         done_idxes = torch.nonzero(dones).squeeze(1)
         if done_idxes.shape[0] != 0:
-            reset_states_, reset_in_hands_, reset_obs_ = envs.reset_envs(done_idxes)
+            reset_states_, reset_in_hands_, reset_obs_, _ , _ = envs.resetAttack()
+            reset_states_ = reset_states_.unsqueeze(dim=0)
+            reset_in_hands_ = reset_in_hands_.unsqueeze(dim=0)
+            reset_obs_ = reset_obs_.unsqueeze(dim=0)
+            
             for j, idx in enumerate(done_idxes):
                 states_[idx] = reset_states_[j]
                 in_hands_[idx] = reset_in_hands_[j]
@@ -620,7 +637,10 @@ def vanilla_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
         logger.debug("OG position: "+str(xyz_position))
         logger.debug("eta: "+str([x_eta, y_eta, z_eta]))
         logger.debug("ADV position: "+str([x_eta, y_eta, z_eta])) 
-        logger.debug("successful grasp: "+str(metadata))      
+        logger.debug("successful grasp: "+str(metadata))    
+        logger.debug("actions: "+str(actions))  
+        logger.debug("rotation: "+str(R))
+        
         xyz_position = adv_position.clone().detach()
         quat_rotation = quat_rotation.clone().detach()
         scale *= scale.clone().detach()
