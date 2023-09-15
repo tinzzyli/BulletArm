@@ -153,6 +153,7 @@ class DQN3DASR(Base3D):
 
 
         action_idx, actions = self.decodeActions(pixels, a2_id)
+        actions = actions.to(self.device)
 
         return q_value_maps, action_idx, actions
 

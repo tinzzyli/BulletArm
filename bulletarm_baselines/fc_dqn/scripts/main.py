@@ -341,13 +341,13 @@ def untargeted_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
     print("iters: ", iters)
 
     # params: [xyz_position, quat_rotation, scale]
-    obs = obs.clone().detach()
-    in_hands = in_hands.clone().detach()
-    states = states.clone().detach()
-    xyz_position = params[0].clone().detach()
-    quat_rotation = params[1].clone().detach()
+    obs = obs.clone().detach().to(device)
+    in_hands = in_hands.clone().detach().to(device)
+    states = states.clone().detach().to(device)
+    xyz_position = params[0].clone().detach().to(device)
+    quat_rotation = params[1].clone().detach().to(device)
     scale = params[2].clone().detach()
-    ORI_VERTICES = ORI_OBJECT_LIST[0].vertices.clone().detach()
+    ORI_VERTICES = ORI_OBJECT_LIST[0].vertices.clone().detach().to(device)
     
     for iter in range(iters):
         print("iter number: ", iter+1)
