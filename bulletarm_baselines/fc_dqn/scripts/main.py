@@ -387,7 +387,7 @@ def untargeted_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
         loss = actions.sum()
         _ = envs.step(actions.detach())
         
-        x_grad, y_grad, z_grad = torch.autograd.grad(actions, xyz_position, retain_graph=False, create_graph=False)[0]
+        x_grad, y_grad, z_grad = torch.autograd.grad(actions.detach(), xyz_position, retain_graph=False, create_graph=False)[0]
 
         # with torch.no_grad():
         # x_grad, y_grad, z_grad = xyz_position.grad.clone()
