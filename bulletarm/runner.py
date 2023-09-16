@@ -34,10 +34,6 @@ def worker(remote, parent_remote, env_fn, planner_fn=None):
       cmd, data = remote.recv()
       if cmd == 'step':
         res = env.step(data)
-        res = res[:5]
-        remote.send(res)
-      elif cmd == 'step_async_attack':
-        res = env.stepAttack(data)
         remote.send(res)
       elif cmd == 'simulate':
         res = env.simulate(data)
@@ -169,7 +165,7 @@ class MultiRunner(object):
       if auto_reset:
         remote.send(('step_auto_reset', action))
       else:
-        remote.send(('step_async_attack', action))
+        remote.send(('step', action))
     self.waiting = True
 
   def stepWait(self):

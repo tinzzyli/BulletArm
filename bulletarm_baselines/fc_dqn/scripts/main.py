@@ -164,32 +164,36 @@ def train():
                 plan_actions = planner_envs.getNextAction()
 
                 ###1
-                plan_actions = plan_actions.to(device)
-                states = states.to(device)
-                in_hands = in_hands.to(device)
-                obs = obs.to(device)
-                if num_processes == 0:
-                    states = states.unsqueeze(dim=0)
-                    in_hands = in_hands.unsqueeze(dim=0)
-                    obs = obs.unsqueeze(dim=0)
-                    plan_actions = plan_actions.unsqueeze(dim=0)
+                # plan_actions = plan_actions.to(device)
+                # states = states.to(device)
+                # in_hands = in_hands.to(device)
+                # obs = obs.to(device)
+                # if num_processes == 0:
+                #     states = states.unsqueeze(dim=0)
+                #     in_hands = in_hands.unsqueeze(dim=0)
+                #     obs = obs.unsqueeze(dim=0)
+                #     plan_actions = plan_actions.unsqueeze(dim=0)
                 ###1
 
                 planner_actions_star_idx, planner_actions_star = agent.getActionFromPlan(plan_actions)
 
                 ###2
-                planner_actions_star = planner_actions_star.to(device)
-                if num_processes == 0:
-                    print(planner_actions_star.shape, states.shape)
+                # planner_actions_star = planner_actions_star.to(device)
+                # if num_processes == 0:
+                #     print(planner_actions_star.shape, states.shape)
                 ###2
                 
                 planner_actions_star = torch.cat((planner_actions_star, states.unsqueeze(1)), dim=1)
 
                 ###3
-                if num_processes == 0:
-                    planner_actions_star = planner_actions_star.reshape(4)
+                # if num_processes == 0:
+                #     planner_actions_star = planner_actions_star.reshape(4)
                 ###3
+
+
                 states_, in_hands_, obs_, rewards, dones = planner_envs.step(planner_actions_star, auto_reset=True)
+
+
                 buffer_obs = getCurrentObs(in_hands, obs)
                 buffer_obs_ = getCurrentObs(in_hands_, obs_)
                 for i in range(planner_num_process):
