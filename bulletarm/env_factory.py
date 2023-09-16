@@ -5,7 +5,7 @@
 import copy
 import numpy as np
 import numpy.random as npr
-
+from functools import partial
 from bulletarm.envs import env_fn
 from bulletarm.planners.planner_factory import getPlannerFn
 
@@ -94,10 +94,15 @@ def createMultiprocessEnvs(num_processes, env_type, env_config={}, planner_confi
 
   # Create the various environments
   env_func = getEnvFn(env_type)
+
+  # def getEnv(c):
+  #   def _thunk():
+  #     return env_func(c)
+  #   return _thunk
+  
   def getEnv(c):
-    def _thunk():
-      return env_func(c)
-    return _thunk
+    return partial(env_func, c)
+  
   envs = [getEnv(env_configs[i]) for i in range(num_processes)]
   planners = [getPlannerFn(env_type, planner_config) for i in range(num_processes)]
   return MultiRunner(envs, planners)
