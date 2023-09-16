@@ -165,6 +165,9 @@ def train():
 
                 ###1
                 plan_actions = plan_actions.to(device)
+                states = states.to(device)
+                in_hands = in_hands.to(device)
+                obs = obs.to(device)
                 if num_processes == 0:
                     plan_actions = plan_actions.unsqueeze(dim=0)
                     states = states.unsqueeze(dim=0)
