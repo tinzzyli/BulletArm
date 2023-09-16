@@ -167,6 +167,9 @@ def train():
                 plan_actions = plan_actions.to(device)
                 if num_processes == 0:
                     plan_actions = plan_actions.unsqueeze(dim=0)
+                    states = states.unsqueeze(dim=0)
+                    in_hands = in_hands.unsqueeze(dim=0)
+                    obs = obs.unsqueeze(dim=0)
                 ###1
 
                 planner_actions_star_idx, planner_actions_star = agent.getActionFromPlan(plan_actions)
