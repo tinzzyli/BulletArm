@@ -16,7 +16,7 @@ def planner_fn(env, env_type, planner_config):
 def getPlannerFn(env_type, planner_config):
 
 
-    return planner_fn
+    return planner_fn(env_type, planner_config)
 
 
 
