@@ -169,7 +169,6 @@ def train():
                 in_hands = in_hands.to(device)
                 obs = obs.to(device)
                 if num_processes == 0:
-                    plan_actions = plan_actions.unsqueeze(dim=0)
                     states = states.unsqueeze(dim=0)
                     in_hands = in_hands.unsqueeze(dim=0)
                     obs = obs.unsqueeze(dim=0)
@@ -185,10 +184,6 @@ def train():
                 
                 planner_actions_star = torch.cat((planner_actions_star, states.unsqueeze(1)), dim=1)
 
-                ###3
-                if num_processes == 0:
-                    planner_actions_star = planner_actions_star.reshape(4)
-                ###3
 
                 states_, in_hands_, obs_, rewards, dones = planner_envs.step(planner_actions_star, auto_reset=True)
                 buffer_obs = getCurrentObs(in_hands, obs)
