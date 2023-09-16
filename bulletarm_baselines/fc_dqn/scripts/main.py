@@ -95,6 +95,12 @@ def evaluate(envs, agent, logger):
     eval_bar.close()
 
 def train():
+    if torch.cuda.is_available():
+        device = torch.device("cuda")
+    else:
+        device = torch.device("cpu")   
+    print("train running on ", device)
+
     eval_thread = None
     start_time = time.time()
     if seed is not None:
@@ -156,10 +162,11 @@ def train():
             local_transitions = [[] for _ in range(planner_num_process)]
             while j < planner_episode:
                 plan_actions = planner_envs.getNextAction()
-
+                plan_actions = plan_actions.to(device)
                 if num_processes == 0:
                     plan_actions = plan_actions.unsqueeze(dim=0)
-                    
+                
+
                 planner_actions_star_idx, planner_actions_star = agent.getActionFromPlan(plan_actions)
                 planner_actions_star = torch.cat((planner_actions_star, states.unsqueeze(1)), dim=1)
                 states_, in_hands_, obs_, rewards, dones = planner_envs.step(planner_actions_star, auto_reset=True)
