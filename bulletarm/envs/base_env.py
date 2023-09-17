@@ -623,7 +623,7 @@ class BaseEnv:
       for r in rot:
         print(r)
       rot = self.convertQuaternionToEuler(rot)
-      print(rot, rot.shape)
+      print(rot)
       obj_poses.append(pos + rot)
     return np.array(obj_poses)
 
