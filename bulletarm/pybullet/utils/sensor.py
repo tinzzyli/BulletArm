@@ -42,7 +42,7 @@ class Sensor(object):
     else:
         device = torch.device("cpu")
 
-    self.device = device
+    self.device = torch.device("cpu")
 
   def setCamMatrix(self, cam_pos, cam_up_vector, target_pos):
     self.view_matrix = pb.computeViewMatrix(
