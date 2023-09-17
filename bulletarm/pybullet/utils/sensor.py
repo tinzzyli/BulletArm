@@ -167,7 +167,7 @@ class Sensor(object):
     self.size = size      
     rendering_list, ORI_OBJECT_LIST, params = self.importSingleObject(scale=self.scale)
     tray_dir = "./tray.obj"
-    t = pyredner.load_obj(tray_dir, return_objects=True, device=self.device, device=self.device)
+    t = pyredner.load_obj(tray_dir, return_objects=True, device=self.device)
     tray = t[0]   
     tray.vertices /= 1000
     tray.vertices[:,0:1] +=  0.5
