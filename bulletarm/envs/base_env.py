@@ -619,9 +619,9 @@ class BaseEnv:
         continue
       pos, rot = obj.getPose()
       for p in pos:
-        print(p, p.shape)
+        print(p)
       for r in rot:
-        print(r. r.shape)
+        print(r)
       rot = self.convertQuaternionToEuler(rot)
       print(rot, rot.shape)
       obj_poses.append(pos + rot)
