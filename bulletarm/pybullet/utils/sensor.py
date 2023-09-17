@@ -36,12 +36,12 @@ class Sensor(object):
     self.fov = np.degrees(2 * np.arctan((target_size / 2) / self.far))
     self.proj_matrix = pb.computeProjectionMatrixFOV(self.fov, 1, self.near, self.far)
 
-    # if torch.cuda.is_available():
-    #     device = torch.device("cuda")
-    # else:
-    #     device = torch.device("cpu")
+    if torch.cuda.is_available():
+        device = torch.device("cuda")
+    else:
+        device = torch.device("cpu")
 
-    self.device = torch.device("cuda")
+    self.device = device
 
     
 
