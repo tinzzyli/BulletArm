@@ -3,7 +3,6 @@ import numpy as np
 import random
 import os
 import glob
-import pyredner # pyredner will be the main Python module we import for redner.
 import torch # We also import PyTorch
 import urllib
 import zipfile
@@ -18,6 +17,7 @@ from transforms3d import quaternions
 from matplotlib.pyplot import imshow
 from bulletarm.pybullet.objects import grasp_net_obj
 from bulletarm.pybullet.objects.grasp_net_obj import GraspNetObject
+import pyredner # pyredner will be the main Python module we import for redner.
 
 class Sensor(object):
   def __init__(self, cam_pos, cam_up_vector, target_pos, target_size, near, far):
@@ -42,7 +42,7 @@ class Sensor(object):
     else:
         device = torch.device("cpu")
 
-    self.device = torch.device("cpu")
+    self.device = device
 
   def setCamMatrix(self, cam_pos, cam_up_vector, target_pos):
     self.view_matrix = pb.computeViewMatrix(
