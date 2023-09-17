@@ -21,7 +21,7 @@ import pyredner # pyredner will be the main Python module we import for redner.
 
 class Sensor(object):
   def __init__(self, cam_pos, cam_up_vector, target_pos, target_size, near, far):
-
+    torch.multiprocessing.set_start_method('spawn')
     # print(cam_pos, cam_up_vector, target_pos, target_size, near, far)
     self.view_matrix = pb.computeViewMatrix(
       cameraEyePosition=cam_pos,
