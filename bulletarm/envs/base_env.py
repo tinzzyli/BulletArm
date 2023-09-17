@@ -618,12 +618,8 @@ class BaseEnv:
       if self._isObjectHeld(obj):
         continue
       pos, rot = obj.getPose()
-      for p in pos:
-        print(p)
-      for r in rot:
-        print(r)
+
       rot = self.convertQuaternionToEuler(rot)
-      print(rot)
       obj_poses.append(pos + rot)
     return np.array(obj_poses)
 

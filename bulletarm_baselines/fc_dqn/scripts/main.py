@@ -169,9 +169,7 @@ def train():
                 planner_bar = tqdm(total=planner_episode)
             local_transitions = [[] for _ in range(planner_num_process)]
             while j < planner_episode:
-                print(" ")
-                print(j)
-                print(" ")
+
                 plan_actions = planner_envs.getNextAction()
 
                 ###1
