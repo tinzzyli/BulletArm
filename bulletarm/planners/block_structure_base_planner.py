@@ -249,7 +249,7 @@ class BlockStructureBasePlanner(BasePlanner):
     if objects is None: objects = self.env.objects
     objects = np.array(list(filter(lambda x: not self.isObjectHeld(x), objects)))
     object_poses = self.env.getObjectPoses(objects)
-    print(object_poses.shape, object_poses)
+    
     # Sort by block size
     if ascend:
       sorted_inds = np.argsort(object_poses[:, 2], axis=0)
