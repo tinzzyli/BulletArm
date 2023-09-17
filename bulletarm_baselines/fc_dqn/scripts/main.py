@@ -98,7 +98,7 @@ def train():
     if torch.cuda.is_available():
         device = torch.device("cuda")
     else:
-        device = torch.device("cpu")   
+        device = torch.device("cpu")
     print("train running on ", device)
 
     eval_thread = None
@@ -156,38 +156,44 @@ def train():
             planner_num_process = num_processes
             j = 0
             states, in_hands, obs = planner_envs.reset()
+
+            ###0
+            if num_processes == 0:
+                states = states.unsqueeze(dim=0)
+                in_hands = in_hands.unsqueeze(dim=0)
+                obs = obs.unsqueeze(dim=0)
+            ###0
+
             s = 0
             if not no_bar:
                 planner_bar = tqdm(total=planner_episode)
             local_transitions = [[] for _ in range(planner_num_process)]
             while j < planner_episode:
+                print("#========= iteration: "+str(j)+" =========#")
                 plan_actions = planner_envs.getNextAction()
 
                 ###1
-                # plan_actions = plan_actions.to(device)
-                # states = states.to(device)
-                # in_hands = in_hands.to(device)
-                # obs = obs.to(device)
-                # if num_processes == 0:
-                #     states = states.unsqueeze(dim=0)
-                #     in_hands = in_hands.unsqueeze(dim=0)
-                #     obs = obs.unsqueeze(dim=0)
-                #     plan_actions = plan_actions.unsqueeze(dim=0)
+                plan_actions = plan_actions.to(device)
+                states = states.to(device)
+                in_hands = in_hands.to(device)
+                obs = obs.to(device)
+                if num_processes == 0:
+                    plan_actions = plan_actions.unsqueeze(dim=0)
                 ###1
 
                 planner_actions_star_idx, planner_actions_star = agent.getActionFromPlan(plan_actions)
 
                 ###2
-                # planner_actions_star = planner_actions_star.to(device)
-                # if num_processes == 0:
-                #     print(planner_actions_star.shape, states.shape)
+                planner_actions_star = planner_actions_star.to(device)
+                if num_processes == 0:
+                    print(planner_actions_star.shape, states.shape)
                 ###2
                 
                 planner_actions_star = torch.cat((planner_actions_star, states.unsqueeze(1)), dim=1)
 
                 ###3
-                # if num_processes == 0:
-                #     planner_actions_star = planner_actions_star.reshape(4)
+                if num_processes == 0:
+                    planner_actions_star = planner_actions_star.reshape(4)
                 ###3
 
 

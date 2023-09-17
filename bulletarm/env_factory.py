@@ -95,13 +95,13 @@ def createMultiprocessEnvs(num_processes, env_type, env_config={}, planner_confi
   # Create the various environments
   env_func = getEnvFn(env_type)
 
-  # def getEnv(c):
-  #   def _thunk():
-  #     return env_func(c)
-  #   return _thunk
-  
   def getEnv(c):
-    return partial(env_func, c)
+    def _thunk():
+      return env_func(c)
+    return _thunk
+  
+  # def getEnv(c):
+  #   return partial(env_func, c)
   
   envs = [getEnv(env_configs[i]) for i in range(num_processes)]
   planners = [getPlannerFn(env_type, planner_config) for i in range(num_processes)]
