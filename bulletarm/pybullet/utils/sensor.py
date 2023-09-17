@@ -61,7 +61,7 @@ class Sensor(object):
     # dir = "./bulletarm/pybullet/urdf/object/GraspNet1B_object/"+object_index+"/convex.obj"
     dir = "./bulletarm/pybullet/urdf/object/GraspNet1B_object/055/convex.obj"
 
-    o = pyredner.load_obj(dir, return_objects=True)
+    o = pyredner.load_obj(dir, return_objects=True, device=self.device)
     new_obj = o[0]
 
     orien = self.objs[0].getRotation()
@@ -115,7 +115,7 @@ class Sensor(object):
                         )
     scene = pyredner.Scene(camera = camera, objects = obj_list)
     chan_list = [pyredner.channels.depth]
-    depth_img = pyredner.render_generic(scene, chan_list)
+    depth_img = pyredner.render_generic(scene, chan_list,device=self.device)
     near = 0.09
     far = 0.010
     depth = near * far /(far - depth_img)
@@ -135,7 +135,7 @@ class Sensor(object):
     rendering_list, _, _ = self.importSingleObject(scale=self.scale)
 
     tray_dir = "./tray.obj"
-    t = pyredner.load_obj(tray_dir, return_objects=True)
+    t = pyredner.load_obj(tray_dir, return_objects=True, device=self.device)
     tray = t[0]   
     tray.vertices = tray.vertices.to(self.device)
     tray.vertices /= 1000
@@ -166,7 +166,7 @@ class Sensor(object):
     self.size = size      
     rendering_list, ORI_OBJECT_LIST, params = self.importSingleObject(scale=self.scale)
     tray_dir = "./tray.obj"
-    t = pyredner.load_obj(tray_dir, return_objects=True)
+    t = pyredner.load_obj(tray_dir, return_objects=True, device=self.device)
     tray = t[0]   
     tray.vertices /= 1000
     tray.vertices[:,0:1] +=  0.5
