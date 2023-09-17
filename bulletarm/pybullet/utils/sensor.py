@@ -43,7 +43,7 @@ class Sensor(object):
 
     self.device = device
 
-    pyredner.set_use_gpu(False)
+    pyredner.set_use_gpu(True)
 
   def setCamMatrix(self, cam_pos, cam_up_vector, target_pos):
     self.view_matrix = pb.computeViewMatrix(
