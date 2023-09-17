@@ -95,11 +95,7 @@ def evaluate(envs, agent, logger):
     eval_bar.close()
 
 def train():
-    if torch.cuda.is_available():
-        device = torch.device("cuda")
-    else:
-        device = torch.device("cpu")
-    print("train running on ", device)
+    
 
     eval_thread = None
     start_time = time.time()
