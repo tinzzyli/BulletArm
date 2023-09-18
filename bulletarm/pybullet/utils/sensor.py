@@ -62,7 +62,7 @@ class Sensor(object):
     # dir = "./bulletarm/pybullet/urdf/object/GraspNet1B_object/"+object_index+"/convex.obj"
     dir = "./bulletarm/pybullet/urdf/object/GraspNet1B_object/055/convex.obj"
 
-    o = pyredner.load_obj(dir, return_objects=True, device=self.device)
+    o = pyredner.load_obj(dir, return_objects=True)
     new_obj = o[0]
 
     orien = self.objs[0].getRotation()
