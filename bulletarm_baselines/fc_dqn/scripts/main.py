@@ -499,7 +499,6 @@ def vanilla_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
 
 if __name__ == '__main__':
     # torch.multiprocessing.set_start_method('spawn')
-    torch.multiprocessing.set_start_method('spawn')
 
     train()
     vanilla_pgd_attack(iters=25)
