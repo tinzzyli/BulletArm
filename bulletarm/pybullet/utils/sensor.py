@@ -18,8 +18,8 @@ from matplotlib.pyplot import imshow
 from bulletarm.pybullet.objects import grasp_net_obj
 from bulletarm.pybullet.objects.grasp_net_obj import GraspNetObject
 import pyredner # pyredner will be the main Python module we import for redner.
-pyredner.set_use_gpu(False)
-pyredner.set_device(torch.device("cpu"))
+pyredner.use_gpu = False
+pyredner.device = torch.device("cpu")
 class Sensor(object):
   def __init__(self, cam_pos, cam_up_vector, target_pos, target_size, near, far):
     # print(cam_pos, cam_up_vector, target_pos, target_size, near, far)
@@ -55,8 +55,8 @@ class Sensor(object):
 
   def importSingleObject(self, scale):
     print("import1 ", pyredner.device, pyredner.use_gpu)
-    pyredner.set_use_gpu(False)
-    pyredner.set_device(torch.device("cpu"))
+    pyredner.use_gpu = False
+    pyredner.device = torch.device("cpu")
     print("import2 ", pyredner.device, pyredner.use_gpu)
     # if self.object_index >= 10:
     #   object_index = "0"+str(self.object_index)
@@ -99,8 +99,8 @@ class Sensor(object):
     return [new_obj], [ORI_OBJECT], [xyz_position, quat_rotation, scale]
   
   def rendering(self, cam_pos, cam_up_vector, target_pos, fov, obj_list, size):
-    pyredner.set_use_gpu(False)
-    pyredner.set_device(torch.device("cpu"))
+    pyredner.use_gpu = False
+    pyredner.device = torch.device("cpu")
     print("rendering ",pyredner.device, pyredner.use_gpu)
 
     cam_pos = torch.FloatTensor(cam_pos)
@@ -133,8 +133,8 @@ class Sensor(object):
     return heightmap.reshape(128,128)
   
   def getHeightmap(self, objs, object_index, size, scale):
-    pyredner.set_use_gpu(False)
-    pyredner.set_device(torch.device("cpu"))
+    pyredner.use_gpu = False
+    pyredner.device = torch.device("cpu")
     print("getheightmap ",pyredner.device, pyredner.use_gpu)
 
     self.object_index = object_index
