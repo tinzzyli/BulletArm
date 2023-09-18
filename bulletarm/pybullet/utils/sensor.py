@@ -53,7 +53,6 @@ class Sensor(object):
     self.proj_matrix = pb.computeProjectionMatrixFOV(70, 1, 0.001, 0.3)
 
   def importSingleObject(self, scale):
-    print("import ", pyredner.device, pyredner.use_gpu)
 
     # if self.object_index >= 10:
     #   object_index = "0"+str(self.object_index)
@@ -97,7 +96,6 @@ class Sensor(object):
   
   def rendering(self, cam_pos, cam_up_vector, target_pos, fov, obj_list, size):
 
-    print("rendering ",pyredner.device, pyredner.use_gpu)
 
     cam_pos = torch.FloatTensor(cam_pos)
     cam_up_vector = torch.FloatTensor(cam_up_vector)
@@ -130,7 +128,6 @@ class Sensor(object):
   
   def getHeightmap(self, objs, object_index, size, scale):
 
-    print("getheightmap ",pyredner.device, pyredner.use_gpu)
 
     self.object_index = object_index
     self.objs = objs
