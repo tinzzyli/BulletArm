@@ -18,7 +18,8 @@ from matplotlib.pyplot import imshow
 from bulletarm.pybullet.objects import grasp_net_obj
 from bulletarm.pybullet.objects.grasp_net_obj import GraspNetObject
 import pyredner # pyredner will be the main Python module we import for redner.
-
+pyredner.set_use_gpu(False)
+pyredner.set_device(torch.device("cpu"))
 class Sensor(object):
   def __init__(self, cam_pos, cam_up_vector, target_pos, target_size, near, far):
     # print(cam_pos, cam_up_vector, target_pos, target_size, near, far)
@@ -42,7 +43,6 @@ class Sensor(object):
         device = torch.device("cpu")
 
     self.device = device
-
     
 
   def setCamMatrix(self, cam_pos, cam_up_vector, target_pos):
@@ -54,7 +54,10 @@ class Sensor(object):
     self.proj_matrix = pb.computeProjectionMatrixFOV(70, 1, 0.001, 0.3)
 
   def importSingleObject(self, scale):
-    
+    print(pyredner.device, pyredner.use_gpu)
+    pyredner.set_use_gpu(False)
+    pyredner.set_device(torch.device("cpu"))
+
     # if self.object_index >= 10:
     #   object_index = "0"+str(self.object_index)
     # else:
@@ -62,7 +65,7 @@ class Sensor(object):
     # dir = "./bulletarm/pybullet/urdf/object/GraspNet1B_object/"+object_index+"/convex.obj"
     dir = "./bulletarm/pybullet/urdf/object/GraspNet1B_object/055/convex.obj"
 
-    o = pyredner.load_obj(dir, return_objects=True, device=self.device)
+    o = pyredner.load_obj(dir, return_objects=True, device=pyredner.device)
     new_obj = o[0]
 
     orien = self.objs[0].getRotation()
@@ -96,7 +99,8 @@ class Sensor(object):
     return [new_obj], [ORI_OBJECT], [xyz_position, quat_rotation, scale]
   
   def rendering(self, cam_pos, cam_up_vector, target_pos, fov, obj_list, size):
-    
+    print("rendering ",pyredner.device, pyredner.use_gpu)
+
     cam_pos = torch.FloatTensor(cam_pos)
     cam_up_vector = torch.FloatTensor(cam_up_vector)
     target_pos = torch.FloatTensor(target_pos)
@@ -116,7 +120,7 @@ class Sensor(object):
                         )
     scene = pyredner.Scene(camera = camera, objects = obj_list)
     chan_list = [pyredner.channels.depth]
-    depth_img = pyredner.render_generic(scene, chan_list, device=self.device)
+    depth_img = pyredner.render_generic(scene, chan_list, device=pyredner.device)
     near = 0.09
     far = 0.010
     depth = near * far /(far - depth_img)
@@ -127,16 +131,18 @@ class Sensor(object):
     return heightmap.reshape(128,128)
   
   def getHeightmap(self, objs, object_index, size, scale):
+    print("getheightmap ",pyredner.device, pyredner.use_gpu)
+
     self.object_index = object_index
     self.objs = objs
     self.scale = scale
     self.size = size      
-
+    
     #===HERE IS THE DIFFERENTIABLE RENDERER===#
     rendering_list, _, _ = self.importSingleObject(scale=self.scale)
 
     tray_dir = "./tray.obj"
-    t = pyredner.load_obj(tray_dir, return_objects=True, device=self.device)
+    t = pyredner.load_obj(tray_dir, return_objects=True, device=pyredner.device)
     tray = t[0]   
     tray.vertices = tray.vertices.to(self.device)
     tray.vertices /= 1000

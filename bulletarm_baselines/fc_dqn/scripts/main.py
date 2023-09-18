@@ -95,7 +95,7 @@ def evaluate(envs, agent, logger):
     eval_bar.close()
 
 def train():
-    # pyredner.set_use_gpu(True)
+    
 
     eval_thread = None
     start_time = time.time()
