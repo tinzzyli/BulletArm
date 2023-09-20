@@ -619,12 +619,22 @@ def trainAttack():
                 train_step(agent, replay_buffer, logger)
 
         # states_, in_hands_, obs_, rewards, dones = envs.stepWait()
-
+        actions_star = actions_star.reshape(4)
         states_, in_hands_, obs_, rewards, dones, _ = envs.stepAttack(actions_star.detach())
+        
+        states_ = states_.unsqueeze(dim=0)
+        in_hands_ = in_hands_.unsqueeze(dim=0)
+        obs_ = obs_.unsqueeze(dim=0)
+        rewards = rewards.unsqueeze(dim=0)
+        dones = dones.unsqueeze(dim=0)
 
         done_idxes = torch.nonzero(dones).squeeze(1)
         if done_idxes.shape[0] != 0:
-            reset_states_, reset_in_hands_, reset_obs_ = envs.reset_envs(done_idxes)
+            reset_states_, reset_in_hands_, reset_obs_ = envs.resetAttack()
+            reset_states_ = reset_states_.unsqueeze(dim=0)
+            reset_in_hands_ = reset_in_hands_.unsqueeze(dim=0)
+            reset_obs_ = reset_obs_.unsqueeze(dim=0)
+            
             for j, idx in enumerate(done_idxes):
                 states_[idx] = reset_states_[j]
                 in_hands_[idx] = reset_in_hands_[j]
