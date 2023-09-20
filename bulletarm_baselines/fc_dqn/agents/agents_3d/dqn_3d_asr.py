@@ -175,7 +175,7 @@ class DQN3DASR(Base3D):
         self.loss_calc_dict['q_target'] = q_target
 
         q1_output, obs_encoding = self.forwardFCN(states, obs[1], obs[0])
-        q1_pred = q1_output[torch.arange(0, batch_size), pixel[:, 0], pixel[:, 1]]
+        q1_pred = q1_output[torch.arange(0, batch_size).long(), pixel[:, 0].long(), pixel[:, 1].long()]
         q2_output = self.forwardQ2(states, obs[1], obs[0], obs_encoding, pixel)
         q2_pred = q2_output[torch.arange(batch_size), a2_idx[:, 0]]
 
