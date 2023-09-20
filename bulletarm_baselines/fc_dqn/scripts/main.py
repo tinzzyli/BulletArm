@@ -587,6 +587,9 @@ def trainAttack():
         q_value_maps, actions_star_idx, actions_star = agent.getEGreedyActionsAttack(states, in_hands, obs, eps)
 
         buffer_obs = getCurrentObs(in_hands, obs)
+
+        actions_star = actions_star.to(device)
+        states = states.to(device)
         actions_star = torch.cat((actions_star, states.unsqueeze(1)), dim=1)
 
         # envs.stepAsync(actions_star, auto_reset=False)
