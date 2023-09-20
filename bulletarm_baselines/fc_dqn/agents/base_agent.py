@@ -192,17 +192,17 @@ class BaseAgent:
         step_lefts = []
         is_experts = []
         for d in batch:
-            states.append(d.state)
-            images.append(d.obs[0])
+            states.append(d.state.to(self.device))
+            images.append(d.obs[0].to(self.device))
             in_hands.append(d.obs[1])
-            xys.append(d.action)
-            rewards.append(d.reward.squeeze())
-            next_states.append(d.next_state)
-            next_obs.append(d.next_obs[0])
-            next_in_hands.append(d.next_obs[1])
-            dones.append(d.done)
-            step_lefts.append(d.step_left)
-            is_experts.append(d.expert)
+            xys.append(d.action.to(self.device))
+            rewards.append(d.reward.squeeze().to(self.device))
+            next_states.append(d.next_state.to(self.device))
+            next_obs.append(d.next_obs[0].to(self.device))
+            next_in_hands.append(d.next_obs[1].to(self.device))
+            dones.append(d.done.to(self.device))
+            step_lefts.append(d.step_left.to(self.device))
+            is_experts.append(d.expert.to(self.device))
         states_tensor = torch.stack(states).long().to(self.device)
         image_tensor = torch.stack(images).to(self.device)
         if len(image_tensor.shape) == 3:
