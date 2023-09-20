@@ -161,16 +161,8 @@ def train():
                 print("------> j: ", j)
 
                 plan_actions = planner_envs.getNextAction()
-
-
-
                 planner_actions_star_idx, planner_actions_star = agent.getActionFromPlan(plan_actions)
-
-
-                
                 planner_actions_star = torch.cat((planner_actions_star, states.unsqueeze(1)), dim=1)
-
-
                 states_, in_hands_, obs_, rewards, dones = planner_envs.step(planner_actions_star, auto_reset=True)
 
 
@@ -546,7 +538,7 @@ def trainAttack():
                 states = states.unsqueeze(dim=0)
                 in_hands = in_hands.unsqueeze(dim=0)
                 obs = obs.unsqueeze(dim=0)
-                j += 1
+                # j += 1
 
                 planner_actions_star_idx, planner_actions_star = agent.getActionFromPlan(plan_actions)
 
@@ -559,11 +551,32 @@ def trainAttack():
 
                 states_, in_hands_, obs_, rewards, dones, _ = planner_envs.stepAttack(planner_actions_star, auto_reset=True)
 
-                states_, in_hands_, obs_, _, _ = planner_envs.resetAttack()
+                buffer_obs = getCurrentObs(in_hands, obs)
+                buffer_obs_ = getCurrentObs(in_hands_, obs_)
 
+                states_, in_hands_, obs_, _, _ = planner_envs.resetAttack()
+                buffer_obs = getCurrentObs(in_hands, obs)
+                buffer_obs_ = getCurrentObs(in_hands_, obs_)
+                for i in range(1):
+                  transition = ExpertTransition(states[i], buffer_obs[i], planner_actions_star_idx[i], rewards[i], states_[i],
+                                                buffer_obs_[i], dones[i], torch.tensor(100), torch.tensor(1))
+                  local_transitions[i].append(transition)
                 states = copy.copy(states_)
                 obs = copy.copy(obs_)
                 in_hands = copy.copy(in_hands_)
+
+                for i in range(1):
+                  if dones[i] and rewards[i]:
+                    for t in local_transitions[i]:
+                      replay_buffer.add(t)
+                    local_transitions[i] = []
+                    j += 1
+                    s += 1
+                    if not no_bar:
+                      planner_bar.set_description('{:.3f}/{}, AVG: {:.3f}'.format(s, j, float(s) / j if j != 0 else 0))
+                      planner_bar.update(1)
+                  elif dones[i]:
+                    local_transitions[i] = []
 
 
     if not no_bar:
@@ -573,7 +586,7 @@ def trainAttack():
 
     while logger.num_training_steps < max_train_step:
 
-        print("------------------> training steps: ", logger.num_training_steps)
+        print("\n------------------> training steps: ", logger.num_training_steps)
 
         states = states.unsqueeze(dim=0)
         in_hands = in_hands.unsqueeze(dim=0)
@@ -612,11 +625,12 @@ def trainAttack():
 
         buffer_obs_ = getCurrentObs(in_hands_, obs_)
 
-        for i in range(num_processes):
+        for i in range(1):
             replay_buffer.add(
                 ExpertTransition(states[i], buffer_obs[i], actions_star_idx[i], rewards[i], states_[i],
                                  buffer_obs_[i], dones[i], torch.tensor(100), torch.tensor(is_expert))
             )
+
         logger.logStep(rewards.numpy(), dones.numpy())
 
         states = copy.copy(states_)

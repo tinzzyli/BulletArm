@@ -37,7 +37,7 @@ class EnvWrapper:
         return states_, in_hands_, obs_, rewards, dones
     
     def stepAttack(self, actions, auto_reset=False):
-        actions = actions.detach().cpu().numpy()
+        actions = actions.cpu().numpy()
         (states_, in_hands_, obs_), rewards, dones, metadata = self.envs.stepAttack(actions, auto_reset)
         states_ = torch.tensor(states_).float()
         in_hands_ = torch.tensor(in_hands_).float()
