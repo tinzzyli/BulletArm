@@ -559,7 +559,7 @@ def trainAttack():
 
                 states_, in_hands_, obs_, rewards, dones, _ = planner_envs.stepAttack(planner_actions_star, auto_reset=True)
 
-                states_, in_hands_, obs_ = planner_envs.resetAttack()
+                states_, in_hands_, obs_, _, _ = planner_envs.resetAttack()
 
                 states = copy.copy(states_)
                 obs = copy.copy(obs_)
@@ -582,13 +582,15 @@ def trainAttack():
         buffer_obs = getCurrentObs(in_hands, obs)
         actions_star = torch.cat((actions_star, states.unsqueeze(1)), dim=1)
 
-        envs.stepAsync(actions_star, auto_reset=False)
+        # envs.stepAsync(actions_star, auto_reset=False)
 
         if len(replay_buffer) >= training_offset:
             for training_iter in range(training_iters):
                 train_step(agent, replay_buffer, logger)
 
-        states_, in_hands_, obs_, rewards, dones = envs.stepWait()
+        # states_, in_hands_, obs_, rewards, dones = envs.stepWait()
+
+        states_, in_hands_, obs_, rewards, dones, _ = envs.stepAttack(actions_star)
 
         done_idxes = torch.nonzero(dones).squeeze(1)
         if done_idxes.shape[0] != 0:
