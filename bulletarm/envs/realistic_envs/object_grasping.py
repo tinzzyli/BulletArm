@@ -157,7 +157,7 @@ class ObjectGrasping(BaseEnv):
         self.takeAction(action)
         self.wait(100)
 
-        obs = self._getObservationAttack(action)
+        state, in_hand, obs, _, _ = self._getObservationAttack(action)
 
         done = self._checkTermination()
         hold = self.robot.holding_obj != None
@@ -166,7 +166,7 @@ class ObjectGrasping(BaseEnv):
 
         self.current_episode_steps += 1
 
-        return obs, reward, True, hold
+        return (state, in_hand, obs), reward, True, hold
 
     def isSimValid(self):
         for obj in self.objects:

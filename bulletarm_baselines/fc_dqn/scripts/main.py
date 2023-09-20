@@ -533,7 +533,7 @@ def trainAttack():
                 planner_bar = tqdm(total=planner_episode)
             local_transitions = [[] for _ in range(planner_num_process)]
             while j < planner_episode:
-                print("------> j: ", j)
+                print("------------------> j: ", j)
 
                 plan_actions = planner_envs.getNextAction()
 
@@ -577,10 +577,11 @@ def trainAttack():
         else:
             eps = exploration.value(logger.num_eps)
         is_expert = 0
-        q_value_maps, actions_star_idx, actions_star = agent.getEGreedyActions(states, in_hands, obs, eps)
+        q_value_maps, actions_star_idx, actions_star = agent.getEGreedyActionsAttack(states, in_hands, obs, eps)
 
         buffer_obs = getCurrentObs(in_hands, obs)
         actions_star = torch.cat((actions_star, states.unsqueeze(1)), dim=1)
+
         envs.stepAsync(actions_star, auto_reset=False)
 
         if len(replay_buffer) >= training_offset:
