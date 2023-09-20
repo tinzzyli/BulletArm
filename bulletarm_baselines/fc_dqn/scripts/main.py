@@ -593,6 +593,7 @@ def trainAttack():
 
     while logger.num_training_steps < max_train_step:
 
+
         if fixed_eps:
             eps = final_eps
         else:
@@ -624,7 +625,7 @@ def trainAttack():
 
         done_idxes = torch.nonzero(dones).squeeze(1)
         if done_idxes.shape[0] != 0:
-            reset_states_, reset_in_hands_, reset_obs_ = envs.resetAttack()
+            reset_states_, reset_in_hands_, reset_obs_, _, _ = envs.resetAttack()
             reset_states_ = reset_states_.unsqueeze(dim=0)
             reset_in_hands_ = reset_in_hands_.unsqueeze(dim=0)
             reset_obs_ = reset_obs_.unsqueeze(dim=0)
