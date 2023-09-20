@@ -525,7 +525,7 @@ def trainAttack():
             s = 0
             if not no_bar:
                 planner_bar = tqdm(total=planner_episode)
-            local_transitions = [[] for _ in range(planner_num_process)]
+            local_transitions = [[] for _ in range(1)]
             while j < planner_episode:
                 print("------------------> j: ", j+1)
 
@@ -621,7 +621,7 @@ def trainAttack():
         # states_, in_hands_, obs_, rewards, dones = envs.stepWait()
         actions_star = actions_star.reshape(4)
         states_, in_hands_, obs_, rewards, dones, _ = envs.stepAttack(actions_star.detach())
-        
+
         states_ = states_.unsqueeze(dim=0)
         in_hands_ = in_hands_.unsqueeze(dim=0)
         obs_ = obs_.unsqueeze(dim=0)
