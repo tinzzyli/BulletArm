@@ -644,7 +644,7 @@ def trainAttack():
 if __name__ == '__main__':
     # torch.multiprocessing.set_start_method('spawn')
 
-    train()
+    trainAttack()
     vanilla_pgd_attack(iters=25)
     # np_pos = [p.numpy() for p in pos]
     # np.save("/Users/tingxi/BulletArm/np_pos.txt", np.pos)
