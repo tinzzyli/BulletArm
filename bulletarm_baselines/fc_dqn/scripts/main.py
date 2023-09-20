@@ -533,7 +533,7 @@ def trainAttack():
                 planner_bar = tqdm(total=planner_episode)
             local_transitions = [[] for _ in range(planner_num_process)]
             while j < planner_episode:
-                print("------------------> j: ", j)
+                print("------------------> j: ", j+1)
 
                 plan_actions = planner_envs.getNextAction()
 
@@ -572,6 +572,13 @@ def trainAttack():
     timer_start = time.time()
 
     while logger.num_training_steps < max_train_step:
+
+        print("------------------> training steps: ", logger.num_training_steps)
+
+        states = states.unsqueeze(dim=0)
+        in_hands = in_hands.unsqueeze(dim=0)
+        obs = obs.unsqueeze(dim=0)
+
         if fixed_eps:
             eps = final_eps
         else:
