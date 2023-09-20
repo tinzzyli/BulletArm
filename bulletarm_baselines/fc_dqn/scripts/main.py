@@ -519,7 +519,9 @@ def trainAttack():
             planner_num_process = num_processes
             j = 0
             states, in_hands, obs, _, _ = planner_envs.resetAttack()
-
+            states = states.unsqueeze(dim=0)
+            in_hands = in_hands.unsqueeze(dim=0)
+            obs = obs.unsqueeze(dim=0)
             s = 0
             if not no_bar:
                 planner_bar = tqdm(total=planner_episode)
@@ -535,9 +537,6 @@ def trainAttack():
                 obs = obs.to(device)
 
                 plan_actions = plan_actions.unsqueeze(dim=0)
-                states = states.unsqueeze(dim=0)
-                in_hands = in_hands.unsqueeze(dim=0)
-                obs = obs.unsqueeze(dim=0)
                 # j += 1
 
                 planner_actions_star_idx, planner_actions_star = agent.getActionFromPlan(plan_actions)
@@ -555,12 +554,20 @@ def trainAttack():
                 buffer_obs_ = getCurrentObs(in_hands_, obs_)
 
                 states_, in_hands_, obs_, _, _ = planner_envs.resetAttack()
+                states_ = states_.unsqueeze(dim=0)
+                in_hands_ = in_hands_.unsqueeze(dim=0)
+                obs_ = obs_.unsqueeze(dim=0)
+                rewards = rewards.unsqueeze(dim=0)
+                dones = dones.unsqueeze(dim=0)
+
                 buffer_obs = getCurrentObs(in_hands, obs)
                 buffer_obs_ = getCurrentObs(in_hands_, obs_)
+
                 for i in range(1):
                   transition = ExpertTransition(states[i], buffer_obs[i], planner_actions_star_idx[i], rewards[i], states_[i],
                                                 buffer_obs_[i], dones[i], torch.tensor(100), torch.tensor(1))
                   local_transitions[i].append(transition)
+                
                 states = copy.copy(states_)
                 obs = copy.copy(obs_)
                 in_hands = copy.copy(in_hands_)
