@@ -320,16 +320,16 @@ def rendering(obj_list):
 
 
 def vanilla_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
-    # logger = logging.getLogger('my_logger')
-    # logger.setLevel(logging.DEBUG)
-    # log_dir = './outputAttack/VanillaPGD'  
-    # os.makedirs(log_dir, exist_ok=True)  
-    # log_file_name = f'auto_generated_log_{int(time.time())}.log'
-    # log_file_path = os.path.join(log_dir, log_file_name)
-    # file_handler = logging.FileHandler(log_file_path, mode='a')
-    # formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    # file_handler.setFormatter(formatter)
-    # logger.addHandler(file_handler)
+    l = logging.getLogger('my_logger')
+    l.setLevel(logging.DEBUG)
+    log_dir = './outputAttack/VanillaPGD'  
+    os.makedirs(log_dir, exist_ok=True)  
+    log_file_name = f'auto_generated_log_{int(time.time())}.log'
+    log_file_path = os.path.join(log_dir, log_file_name)
+    file_handler = logging.FileHandler(log_file_path, mode='a')
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    file_handler.setFormatter(formatter)
+    l.addHandler(file_handler)
     # to avoid potential errors, run code in single process
     # single runner has only step function, no stepAsync and stepWait
 
@@ -345,10 +345,11 @@ def vanilla_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
     else:
         replay_buffer = QLearningBuffer(buffer_size)
 
-    log_dir = "/content/drive/MyDrive/my_archive/model_checkpoint/"
-    logger = BaselineLogger(log_dir, checkpoint_interval=save_freq, num_eval_eps=num_eval_episodes, hyperparameters=hyper_parameters, eval_freq=eval_freq)
+    # log_dir = "/content/drive/MyDrive/my_archive/model_checkpoint/"
+    # logger = BaselineLogger(log_dir, checkpoint_interval=save_freq, num_eval_eps=num_eval_episodes, hyperparameters=hyper_parameters, eval_freq=eval_freq)
     agent = createAgent(test=False) 
-    logger.loadCheckPoint("/content/drive/MyDrive/my_archive/model_checkpoint/checkpoint/checkpoint.pt", agent.loadFromState, replay_buffer.loadFromState)
+    # /content/drive/MyDrive/my_archive/model_checkpoint/
+    # logger.loadCheckPoint("/content/drive/MyDrive/my_archive/model_checkpoint/checkpoint/checkpoint.pt", agent.loadFromState, replay_buffer.loadFromState)
     agent.loadModel("/content/drive/MyDrive/my_archive/model_checkpoint/models/snapshot")
 
     # log_dir = "/Users/tingxi/Downloads/model1/"
@@ -448,13 +449,13 @@ def vanilla_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
 
 
 
-        # logger.debug("gradient: "+str([x_grad, y_grad, z_grad]))
-        # logger.debug("OG position: "+str(xyz_position))
-        # logger.debug("eta: "+str([x_eta, y_eta, z_eta]))
-        # logger.debug("ADV position: "+str([x_eta, y_eta, z_eta])) 
-        # logger.debug("successful grasp: "+str(metadata))    
-        # logger.debug("actions: "+str(actions))  
-        # logger.debug("rotation: "+str(R))
+        l.debug("gradient: "+str([x_grad, y_grad, z_grad]))
+        l.debug("OG position: "+str(xyz_position))
+        l.debug("eta: "+str([x_eta, y_eta, z_eta]))
+        l.debug("ADV position: "+str([x_eta, y_eta, z_eta])) 
+        l.debug("successful grasp: "+str(metadata))    
+        l.debug("actions: "+str(actions))  
+        l.debug("rotation: "+str(R))
         
         xyz_position = adv_position.clone().detach()
         quat_rotation = quat_rotation.clone().detach()
@@ -470,9 +471,9 @@ def vanilla_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
         #     net.zero_grad()
         # for optimizer in agent.optimizers:
         #     optimizer.zero_grad()
-    # logger.removeHandler(file_handler)
+    l.removeHandler(file_handler)
 
-    # logging.shutdown()
+    logging.shutdown()
 
     return 0
 
