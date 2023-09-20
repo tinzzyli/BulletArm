@@ -593,12 +593,6 @@ def trainAttack():
 
     while logger.num_training_steps < max_train_step:
 
-        print("\n------------------> training steps: ", logger.num_training_steps)
-
-        states = states.unsqueeze(dim=0)
-        in_hands = in_hands.unsqueeze(dim=0)
-        obs = obs.unsqueeze(dim=0)
-
         if fixed_eps:
             eps = final_eps
         else:
