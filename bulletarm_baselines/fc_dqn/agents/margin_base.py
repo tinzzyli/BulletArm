@@ -12,7 +12,9 @@ class MarginBase:
         if is_experts.sum() == 0:
             return torch.tensor(0)
         batch_size = q_output.size(0)
-        q_pred = q_output[torch.arange(0, batch_size), action_idx]
+        # q_pred = q_output[torch.arange(0, batch_size), action_idx]
+        q_pred = q_output[torch.arange(0, batch_size).long(), action_idx.long()]
+
 
         if self.margin == 'ce':
             if apply_beta:
@@ -22,7 +24,9 @@ class MarginBase:
 
         elif self.margin == 'oril':
             margin = torch.ones_like(q_output) * self.margin_l
-            margin[torch.arange(0, batch_size), action_idx] = 0
+            # margin[torch.arange(0, batch_size), action_idx] = 0
+            margin[torch.arange(0, batch_size).long(), action_idx.long()] = 0
+
             margin_output = q_output + margin
             margin_output_max = margin_output.reshape(batch_size, -1).max(1)[0]
             margin_loss = (margin_output_max - q_pred)[is_experts]
@@ -37,7 +41,9 @@ class MarginBase:
 
                 qe = q_pred[j]
                 q_all = q_output[j]
-                over = q_all[(q_all > qe - self.margin_l) * (torch.arange(0, q_all.shape[0]).to(q_output.device)!=action_idx[j])]
+                # over = q_all[(q_all > qe - self.margin_l) * (torch.arange(0, q_all.shape[0]).to(q_output.device)!=action_idx[j])]
+                over = q_all[(q_all > qe - self.margin_l) * (torch.arange(0, q_all.shape[0]).to(q_output.device)!=action_idx[j]).long()]
+
                 if over.shape[0] == 0:
                     margin_losses.append(torch.tensor(0).float().to(q_output.device))
                 else:
