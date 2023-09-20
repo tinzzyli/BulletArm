@@ -600,7 +600,7 @@ def trainAttack():
 
         # states_, in_hands_, obs_, rewards, dones = envs.stepWait()
 
-        states_, in_hands_, obs_, rewards, dones, _ = envs.stepAttack(actions_star)
+        states_, in_hands_, obs_, rewards, dones, _ = envs.stepAttack(actions_star.detach())
 
         done_idxes = torch.nonzero(dones).squeeze(1)
         if done_idxes.shape[0] != 0:
