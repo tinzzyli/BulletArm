@@ -342,7 +342,7 @@ def vanilla_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
 
 
     agent = createAgent(test=False) 
-    agent.loadModel("/Users/tingxi/Downloads/model_checkpoint.zip/models/snapshot")
+    agent.loadModel("/content/drive/MyDrive/models/snapshot")
     agent.eval()
     
     states, in_hands, obs, ORI_OBJECT_LIST, params = envs.resetAttack() 
