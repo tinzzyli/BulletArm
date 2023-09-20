@@ -172,14 +172,14 @@ def train():
                     states = states.unsqueeze(dim=0)
                     in_hands = in_hands.unsqueeze(dim=0)
                     obs = obs.unsqueeze(dim=0)
+                    j += 1
                 """1"""
 
                 planner_actions_star_idx, planner_actions_star = agent.getActionFromPlan(plan_actions)
 
                 """2"""
                 planner_actions_star = planner_actions_star.to(device)
-                if num_processes == 0:
-                    print(planner_actions_star.shape, states.shape)
+                print(planner_actions_star)
                 """2"""
                 
                 planner_actions_star = torch.cat((planner_actions_star, states.unsqueeze(1)), dim=1)
@@ -189,14 +189,12 @@ def train():
                     planner_actions_star = planner_actions_star.reshape(4)
                 """3"""
 
-
                 states_, in_hands_, obs_, rewards, dones = planner_envs.step(planner_actions_star, auto_reset=True)
 
                 """4"""
                 if num_processes == 0:
                     states_, in_hands_, obs_ = planner_envs.reset()
                 """4"""
-
 
                 # buffer_obs = getCurrentObs(in_hands, obs)
                 # buffer_obs_ = getCurrentObs(in_hands_, obs_)
@@ -205,12 +203,9 @@ def train():
                 #                                 buffer_obs_[i], dones[i], torch.tensor(100), torch.tensor(1))
                 #   local_transitions[i].append(transition)
 
-                  
-
                 states = copy.copy(states_)
                 obs = copy.copy(obs_)
                 in_hands = copy.copy(in_hands_)
-
 
         #         for i in range(planner_num_process):
         #           if dones[i] and rewards[i]:
@@ -225,7 +220,6 @@ def train():
         #           elif dones[i]:
         #             local_transitions[i] = []
 
-                    
         # if expert_aug_n > 0:
         #     augmentBuffer(replay_buffer, expert_aug_n, agent.rzs)
         # elif expert_aug_d4:
@@ -358,20 +352,14 @@ def rendering(obj_list):
 def vanilla_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
     logger = logging.getLogger('my_logger')
     logger.setLevel(logging.DEBUG)
-
     log_dir = './outputAttack/VanillaPGD'  
     os.makedirs(log_dir, exist_ok=True)  
     log_file_name = f'auto_generated_log_{int(time.time())}.log'
     log_file_path = os.path.join(log_dir, log_file_name)
-
     file_handler = logging.FileHandler(log_file_path, mode='a')
-
-    
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     file_handler.setFormatter(formatter)
-
     logger.addHandler(file_handler)
-
     # to avoid potential errors, run code in single process
     # single runner has only step function, no stepAsync and stepWait
 
@@ -380,12 +368,10 @@ def vanilla_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
     else:
         device = torch.device("cpu")    
 
-    torch.set_printoptions(precision=10)
     envs = EnvWrapper(num_processes, env, env_config, planner_config)
 
-    #NOTE: find out the difference between test=True and test=False
-    #NOTE: find out which to use, eval() or train(), in this case
-    agent = createAgent(test=False) # if test=True, gradient equals to ZERO
+
+    agent = createAgent(test=False) 
     agent.eval()
     states, in_hands, obs, ORI_OBJECT_LIST, params = envs.resetAttack() 
     states = states.unsqueeze(dim = 0)

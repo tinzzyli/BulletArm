@@ -156,20 +156,12 @@ class ObjectGrasping(BaseEnv):
         pre_obj_grasped = self.obj_grasped
         self.takeAction(action)
         self.wait(100)
-        hold = self.robot.holding_obj
-        # remove obj that above a threshold hight
-        # for obj in self.objects:
-        #   if obj.getPosition()[2] > self.pick_pre_offset:
-        #     # self.objects.remove(obj)
-        #     # pb.removeBody(obj.object_id)
-        #     self._removeObject(obj)
 
-        # for obj in self.objects:
-        #   if not self._isObjectWithinWorkspace(obj):
-        #     self._removeObject(obj)
         obs = self._getObservation(action)
 
         done = self._checkTermination()
+        hold = self.robot.holding_obj != None
+
         reward = 1.0 if self.obj_grasped > pre_obj_grasped else 0.0
 
         self.current_episode_steps += 1
