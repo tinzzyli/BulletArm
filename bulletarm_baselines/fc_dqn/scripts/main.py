@@ -669,7 +669,7 @@ def trainAttack():
             eval_thread = threading.Thread(target=evaluate, args=(eval_envs, eval_agent, logger))
             eval_thread.start()
 
-        if logger.num_steps % (num_processes * save_freq) == 0:
+        if logger.num_steps % (1 * save_freq) == 0:
             saveModelAndInfo(logger, agent)
 
     if eval_thread is not None:
