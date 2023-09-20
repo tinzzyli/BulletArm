@@ -345,10 +345,10 @@ def vanilla_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
     else:
         replay_buffer = QLearningBuffer(buffer_size)
 
-    # log_dir = "/content/drive/MyDrive/my_archive/model_checkpoint/"
-    # logger = BaselineLogger(log_dir, checkpoint_interval=save_freq, num_eval_eps=num_eval_episodes, hyperparameters=hyper_parameters, eval_freq=eval_freq)
+    log_dir = "/content/drive/MyDrive/my_archive/model_checkpoint/"
+    logger = BaselineLogger(log_dir, checkpoint_interval=save_freq, num_eval_eps=num_eval_episodes, hyperparameters=hyper_parameters, eval_freq=eval_freq)
     agent = createAgent(test=False) 
-    # logger.loadCheckPoint("/content/drive/MyDrive/my_archive/model_checkpoint/checkpoint/checkpoint.pt", agent.loadFromState, replay_buffer.loadFromState)
+    logger.loadCheckPoint("/content/drive/MyDrive/my_archive/model_checkpoint/checkpoint/checkpoint.pt", agent.loadFromState, replay_buffer.loadFromState)
     agent.loadModel("/content/drive/MyDrive/my_archive/model_checkpoint/models/snapshot")
 
     # log_dir = "/Users/tingxi/Downloads/model1/"
