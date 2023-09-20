@@ -153,84 +153,84 @@ def train():
             j = 0
             states, in_hands, obs = planner_envs.reset()
 
-            ###0
-            if num_processes == 0:
-                states = states.unsqueeze(dim=0)
-                in_hands = in_hands.unsqueeze(dim=0)
-                obs = obs.unsqueeze(dim=0)
-            ###0
-
             s = 0
             if not no_bar:
                 planner_bar = tqdm(total=planner_episode)
             local_transitions = [[] for _ in range(planner_num_process)]
             while j < planner_episode:
+                print("------> j: ", j)
 
                 plan_actions = planner_envs.getNextAction()
 
-                ###1
+                """1"""
                 plan_actions = plan_actions.to(device)
                 states = states.to(device)
                 in_hands = in_hands.to(device)
                 obs = obs.to(device)
                 if num_processes == 0:
                     plan_actions = plan_actions.unsqueeze(dim=0)
-                ###1
+                    states = states.unsqueeze(dim=0)
+                    in_hands = in_hands.unsqueeze(dim=0)
+                    obs = obs.unsqueeze(dim=0)
+                """1"""
 
                 planner_actions_star_idx, planner_actions_star = agent.getActionFromPlan(plan_actions)
 
-                ###2
+                """2"""
                 planner_actions_star = planner_actions_star.to(device)
                 if num_processes == 0:
                     print(planner_actions_star.shape, states.shape)
-                ###2
+                """2"""
                 
                 planner_actions_star = torch.cat((planner_actions_star, states.unsqueeze(1)), dim=1)
 
-                ###3
+                """3"""
                 if num_processes == 0:
                     planner_actions_star = planner_actions_star.reshape(4)
-                ###3
+                """3"""
 
 
                 states_, in_hands_, obs_, rewards, dones = planner_envs.step(planner_actions_star, auto_reset=True)
 
-                ###4
+                """4"""
                 if num_processes == 0:
                     states_, in_hands_, obs_ = planner_envs.reset()
-                    states_ = states_.unsqueeze(dim=0)
-                    in_hands = in_hands.unsqueeze(dim=0)
-                    obs_ = obs_.unsqueeze(dim=0)
-                ###4
+                """4"""
 
-                buffer_obs = getCurrentObs(in_hands, obs)
-                buffer_obs_ = getCurrentObs(in_hands_, obs_)
-                for i in range(planner_num_process):
-                  transition = ExpertTransition(states[i], buffer_obs[i], planner_actions_star_idx[i], rewards[i], states_[i],
-                                                buffer_obs_[i], dones[i], torch.tensor(100), torch.tensor(1))
-                  local_transitions[i].append(transition)
+
+                # buffer_obs = getCurrentObs(in_hands, obs)
+                # buffer_obs_ = getCurrentObs(in_hands_, obs_)
+                # for i in range(planner_num_process):
+                #   transition = ExpertTransition(states[i], buffer_obs[i], planner_actions_star_idx[i], rewards[i], states_[i],
+                #                                 buffer_obs_[i], dones[i], torch.tensor(100), torch.tensor(1))
+                #   local_transitions[i].append(transition)
+
+                  
 
                 states = copy.copy(states_)
                 obs = copy.copy(obs_)
                 in_hands = copy.copy(in_hands_)
 
-                for i in range(planner_num_process):
-                  if dones[i] and rewards[i]:
-                    for t in local_transitions[i]:
-                      replay_buffer.add(t)
-                    local_transitions[i] = []
-                    j += 1
-                    s += 1
-                    if not no_bar:
-                      planner_bar.set_description('{:.3f}/{}, AVG: {:.3f}'.format(s, j, float(s) / j if j != 0 else 0))
-                      planner_bar.update(1)
-                  elif dones[i]:
-                    local_transitions[i] = []
 
-        if expert_aug_n > 0:
-            augmentBuffer(replay_buffer, expert_aug_n, agent.rzs)
-        elif expert_aug_d4:
-            augmentBufferD4(replay_buffer, agent.rzs)
+        #         for i in range(planner_num_process):
+        #           if dones[i] and rewards[i]:
+        #             for t in local_transitions[i]:
+        #               replay_buffer.add(t)
+        #             local_transitions[i] = []
+        #             j += 1
+        #             s += 1
+        #             if not no_bar:
+        #               planner_bar.set_description('{:.3f}/{}, AVG: {:.3f}'.format(s, j, float(s) / j if j != 0 else 0))
+        #               planner_bar.update(1)
+        #           elif dones[i]:
+        #             local_transitions[i] = []
+
+                    
+        # if expert_aug_n > 0:
+        #     augmentBuffer(replay_buffer, expert_aug_n, agent.rzs)
+        # elif expert_aug_d4:
+        #     augmentBufferD4(replay_buffer, agent.rzs)
+
 
     # pre train
     if pre_train_step > 0:
