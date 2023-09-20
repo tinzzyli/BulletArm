@@ -194,7 +194,7 @@ class BaseAgent:
         for d in batch:
             states.append(d.state.to(self.device))
             images.append(d.obs[0].to(self.device))
-            in_hands.append(d.obs[1])
+            in_hands.append(d.obs[1].to(self.device))
             xys.append(d.action.to(self.device))
             rewards.append(d.reward.squeeze().to(self.device))
             next_states.append(d.next_state.to(self.device))
