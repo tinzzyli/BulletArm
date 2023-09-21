@@ -157,7 +157,7 @@ aug = args.aug
 aug_type = args.aug_type
 
 # eval
-object_index = args.object_index
+# object_index = args.object_index
 num_eval_processes = args.num_eval_processes
 eval_freq = args.eval_freq
 num_eval_episodes = args.num_eval_episodes
