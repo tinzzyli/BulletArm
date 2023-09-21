@@ -346,7 +346,7 @@ def vanilla_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
         replay_buffer = QLearningBuffer(buffer_size)
 
     agent = createAgent(test=False)
-    agent.networks[0].load_state_dict(torch.load("/content/drive/MyDrive/my_archive/model_checkpoint/models/snapshot_q0.pt"))
+    agent.networks[0].load_state_dict(torch.load("/content/drive/MyDrive/my_archive/model_checkpoint/models/snapshot_q1.pt"))
     # log_dir = "/content/drive/MyDrive/my_archive/model_checkpoint/"
     # logger = BaselineLogger(log_dir, checkpoint_interval=save_freq, num_eval_eps=num_eval_episodes, hyperparameters=hyper_parameters, eval_freq=eval_freq)
      
