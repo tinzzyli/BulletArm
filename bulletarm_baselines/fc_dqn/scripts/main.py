@@ -345,9 +345,11 @@ def vanilla_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
     else:
         replay_buffer = QLearningBuffer(buffer_size)
 
+    agent = createAgent(test=False)
+    agent.networks[0].load_state_dict(torch.load("/Users/tingxi/Downloads/model_checkpoint.zip/models/snapshot_q0.pt"))
     # log_dir = "/content/drive/MyDrive/my_archive/model_checkpoint/"
     # logger = BaselineLogger(log_dir, checkpoint_interval=save_freq, num_eval_eps=num_eval_episodes, hyperparameters=hyper_parameters, eval_freq=eval_freq)
-    agent = createAgent(test=False) 
+     
     # /content/drive/MyDrive/my_archive/model_checkpoint/
     # logger.loadCheckPoint("/content/drive/MyDrive/my_archive/model_checkpoint/checkpoint/checkpoint.pt", agent.loadFromState, replay_buffer.loadFromState)
     agent.loadModel("/content/drive/MyDrive/my_archive/model_checkpoint/models/snapshot")
@@ -368,7 +370,7 @@ def vanilla_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
     if not z_epsilon:
         z_epsilon = epsilon * 1e-04
 
-    logger.info('\n device: '+str(device)+
+    l.info('\n device: '+str(device)+
                 '\n epsilon: '+str(epsilon)+
                 '\n alpha: '+str(alpha)+
                 '\n iters: '+str(iters))
@@ -388,7 +390,7 @@ def vanilla_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
     R = R.T
 
     for iter in range(iters):
-        logger.info('Iteration '+str(iter)+'/'+str(iters))
+        l.info('Iteration '+str(iter)+'/'+str(iters))
         xyz_position.requires_grad = True
         xyz_position = xyz_position.to(device)
         xyz_position = xyz_position.float()
@@ -495,6 +497,7 @@ def trainAttack():
 
     if load_model_pre:
         agent.loadModel(load_model_pre)
+
     agent.train()
     eval_agent.train()
 
