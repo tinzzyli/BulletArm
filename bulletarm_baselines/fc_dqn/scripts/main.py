@@ -346,19 +346,10 @@ def vanilla_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
         replay_buffer = QLearningBuffer(buffer_size)
 
     agent = createAgent(test=False)
-    agent.networks[0].load_state_dict(torch.load("/content/drive/MyDrive/my_archive/model_checkpoint/models/snapshot_q1.pt"))
     # log_dir = "/content/drive/MyDrive/my_archive/model_checkpoint/"
-    # logger = BaselineLogger(log_dir, checkpoint_interval=save_freq, num_eval_eps=num_eval_episodes, hyperparameters=hyper_parameters, eval_freq=eval_freq)
-     
-    # /content/drive/MyDrive/my_archive/model_checkpoint/
-    # logger.loadCheckPoint("/content/drive/MyDrive/my_archive/model_checkpoint/checkpoint/checkpoint.pt", agent.loadFromState, replay_buffer.loadFromState)
+    checkpoint = torch.load("/content/drive/MyDrive/my_archive/model_checkpoint/checkpoint/checkpoint.pt")
+    agent.loadFromState(checkpoint['agent'])
     agent.loadModel("/content/drive/MyDrive/my_archive/model_checkpoint/models/snapshot")
-
-    # log_dir = "/Users/tingxi/Downloads/model1/"
-    # logger = BaselineLogger(log_dir, checkpoint_interval=save_freq, num_eval_eps=num_eval_episodes, hyperparameters=hyper_parameters, eval_freq=eval_freq)
-    # agent = createAgent(test=False) 
-    # logger.loadCheckPoint("//Users/tingxi/Downloads/model_checkpoint.zip/checkpoint/checkpoint.pt", agent.loadFromState, replay_buffer.loadFromState)
-    # agent.loadModel("/Users/tingxi/Downloads/model_checkpoint.zip/models/snapshot")
 
     agent.eval()
     
