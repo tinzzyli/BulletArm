@@ -111,6 +111,7 @@ def train():
 
     if load_model_pre:
         agent.loadModel(load_model_pre)
+
     agent.train()
     eval_agent.train()
 
@@ -158,16 +159,16 @@ def train():
                 planner_bar = tqdm(total=planner_episode)
             local_transitions = [[] for _ in range(planner_num_process)]
             while j < planner_episode:
-                print("------> j: ", j)
+                print("------------------> j: ", j+1)
 
                 plan_actions = planner_envs.getNextAction()
                 planner_actions_star_idx, planner_actions_star = agent.getActionFromPlan(plan_actions)
                 planner_actions_star = torch.cat((planner_actions_star, states.unsqueeze(1)), dim=1)
                 states_, in_hands_, obs_, rewards, dones = planner_envs.step(planner_actions_star, auto_reset=True)
 
-
                 buffer_obs = getCurrentObs(in_hands, obs)
                 buffer_obs_ = getCurrentObs(in_hands_, obs_)
+
                 for i in range(planner_num_process):
                   transition = ExpertTransition(states[i], buffer_obs[i], planner_actions_star_idx[i], rewards[i], states_[i],
                                                 buffer_obs_[i], dones[i], torch.tensor(100), torch.tensor(1))
@@ -227,6 +228,7 @@ def train():
         q_value_maps, actions_star_idx, actions_star = agent.getEGreedyActions(states, in_hands, obs, eps)
 
         buffer_obs = getCurrentObs(in_hands, obs)
+
         actions_star = torch.cat((actions_star, states.unsqueeze(1)), dim=1)
         envs.stepAsync(actions_star, auto_reset=False)
 
@@ -346,9 +348,8 @@ def vanilla_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
         replay_buffer = QLearningBuffer(buffer_size)
 
     agent = createAgent(test=False)
-    # log_dir = "/content/drive/MyDrive/my_archive/model_checkpoint/"
-    checkpoint = torch.load("/content/drive/MyDrive/my_archive/model_checkpoint/checkpoint/checkpoint.pt")
-    agent.loadFromState(checkpoint['agent'])
+    # checkpoint = torch.load("/content/drive/MyDrive/my_archive/model_checkpoint/checkpoint/checkpoint.pt")
+    # agent.loadFromState(checkpoint['agent'])
     agent.loadModel("/content/drive/MyDrive/my_archive/model_checkpoint/models/snapshot")
 
     agent.eval()
@@ -541,14 +542,11 @@ def trainAttack():
                 print("------------------> j: ", j+1)
 
                 plan_actions = planner_envs.getNextAction()
-
                 plan_actions = plan_actions.to(device)
                 states = states.to(device)
                 in_hands = in_hands.to(device)
                 obs = obs.to(device)
-
                 plan_actions = plan_actions.unsqueeze(dim=0)
-                # j += 1
 
                 planner_actions_star_idx, planner_actions_star = agent.getActionFromPlan(plan_actions)
 
@@ -556,23 +554,19 @@ def trainAttack():
                 print(planner_actions_star)
 
                 planner_actions_star = torch.cat((planner_actions_star, states.unsqueeze(1)), dim=1)
-
                 planner_actions_star = planner_actions_star.reshape(4)
 
                 states_, in_hands_, obs_, rewards, dones, _ = planner_envs.stepAttack(planner_actions_star, auto_reset=True)
+                states_, in_hands_, obs_, _, _ = planner_envs.resetAttack()
 
                 buffer_obs = getCurrentObs(in_hands, obs)
                 buffer_obs_ = getCurrentObs(in_hands_, obs_)
 
-                states_, in_hands_, obs_, _, _ = planner_envs.resetAttack()
                 states_ = states_.unsqueeze(dim=0)
                 in_hands_ = in_hands_.unsqueeze(dim=0)
                 obs_ = obs_.unsqueeze(dim=0)
                 rewards = rewards.unsqueeze(dim=0)
                 dones = dones.unsqueeze(dim=0)
-
-                buffer_obs = getCurrentObs(in_hands, obs)
-                buffer_obs_ = getCurrentObs(in_hands_, obs_)
 
                 for i in range(1):
                   transition = ExpertTransition(states[i], buffer_obs[i], planner_actions_star_idx[i], rewards[i], states_[i],
@@ -596,6 +590,28 @@ def trainAttack():
                   elif dones[i]:
                     local_transitions[i] = []
 
+        if expert_aug_n > 0:
+            augmentBuffer(replay_buffer, expert_aug_n, agent.rzs)
+        elif expert_aug_d4:
+            augmentBufferD4(replay_buffer, agent.rzs)
+
+
+    # pre train
+    if pre_train_step > 0:
+        pbar = tqdm(total=pre_train_step)
+        while logger.num_training_steps < pre_train_step:
+            t0 = time.time()
+            train_step(agent, replay_buffer, logger)
+            if not no_bar:
+                pbar.set_description('loss: {:.3f}, time: {:.2f}'.format(float(logger.getCurrentLoss()), time.time()-t0))
+                pbar.update(len(logger.num_training_steps)-pbar.n)
+
+            if (time.time() - start_time) / 3600 > time_limit:
+                logger.saveCheckPoint(agent.getSaveState(), replay_buffer.getSaveState())
+                exit(0)
+        pbar.close()
+        agent.saveModel(os.path.join(logger.models_dir, 'snapshot_{}'.format('pretrain')))
+        # agent.sl = sl
 
     if not no_bar:
         pbar = tqdm(total=max_train_step)
@@ -603,8 +619,6 @@ def trainAttack():
     timer_start = time.time()
 
     while logger.num_training_steps < max_train_step:
-
-
         if fixed_eps:
             eps = final_eps
         else:
@@ -693,8 +707,8 @@ def trainAttack():
 
 if __name__ == '__main__':
     # torch.multiprocessing.set_start_method('spawn')
-
-    # trainAttack()
+    # train()
+    trainAttack()
     vanilla_pgd_attack(iters=25)
     # np_pos = [p.numpy() for p in pos]
     # np.save("/Users/tingxi/BulletArm/np_pos.txt", np.pos)

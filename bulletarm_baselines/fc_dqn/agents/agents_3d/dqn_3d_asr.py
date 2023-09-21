@@ -4,6 +4,7 @@ import torch.nn.functional as F
 from copy import deepcopy
 from bulletarm_baselines.fc_dqn.agents.agents_3d.base_3d import Base3D
 from bulletarm_baselines.fc_dqn.utils import torch_utils
+
 import torch.nn as nn
 
 
@@ -14,7 +15,7 @@ class DQN3DASR(Base3D):
         if torch.cuda.is_available():
             self.device = torch.device("cuda")
         else:
-            self.device = torch.device("cpu")  
+            self.device = torch.device("cpu")
         self.num_rz = num_rz
         self.rzs = torch.from_numpy(np.linspace(rz_range[0], rz_range[1], num_rz)).float().to(self.device)
         self.a2_size = num_rz
