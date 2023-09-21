@@ -350,9 +350,9 @@ def vanilla_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
     agent = createAgent(test=False)
     # checkpoint = torch.load("/content/drive/MyDrive/my_archive/model_checkpoint/checkpoint/checkpoint.pt")
     # agent.loadFromState(checkpoint['agent'])
+    agent.eval()
     agent.loadModel("/content/drive/MyDrive/my_archive/ck1/models/snapshot")
 
-    agent.eval()
     
     states, in_hands, obs, ORI_OBJECT_LIST, params = envs.resetAttack() 
     states = states.unsqueeze(dim = 0)
