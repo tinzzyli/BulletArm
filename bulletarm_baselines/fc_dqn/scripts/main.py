@@ -350,7 +350,7 @@ def vanilla_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
     agent = createAgent(test=False)
     # checkpoint = torch.load("/content/drive/MyDrive/my_archive/model_checkpoint/checkpoint/checkpoint.pt")
     # agent.loadFromState(checkpoint['agent'])
-    agent.loadModel("/content/drive/MyDrive/my_archive/model_checkpoint/models/snapshot")
+    agent.loadModel("/content/drive/MyDrive/my_archive/ck1/models/snapshot")
 
     agent.eval()
     
@@ -708,7 +708,7 @@ def trainAttack():
 if __name__ == '__main__':
     # torch.multiprocessing.set_start_method('spawn')
     # train()
-    trainAttack()
+    # trainAttack()
     vanilla_pgd_attack(iters=25)
     # np_pos = [p.numpy() for p in pos]
     # np.save("/Users/tingxi/BulletArm/np_pos.txt", np.pos)
