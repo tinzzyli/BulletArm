@@ -61,7 +61,7 @@ eval_group = parser.add_argument_group('eval')
 eval_group.add_argument('--num_eval_processes', type=int, default=0, help='The number of parallel environments for evaluation')
 eval_group.add_argument('--eval_freq', default=500, type=int, help='The evaluation frequency')
 eval_group.add_argument('--num_eval_episodes', default=100, type=int, help='The number of evaluation episodes')
-# eval_group.add_argument('--object_index', default=55, type=int, help='The index number of objects in object grasping')
+eval_group.add_argument('--object_index', default=-1, type=int, help='The index number of objects in object grasping')
 
 planner_group = parser.add_argument_group('planner')
 planner_group.add_argument('--planner_pos_noise', type=float, default=0)
@@ -157,7 +157,7 @@ aug = args.aug
 aug_type = args.aug_type
 
 # eval
-# object_index = args.object_index
+object_index = args.object_index
 num_eval_processes = args.num_eval_processes
 eval_freq = args.eval_freq
 num_eval_episodes = args.num_eval_episodes
