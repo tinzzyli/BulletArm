@@ -394,10 +394,10 @@ class BaseEnv:
   
 
   def _getHeightmap(self):
-    return self.sensor.getHeightmap(self.objects, self.object_index, self.heightmap_size, self.OBJ_SCALE_FOR_PYREDNER)
+    return self.sensor.getHeightmap(self.objects, self.OBJ_INDEX_FOR_PYREDNER, self.heightmap_size, self.OBJ_SCALE_FOR_PYREDNER)
   
   def _getHeightmapAttack(self):
-    return self.sensor.getHeightmapAttack(self.objects, self.object_index, self.heightmap_size, self.OBJ_SCALE_FOR_PYREDNER)
+    return self.sensor.getHeightmapAttack(self.objects, self.OBJ_INDEX_FOR_PYREDNER, self.heightmap_size, self.OBJ_SCALE_FOR_PYREDNER)
 
   def _getValidPositions(self, border_padding, min_distance, existing_positions, num_shapes, sample_range=None):
     existing_positions_copy = copy.deepcopy(existing_positions)
@@ -586,7 +586,7 @@ class BaseEnv:
         handle = pb_obj_generation.generateGraspNetObject(position, orientation, scale, model_id)
       
         self.OBJ_SCALE_FOR_PYREDNER = handle.OBJ_SCALE
-
+        self.OBJ_INDEX_FOR_PYREDNER = handle.OBJ_INDEX
       else:
         raise NotImplementedError
 

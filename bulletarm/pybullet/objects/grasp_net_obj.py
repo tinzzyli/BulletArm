@@ -77,6 +77,7 @@ class GraspNetObject(PybulletObject):
                 break
         # print("grasp_net_obj obj_scale", obj_scale)
         self.OBJ_SCALE = obj_scale
+        self.OBJ_INDEX = index
         pb.changeDynamics(object_id,
                           -1,
                           lateralFriction=1,

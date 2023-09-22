@@ -52,15 +52,10 @@ class Sensor(object):
     )
     self.proj_matrix = pb.computeProjectionMatrixFOV(70, 1, 0.001, 0.3)
 
-  def importSingleObject(self, scale):
-
-    # if self.object_index >= 10:
-    #   object_index = "0"+str(self.object_index)
-    # else:
-    #   object_index = "00"+str(self.object_index)
-    # dir = "./bulletarm/pybullet/urdf/object/GraspNet1B_object/"+object_index+"/convex.obj"
-    dir = "./bulletarm/pybullet/urdf/object/GraspNet1B_object/055/convex.obj"
-
+  def importSingleObject(self, scale, object_index):
+   
+    dir = "./bulletarm/pybullet/urdf/object/GraspNet1B_object/0*/convex.obj"
+    dir = dir.replace("*", str(object_index))
     o = pyredner.load_obj(dir, return_objects=True)
     new_obj = o[0]
 
@@ -135,7 +130,8 @@ class Sensor(object):
     self.size = size      
     
     #===HERE IS THE DIFFERENTIABLE RENDERER===#
-    rendering_list, _, _ = self.importSingleObject(scale=self.scale)
+    rendering_list, _, _ = self.importSingleObject(scale=self.scale, 
+                                                   object_index=self.object_index)
 
     tray_dir = "./tray.obj"
     t = pyredner.load_obj(tray_dir, return_objects=True, device=pyredner.device)
@@ -167,7 +163,8 @@ class Sensor(object):
     self.objs = objs
     self.scale = scale
     self.size = size      
-    rendering_list, ORI_OBJECT_LIST, params = self.importSingleObject(scale=self.scale)
+    rendering_list, ORI_OBJECT_LIST, params = self.importSingleObject(scale=self.scale, 
+                                                                      object_index=self.object_index)
     tray_dir = "./tray.obj"
     t = pyredner.load_obj(tray_dir, return_objects=True, device=self.device)
     tray = t[0]   

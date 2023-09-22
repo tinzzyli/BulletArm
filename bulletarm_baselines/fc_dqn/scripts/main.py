@@ -348,8 +348,7 @@ def vanilla_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
         replay_buffer = QLearningBuffer(buffer_size)
 
     agent = createAgent(test=True)
-    # checkpoint = torch.load("/content/drive/MyDrive/my_archive/model_checkpoint/checkpoint/checkpoint.pt")
-    # agent.loadFromState(checkpoint['agent'])
+
     agent.eval()
     agent.loadModel("/content/drive/MyDrive/my_archive/ck1/models/snapshot")
 
@@ -529,6 +528,7 @@ def trainAttack():
             states = states.unsqueeze(dim=0)
             in_hands = in_hands.unsqueeze(dim=0)
             obs = obs.unsqueeze(dim=0)
+
             s = 0
             if not no_bar:
                 planner_bar = tqdm(total=planner_episode)
@@ -554,14 +554,14 @@ def trainAttack():
                 states_, in_hands_, obs_, rewards, dones, _ = planner_envs.stepAttack(planner_actions_star, auto_reset=True)
                 states_, in_hands_, obs_, _, _ = planner_envs.resetAttack()
 
-                buffer_obs = getCurrentObs(in_hands, obs)
-                buffer_obs_ = getCurrentObs(in_hands_, obs_)
-
                 states_ = states_.unsqueeze(dim=0)
                 in_hands_ = in_hands_.unsqueeze(dim=0)
                 obs_ = obs_.unsqueeze(dim=0)
                 rewards = rewards.unsqueeze(dim=0)
                 dones = dones.unsqueeze(dim=0)
+
+                buffer_obs = getCurrentObs(in_hands, obs)
+                buffer_obs_ = getCurrentObs(in_hands_, obs_)
 
                 for i in range(1):
                   transition = ExpertTransition(states[i], buffer_obs[i], planner_actions_star_idx[i], rewards[i], states_[i],
