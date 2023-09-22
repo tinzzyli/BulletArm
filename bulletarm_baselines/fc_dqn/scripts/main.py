@@ -31,6 +31,7 @@ from bulletarm_baselines.fc_dqn.utils.parameters import *
 from bulletarm_baselines.fc_dqn.utils.torch_utils import augmentBuffer, augmentBufferD4
 from bulletarm_baselines.fc_dqn.scripts.fill_buffer_deconstruct import fillDeconstructUsingRunner
 
+import pybullet as pb
 
 ExpertTransition = collections.namedtuple('ExpertTransition', 'state obs action reward next_state next_obs done step_left expert')
 
@@ -350,16 +351,13 @@ def vanilla_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
     agent = createAgent(test=True)
 
     agent.eval()
-    agent.loadModel("/content/drive/MyDrive/my_archive/ck1/models/snapshot")
+    agent.loadModel("/content/drive/MyDrive/my_archive/ck3/models/snapshot")
 
     
     states, in_hands, obs, ORI_OBJECT_LIST, params = envs.resetAttack() 
     states = states.unsqueeze(dim = 0)
     in_hands = in_hands.unsqueeze(dim = 0)
     obs = obs.unsqueeze(dim = 0)
-
-    if not z_epsilon:
-        z_epsilon = epsilon * 1e-04
 
     l.info('\n device: '+str(device)+
                 '\n epsilon: '+str(epsilon)+
@@ -409,43 +407,56 @@ def vanilla_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
         
         """ autograd """
         MSE = nn.MSELoss()
-        loss = MSE(actions.detach(), xyz_position)        
-        grad = torch.autograd.grad(outputs=loss, 
-                                   inputs=(xyz_position, R), 
+        pos_loss = MSE(actions[:2].detach(), xyz_position[:2])        
+        pos_grad = torch.autograd.grad(outputs=pos_loss, 
+                                   inputs=xyz_position[:2], 
                                    grad_outputs=None, 
                                    allow_unused=True, 
                                    retain_graph=False, 
                                    create_graph=False)
-        x_grad, y_grad, z_grad = grad[0]
-        rot_grad = grad[1]
+        x_grad, y_grad = pos_grad[0]
 
+        rot = (0, 0, actions[2])
+        rot_q = pb.getQuaternionFromEuler(rot)
+        rot_mat = pb.getMatrixFromQuaternion (rot_q)
+
+        rot_loss = MSE(rot_mat, R)
+        rot_grad = torch.autograd.grad(outputs=rot_loss, 
+                                   inputs=R, 
+                                   grad_outputs=None, 
+                                   allow_unused=True, 
+                                   retain_graph=False, 
+                                   create_graph=False)[0]
+        
+        
+        
         actions = torch.cat((actions, states.unsqueeze(1)), dim=1)
         actions = actions.reshape(4)
         _, _, _, _, _, metadata = envs.stepAttack(actions.detach())
+        if not metadata:
+            continue
         """ autograd """
 
         """ attack on position """
         x,y,z = xyz_position.clone().detach()
         # step length should be within a certain range
-        x_eta = torch.clamp(x_grad.sign(), min = -epsilon,   max = epsilon)
-        y_eta = torch.clamp(y_grad.sign(), min = -epsilon,   max = epsilon)
-        z_eta = torch.clamp(z_grad.sign(), min = -z_epsilon, max = z_epsilon)
+        x_eta = torch.clamp(x_grad.sign(), min = -epsilon,  max = epsilon)
+        y_eta = torch.clamp(y_grad.sign(), min = -epsilon,  max = epsilon)
         # coordinate boudary of the object, please do not change these values
         # valid range of x and y is 0.2 while for z the range is 0.000025
         # accumulated change should not exceed the boundaries
         adv_position = torch.tensor([
             torch.clamp(x + x_eta, min =  0.4, max = 0.6),
             torch.clamp(y + y_eta, min = -0.1, max = 0.1),
-            torch.clamp(z + z_eta, min =  0.013800, max = 0.013825)
         ], device=device)
         """ attack on position """
 
 
 
-        l.debug("gradient: "+str([x_grad, y_grad, z_grad]))
+        l.debug("gradient: "+str([x_grad, y_grad]))
         l.debug("OG position: "+str(xyz_position))
-        l.debug("eta: "+str([x_eta, y_eta, z_eta]))
-        l.debug("ADV position: "+str([x_eta, y_eta, z_eta])) 
+        l.debug("eta: "+str([x_eta, y_eta]))
+        l.debug("ADV position: "+str(adv_position)) 
         l.debug("successful grasp: "+str(metadata))    
         l.debug("actions: "+str(actions))  
         l.debug("rotation: "+str(R))
@@ -705,8 +716,8 @@ def trainAttack():
 if __name__ == '__main__':
     # torch.multiprocessing.set_start_method('spawn')
     # train()    
-    trainAttack()
-    # vanilla_pgd_attack(iters=25)
+    # trainAttack()
+    vanilla_pgd_attack(iters=25)
     # np_pos = [p.numpy() for p in pos]
     # np.save("/Users/tingxi/BulletArm/np_pos.txt", np.pos)
     
