@@ -53,9 +53,9 @@ class Sensor(object):
     self.proj_matrix = pb.computeProjectionMatrixFOV(70, 1, 0.001, 0.3)
 
   def importSingleObject(self, scale, object_index):
-   
-    dir = "./bulletarm/pybullet/urdf/object/GraspNet1B_object/0*/convex.obj"
-    dir = dir.replace("*", str(object_index))
+    object_index = str(object_index).zfill(3)
+    dir = "./bulletarm/pybullet/urdf/object/GraspNet1B_object/*/convex.obj"
+    dir = dir.replace("*", object_index)
     o = pyredner.load_obj(dir, return_objects=True)
     new_obj = o[0]
 

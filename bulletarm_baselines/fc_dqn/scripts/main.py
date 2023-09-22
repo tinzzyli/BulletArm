@@ -449,6 +449,7 @@ def vanilla_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
         l.debug("successful grasp: "+str(metadata))    
         l.debug("actions: "+str(actions))  
         l.debug("rotation: "+str(R))
+        print("successful grasp: "+str(metadata))
         
         xyz_position = adv_position.clone().detach()
         quat_rotation = quat_rotation.clone().detach()
