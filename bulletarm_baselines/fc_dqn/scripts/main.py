@@ -347,7 +347,7 @@ def vanilla_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
     else:
         replay_buffer = QLearningBuffer(buffer_size)
 
-    agent = createAgent(test=False)
+    agent = createAgent(test=True)
     # checkpoint = torch.load("/content/drive/MyDrive/my_archive/model_checkpoint/checkpoint/checkpoint.pt")
     # agent.loadFromState(checkpoint['agent'])
     agent.eval()
@@ -459,12 +459,7 @@ def vanilla_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
         ORI_OBJECT_LIST[0].vertices = ORI_OBJECT_LIST[0].vertices.clone().detach()
         new_vertices = new_vertices.clone().detach()
 
-        # for net in agent.networks:
-        #     net.zero_grad()
-        # for net in agent.target_networks:
-        #     net.zero_grad()
-        # for optimizer in agent.optimizers:
-        #     optimizer.zero_grad()
+
     l.removeHandler(file_handler)
 
     logging.shutdown()
@@ -700,6 +695,7 @@ def trainAttack():
     if eval_thread is not None:
         eval_thread.join()
 
+    agent.eval()
     saveModelAndInfo(logger, agent)
     logger.saveCheckPoint(agent.getSaveState(), replay_buffer.getSaveState())
     envs.close()
@@ -707,7 +703,7 @@ def trainAttack():
 
 if __name__ == '__main__':
     # torch.multiprocessing.set_start_method('spawn')
-    # train()
+    # train()    
     # trainAttack()
     vanilla_pgd_attack(iters=25)
     # np_pos = [p.numpy() for p in pos]
