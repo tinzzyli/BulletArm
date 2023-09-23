@@ -352,9 +352,9 @@ def getGroundTruth(agent,
     states = states.to(device)
     actions = torch.cat((actions, states.unsqueeze(1)), dim=1)
     actions = actions.reshape(4)
-    _, _, _, _, _, success = envs.stepAttack(actions.detach())
+    # _, _, _, _, _, success = envs.stepAttack(actions.detach())
 
-    return actions, success
+    return actions
 
 
 def vanilla_pgd_attack(epsilon_1=0.002, epsilon_2=0.002, alpha_1 = 0.02, alpha_2 = 0.02, iters=10):
@@ -391,20 +391,19 @@ def vanilla_pgd_attack(epsilon_1=0.002, epsilon_2=0.002, alpha_1 = 0.02, alpha_2
         # scale is within 0.6 ~ 0.7 in obj grasping
 
     success = False
-    while not success:
-        target, success = getGroundTruth(
-                                        agent = agent, 
-                                        envs = envs,
-                                        states = states,
-                                        in_hands = in_hands,
-                                        obs = obs,
-                                        original_object_list = ORI_OBJECT_LIST,
-                                        xyz_position = xyz_position,
-                                        rot_mat = rot_mat,
-                                        scale = scale,
-                                        device = device
-                                        )
-        
+
+    target= getGroundTruth(
+                                    agent = agent, 
+                                    envs = envs,
+                                    states = states,
+                                    in_hands = in_hands,
+                                    obs = obs,
+                                    original_object_list = ORI_OBJECT_LIST,
+                                    xyz_position = xyz_position,
+                                    rot_mat = rot_mat,
+                                    scale = scale,
+                                    device = device
+                                    )
     
     pos_target = target[:2]
     rot_target = target[2]
@@ -420,7 +419,7 @@ def vanilla_pgd_attack(epsilon_1=0.002, epsilon_2=0.002, alpha_1 = 0.02, alpha_2
         xyz_position.requires_grad = True
         rot_mat.requires_grad = True
 
-        actions, success = getGroundTruth(agent = agent, 
+        actions = getGroundTruth(agent = agent, 
                                 envs = envs,
                                 states = states,
                                 in_hands = in_hands,
@@ -474,10 +473,10 @@ def vanilla_pgd_attack(epsilon_1=0.002, epsilon_2=0.002, alpha_1 = 0.02, alpha_2
         l.debug("OG position: "+str(xyz_position))
         l.debug("eta: "+str([x_eta, y_eta]))
         l.debug("ADV position: "+str(adv_position)) 
-        l.debug("successful grasp: "+str(success))    
+        # l.debug("successful grasp: "+str(success))    
         l.debug("actions: "+str(actions))  
         l.debug("rotation: "+str(rot_mat))
-        print("successful grasp: "+str(success))
+        # print("successful grasp: "+str(success))
         
         xyz_position = adv_position.clone().detach()
         rot_mat = rot_mat.clone().detach()
