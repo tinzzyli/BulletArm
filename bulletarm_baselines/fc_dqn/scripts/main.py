@@ -381,7 +381,7 @@ def vanilla_pgd_attack(epsilon_1=0.002, epsilon_2=0.002, alpha_1 = 0.02, alpha_2
 
     agent = createAgent(test=True)
     agent.eval()
-    agent.loadModel("/content/drive/MyDrive/my_archive/ck3/snapshot")
+    # agent.loadModel("/content/drive/MyDrive/my_archive/ck3/snapshot")
 
     with torch.no_grad():
         states, in_hands, obs, ORI_OBJECT_LIST, params = envs.resetAttack() 
@@ -392,18 +392,18 @@ def vanilla_pgd_attack(epsilon_1=0.002, epsilon_2=0.002, alpha_1 = 0.02, alpha_2
 
     success = False
 
-    target= getGroundTruth(
-                                    agent = agent, 
-                                    envs = envs,
-                                    states = states,
-                                    in_hands = in_hands,
-                                    obs = obs,
-                                    original_object_list = ORI_OBJECT_LIST,
-                                    xyz_position = xyz_position,
-                                    rot_mat = rot_mat,
-                                    scale = scale,
-                                    device = device
-                                    )
+    target = getGroundTruth(
+                            agent = agent, 
+                            envs = envs,
+                            states = states,
+                            in_hands = in_hands,
+                            obs = obs,
+                            original_object_list = ORI_OBJECT_LIST,
+                            xyz_position = xyz_position,
+                            rot_mat = rot_mat,
+                            scale = scale,
+                            device = device
+                            )
     
     pos_target = target[:2]
     rot_target = target[2]
@@ -429,6 +429,9 @@ def vanilla_pgd_attack(epsilon_1=0.002, epsilon_2=0.002, alpha_1 = 0.02, alpha_2
                                 rot_mat = rot_mat,
                                 scale = scale,
                                 device = device)
+        
+        print("actions.requires_grad: ", actions.requires_grad)
+        print("actions: ", actions)
 
         MSE = nn.MSELoss()
 
@@ -439,8 +442,8 @@ def vanilla_pgd_attack(epsilon_1=0.002, epsilon_2=0.002, alpha_1 = 0.02, alpha_2
                                    grad_outputs=None, 
                                    allow_unused=True, 
                                    retain_graph=True, 
-                                   create_graph=False)
-        x_grad, y_grad = pos_grad[0]
+                                   create_graph=False)[0]
+        x_grad, y_grad = pos_grad
         x,y,z = xyz_position.clone().detach()
         x_eta = torch.clamp(x_grad, min = -epsilon_1,  max = epsilon_1)
         y_eta = torch.clamp(y_grad, min = -epsilon_1,  max = epsilon_1)
