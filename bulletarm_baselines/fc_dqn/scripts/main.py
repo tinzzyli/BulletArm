@@ -484,11 +484,7 @@ def vanilla_pgd_attack(epsilon_1 = 0.002, epsilon_2 = 0.002, alpha_1 = 0.02, alp
         
         xyz_position = adv_position.clone().detach()
         rot_mat = rot_mat.clone().detach()
-        scale *= scale.clone().detach()
-        obs = obs.clone().detach()
-        q_value_maps = q_value_maps.clone().detach()
-        ORI_OBJECT_LIST[0].vertices = ORI_OBJECT_LIST[0].vertices.clone().detach()
-        new_vertices = new_vertices.clone().detach()
+        scale = scale.clone().detach()
 
     l.removeHandler(file_handler)
 
