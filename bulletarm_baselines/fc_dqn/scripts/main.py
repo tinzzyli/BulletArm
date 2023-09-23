@@ -318,11 +318,44 @@ def rendering(obj_list):
 
     return heightmap.reshape(128,128)
 
+def getGroundTruth(agent, 
+                   envs, 
+                   states,
+                   in_hands,
+                   obs,
+                   original_object_list, # this variable must not change
+                   xyz_position,
+                   rot_mat,
+                   scale):
+    
+    with torch.no_grad():
+        states = states.unsqueeze(dim = 0) # new variable
+        in_hands = in_hands.unsqueeze(dim = 0) # new variable
+        obs = obs.unsqueeze(dim = 0) # new variable
+        object_list = original_object_list[:]
+        new_vertices = object_list[0].vertices.to(device) # new variable
+        scale = torch.tensor(scale)
+
+    new_vertices *= scale
+
+    rot_mat_T = rot_mat.T.float()
+    new_vertices = torch.matmul(new_vertices, rot_mat_T)
+    new_vertices[:,0:1] += xyz_position[0]
+    new_vertices[:,1:2] += xyz_position[1]
+    new_vertices[:,2:3] += xyz_position[2]
+    object_list[0].vertices = new_vertices.clone()
+
+    obs = rendering(obj_list=object_list).reshape(1,1,128,128)    
+    _, _, actions = agent.getEGreedyActionsAttack(states, in_hands, obs, 0)
+    actions = torch.cat((actions, states.unsqueeze(1)), dim=1)
+    actions = actions.reshape(4)
+    _, _, _, _, _, success = envs.stepAttack(actions.detach())
+
+    return actions, success
 
 
+def vanilla_pgd_attack(epsilon_1=0.002, epsilon_2=0.002, iters=10):
 
-
-def vanilla_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
     l = logging.getLogger('my_logger')
     l.setLevel(logging.DEBUG)
     log_dir = './outputAttack/VanillaPGD'  
@@ -343,71 +376,55 @@ def vanilla_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
 
     envs = EnvWrapper(num_processes, env, env_config, planner_config)
 
-    if buffer_type == 'expert':
-        replay_buffer = QLearningBufferExpert(buffer_size)
-    else:
-        replay_buffer = QLearningBuffer(buffer_size)
-
     agent = createAgent(test=True)
-
     agent.eval()
     agent.loadModel("/content/drive/MyDrive/my_archive/ck3/models/snapshot")
 
+    with torch.no_grad():
+        states, in_hands, obs, ORI_OBJECT_LIST, params = envs.resetAttack() 
+        xyz_position, rot_mat, scale = params
+        # scale is within 0.6 ~ 0.7
+
+    success = False
+    while not success:
+        target, success = getGroundTruth(agent = agent, 
+                                envs = envs,
+                                states = states,
+                                in_hands = in_hands,
+                                obs = obs,
+                                original_object_list = ORI_OBJECT_LIST,
+                                xyz_position = xyz_position,
+                                rot_mat = rot_mat,
+                                scale = scale)
+        
     
-    states, in_hands, obs, ORI_OBJECT_LIST, params = envs.resetAttack() 
-    states = states.unsqueeze(dim = 0)
-    in_hands = in_hands.unsqueeze(dim = 0)
-    obs = obs.unsqueeze(dim = 0)
+    pos_target = target[:2]
+    rot_target = target[2]
 
     l.info('\n device: '+str(device)+
-                '\n epsilon: '+str(epsilon)+
-                '\n alpha: '+str(alpha)+
-                '\n iters: '+str(iters))
-
-    # params: [xyz_position, quat_rotation, scale]
-    obs = obs.clone().detach().to(device)
-    in_hands = in_hands.clone().detach().to(device)
-    states = states.clone().detach().to(device)
-    xyz_position = params[0].clone().detach().to(device)
-    quat_rotation = params[1].clone().detach()
-    scale = params[2].clone().detach()
-    ORI_VERTICES = ORI_OBJECT_LIST[0].vertices.clone().detach().to(device)
-    R = quaternions.quat2mat(quat_rotation)
-    R = torch.Tensor(R)    
-    R = R.to(device)
-    R = R.float()
-    R = R.T
+           '\n epsilon_1: '+str(epsilon_1)+
+           '\n epsilon_2: '+str(epsilon_2)+
+           '\n iters: '+str(iters))
 
     for iter in range(iters):
         l.info('Iteration '+str(iter)+'/'+str(iters))
+
         xyz_position.requires_grad = True
-        xyz_position = xyz_position.to(device)
-        xyz_position = xyz_position.float()
-        scale = scale.to(device)
-        scale = scale.float()
-        new_vertices = ORI_VERTICES.clone()
-        new_vertices = new_vertices.to(device)
-        new_vertices = new_vertices.float()
+        rot_mat.requires_grad = True
 
+        actions, success = getGroundTruth(agent = agent, 
+                                envs = envs,
+                                states = states,
+                                in_hands = in_hands,
+                                obs = obs,
+                                original_object_list = ORI_OBJECT_LIST,
+                                xyz_position = xyz_position,
+                                rot_mat = rot_mat,
+                                scale = scale)
 
-        """ model """
-        new_vertices *= scale
-        R.requires_grad = True
-
-        new_vertices = torch.matmul(new_vertices, R)
-        new_vertices[:,0:1] += xyz_position[0]
-        new_vertices[:,1:2] += xyz_position[1]
-        new_vertices[:,2:3] += xyz_position[2]
-        ORI_OBJECT_LIST[0].vertices = new_vertices.clone()
-
-        obs = rendering(obj_list=ORI_OBJECT_LIST) 
-        obs = obs.reshape(1,1,128,128)    
-        q_value_maps, _, actions = agent.getEGreedyActionsAttack(states, in_hands, obs, 0)
-        """ model """
-        
-        """ autograd """
         MSE = nn.MSELoss()
-        pos_loss = MSE(actions[:2].detach(), xyz_position[:2])        
+
+        pos_loss = MSE(pos_target, actions[:2])        
         pos_grad = torch.autograd.grad(outputs=pos_loss, 
                                    inputs=xyz_position[:2], 
                                    grad_outputs=None, 
@@ -416,32 +433,11 @@ def vanilla_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
                                    create_graph=False)
         x_grad, y_grad = pos_grad[0]
 
-        rot = (0, 0, actions[2])
-        rot_q = pb.getQuaternionFromEuler(rot)
-        rot_mat = pb.getMatrixFromQuaternion (rot_q)
-
-        rot_loss = MSE(rot_mat, R)
-        rot_grad = torch.autograd.grad(outputs=rot_loss, 
-                                   inputs=R, 
-                                   grad_outputs=None, 
-                                   allow_unused=True, 
-                                   retain_graph=False, 
-                                   create_graph=False)[0]
-        
-        
-        
-        actions = torch.cat((actions, states.unsqueeze(1)), dim=1)
-        actions = actions.reshape(4)
-        _, _, _, _, _, metadata = envs.stepAttack(actions.detach())
-        if not metadata:
-            continue
-        """ autograd """
-
         """ attack on position """
         x,y,z = xyz_position.clone().detach()
         # step length should be within a certain range
-        x_eta = torch.clamp(x_grad.sign(), min = -epsilon,  max = epsilon)
-        y_eta = torch.clamp(y_grad.sign(), min = -epsilon,  max = epsilon)
+        x_eta = torch.clamp(x_grad.sign(), min = -epsilon_1,  max = epsilon_1)
+        y_eta = torch.clamp(y_grad.sign(), min = -epsilon_1,  max = epsilon_1)
         # coordinate boudary of the object, please do not change these values
         # valid range of x and y is 0.2 while for z the range is 0.000025
         # accumulated change should not exceed the boundaries
@@ -451,25 +447,35 @@ def vanilla_pgd_attack(epsilon=0.002, z_epsilon=None, alpha=5e-13, iters=10):
         ], device=device)
         """ attack on position """
 
-
+        """ attack on rotation"""
+        rot_loss = MSE(rot_target, actions[2])
+        rot_grad = torch.autograd.grad(outputs=rot_loss, 
+                                   inputs=rot_mat, 
+                                   grad_outputs=None, 
+                                   allow_unused=True, 
+                                   retain_graph=False, 
+                                   create_graph=False)[0]
+        
+        rot_eta = rot_grad.sign() * epsilon_2
+        rot_mat = rot_mat.detach() + rot_eta.detach()
+        """ attack on rotation"""
 
         l.debug("gradient: "+str([x_grad, y_grad]))
         l.debug("OG position: "+str(xyz_position))
         l.debug("eta: "+str([x_eta, y_eta]))
         l.debug("ADV position: "+str(adv_position)) 
-        l.debug("successful grasp: "+str(metadata))    
+        l.debug("successful grasp: "+str(success))    
         l.debug("actions: "+str(actions))  
-        l.debug("rotation: "+str(R))
-        print("successful grasp: "+str(metadata))
+        l.debug("rotation: "+str(rot_mat))
+        print("successful grasp: "+str(success))
         
         xyz_position = adv_position.clone().detach()
-        quat_rotation = quat_rotation.clone().detach()
+        rot_mat = rot_mat.clone().detach()
         scale *= scale.clone().detach()
         obs = obs.clone().detach()
         q_value_maps = q_value_maps.clone().detach()
         ORI_OBJECT_LIST[0].vertices = ORI_OBJECT_LIST[0].vertices.clone().detach()
         new_vertices = new_vertices.clone().detach()
-
 
     l.removeHandler(file_handler)
 

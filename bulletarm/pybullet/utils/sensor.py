@@ -87,7 +87,7 @@ class Sensor(object):
 
     # print(scale, quat_rotation, xyz_position)
 
-    return [new_obj], [ORI_OBJECT], [xyz_position, quat_rotation, scale]
+    return [new_obj], [ORI_OBJECT], [xyz_position, R, scale]
   
   def rendering(self, cam_pos, cam_up_vector, target_pos, fov, obj_list, size):
 
