@@ -354,7 +354,7 @@ def getGroundTruth(agent,
     return actions, success
 
 
-def vanilla_pgd_attack(epsilon_1=0.002, epsilon_2=0.002, iters=10):
+def vanilla_pgd_attack(epsilon_1=0.002, epsilon_2=0.002, alpha_1 = 0.02, alpha_2 = 0.02, iters=10):
 
     l = logging.getLogger('my_logger')
     l.setLevel(logging.DEBUG)
@@ -382,8 +382,10 @@ def vanilla_pgd_attack(epsilon_1=0.002, epsilon_2=0.002, iters=10):
 
     with torch.no_grad():
         states, in_hands, obs, ORI_OBJECT_LIST, params = envs.resetAttack() 
-        xyz_position, rot_mat, scale = params
-        # scale is within 0.6 ~ 0.7
+        original_xyz_position, original_rot_mat, scale = params
+        xyz_position = torch.tensor(original_xyz_position)
+        rot_mat = torch.tensor(original_rot_mat)
+        # scale is within 0.6 ~ 0.7 in obj grasping
 
     success = False
     while not success:
@@ -424,6 +426,7 @@ def vanilla_pgd_attack(epsilon_1=0.002, epsilon_2=0.002, iters=10):
 
         MSE = nn.MSELoss()
 
+        """ attack on position """
         pos_loss = MSE(pos_target, actions[:2])        
         pos_grad = torch.autograd.grad(outputs=pos_loss, 
                                    inputs=xyz_position[:2], 
@@ -432,18 +435,17 @@ def vanilla_pgd_attack(epsilon_1=0.002, epsilon_2=0.002, iters=10):
                                    retain_graph=False, 
                                    create_graph=False)
         x_grad, y_grad = pos_grad[0]
-
-        """ attack on position """
         x,y,z = xyz_position.clone().detach()
-        # step length should be within a certain range
-        x_eta = torch.clamp(x_grad.sign(), min = -epsilon_1,  max = epsilon_1)
-        y_eta = torch.clamp(y_grad.sign(), min = -epsilon_1,  max = epsilon_1)
+        x_eta = torch.clamp(x_grad, min = -epsilon_1,  max = epsilon_1)
+        y_eta = torch.clamp(y_grad, min = -epsilon_1,  max = epsilon_1)
         # coordinate boudary of the object, please do not change these values
         # valid range of x and y is 0.2 while for z the range is 0.000025
         # accumulated change should not exceed the boundaries
+
         adv_position = torch.tensor([
-            torch.clamp(x + x_eta, min =  0.4, max = 0.6),
-            torch.clamp(y + y_eta, min = -0.1, max = 0.1),
+            torch.clamp(x + x_eta, min = original_xyz_position - alpha_1, max = original_xyz_position + alpha_1),
+            torch.clamp(y + y_eta, min = original_xyz_position - alpha_1, max = original_xyz_position + alpha_1),
+            z
         ], device=device)
         """ attack on position """
 
@@ -457,7 +459,8 @@ def vanilla_pgd_attack(epsilon_1=0.002, epsilon_2=0.002, iters=10):
                                    create_graph=False)[0]
         
         rot_eta = rot_grad.sign() * epsilon_2
-        rot_mat = rot_mat.detach() + rot_eta.detach()
+        rot_mat = rot_mat.detach()
+        rot_mat = torch.clamp(rot_mat + rot_eta, min = original_rot_mat - alpha_2, max = original_rot_mat + alpha_2)
         """ attack on rotation"""
 
         l.debug("gradient: "+str([x_grad, y_grad]))
