@@ -405,8 +405,8 @@ def vanilla_pgd_attack(epsilon_1=0.002, epsilon_2=0.002, alpha_1 = 0.02, alpha_2
                             device = device
                             )
     
-    pos_target = target[:2]
-    rot_target = target[2]
+    pos_target = target[:2].detach()
+    rot_target = target[2].detach()
 
     l.info('\n device: '+str(device)+
            '\n epsilon_1: '+str(epsilon_1)+
@@ -419,7 +419,8 @@ def vanilla_pgd_attack(epsilon_1=0.002, epsilon_2=0.002, alpha_1 = 0.02, alpha_2
         xyz_position.requires_grad = True
         rot_mat.requires_grad = True
 
-        actions = getGroundTruth(agent = agent, 
+        actions = getGroundTruth(
+                                agent = agent, 
                                 envs = envs,
                                 states = states,
                                 in_hands = in_hands,
@@ -438,12 +439,12 @@ def vanilla_pgd_attack(epsilon_1=0.002, epsilon_2=0.002, alpha_1 = 0.02, alpha_2
         """ attack on position """
         pos_loss = MSE(pos_target, actions[:2])        
         pos_grad = torch.autograd.grad(outputs=pos_loss, 
-                                   inputs=xyz_position[:2], 
+                                   inputs=xyz_position, 
                                    grad_outputs=None, 
                                    allow_unused=True, 
                                    retain_graph=True, 
                                    create_graph=False)[0]
-        x_grad, y_grad = pos_grad
+        x_grad, y_grad, _ = pos_grad
         x,y,z = xyz_position.clone().detach()
         x_eta = torch.clamp(x_grad, min = -epsilon_1,  max = epsilon_1)
         y_eta = torch.clamp(y_grad, min = -epsilon_1,  max = epsilon_1)
