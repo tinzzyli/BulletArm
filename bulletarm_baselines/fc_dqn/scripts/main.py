@@ -326,7 +326,8 @@ def getGroundTruth(agent,
                    original_object_list, # this variable must not change
                    xyz_position,
                    rot_mat,
-                   scale):
+                   scale,
+                   device):
     
     with torch.no_grad():
         states = states.unsqueeze(dim = 0) # new variable
@@ -347,6 +348,7 @@ def getGroundTruth(agent,
 
     obs = rendering(obj_list=object_list).reshape(1,1,128,128)    
     _, _, actions = agent.getEGreedyActionsAttack(states, in_hands, obs, 0)
+    actions = actions.to(device)
     actions = torch.cat((actions, states.unsqueeze(1)), dim=1)
     actions = actions.reshape(4)
     _, _, _, _, _, success = envs.stepAttack(actions.detach())
@@ -389,15 +391,18 @@ def vanilla_pgd_attack(epsilon_1=0.002, epsilon_2=0.002, alpha_1 = 0.02, alpha_2
 
     success = False
     while not success:
-        target, success = getGroundTruth(agent = agent, 
-                                envs = envs,
-                                states = states,
-                                in_hands = in_hands,
-                                obs = obs,
-                                original_object_list = ORI_OBJECT_LIST,
-                                xyz_position = xyz_position,
-                                rot_mat = rot_mat,
-                                scale = scale)
+        target, success = getGroundTruth(
+                                        agent = agent, 
+                                        envs = envs,
+                                        states = states,
+                                        in_hands = in_hands,
+                                        obs = obs,
+                                        original_object_list = ORI_OBJECT_LIST,
+                                        xyz_position = xyz_position,
+                                        rot_mat = rot_mat,
+                                        scale = scale,
+                                        device = device
+                                        )
         
     
     pos_target = target[:2]
