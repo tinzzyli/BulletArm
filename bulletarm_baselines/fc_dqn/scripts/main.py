@@ -349,6 +349,7 @@ def getGroundTruth(agent,
     obs = rendering(obj_list=object_list).reshape(1,1,128,128)    
     _, _, actions = agent.getEGreedyActionsAttack(states, in_hands, obs, 0)
     actions = actions.to(device)
+    states = states.to(device)
     actions = torch.cat((actions, states.unsqueeze(1)), dim=1)
     actions = actions.reshape(4)
     _, _, _, _, _, success = envs.stepAttack(actions.detach())
@@ -427,7 +428,8 @@ def vanilla_pgd_attack(epsilon_1=0.002, epsilon_2=0.002, alpha_1 = 0.02, alpha_2
                                 original_object_list = ORI_OBJECT_LIST,
                                 xyz_position = xyz_position,
                                 rot_mat = rot_mat,
-                                scale = scale)
+                                scale = scale,
+                                device = device)
 
         MSE = nn.MSELoss()
 
