@@ -477,6 +477,8 @@ def vanilla_pgd_attack(epsilon_1=0.002, epsilon_2=0.002, alpha_1 = 0.02, alpha_2
         l.debug("actions: "+str(actions))  
         l.debug("rotation: "+str(rot_mat))
         # print("successful grasp: "+str(success))
+        print("\n"+adv_position+"\n")
+        print("\n"+rot_mat+"\n")
         
         xyz_position = adv_position.clone().detach()
         rot_mat = rot_mat.clone().detach()
