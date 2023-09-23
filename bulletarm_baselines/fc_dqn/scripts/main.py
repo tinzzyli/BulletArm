@@ -432,7 +432,7 @@ def vanilla_pgd_attack(epsilon_1=0.002, epsilon_2=0.002, alpha_1 = 0.02, alpha_2
                                    inputs=xyz_position[:2], 
                                    grad_outputs=None, 
                                    allow_unused=True, 
-                                   retain_graph=False, 
+                                   retain_graph=True, 
                                    create_graph=False)
         x_grad, y_grad = pos_grad[0]
         x,y,z = xyz_position.clone().detach()
