@@ -357,7 +357,7 @@ def getGroundTruth(agent,
     return actions
 
 
-def vanilla_pgd_attack(epsilon_1=0.002, epsilon_2=0.002, alpha_1 = 0.02, alpha_2 = 0.02, iters=10):
+def vanilla_pgd_attack(epsilon_1 = 0.002, epsilon_2 = 0.002, alpha_1 = 0.02, alpha_2 = 0.02, iters=10):
 
     l = logging.getLogger('my_logger')
     l.setLevel(logging.DEBUG)
@@ -381,16 +381,15 @@ def vanilla_pgd_attack(epsilon_1=0.002, epsilon_2=0.002, alpha_1 = 0.02, alpha_2
 
     agent = createAgent(test=True)
     agent.eval()
-    # agent.loadModel("/content/drive/MyDrive/my_archive/ck3/snapshot")
+    agent.loadModel("/content/drive/MyDrive/my_archive/ck3/snapshot")
 
     with torch.no_grad():
         states, in_hands, obs, ORI_OBJECT_LIST, params = envs.resetAttack() 
         original_xyz_position, original_rot_mat, scale = params
+        original_xyz_position = torch.tensor(original_xyz_position)
         xyz_position = torch.tensor(original_xyz_position)
         rot_mat = torch.tensor(original_rot_mat)
         # scale is within 0.6 ~ 0.7 in obj grasping
-
-    success = False
 
     target = getGroundTruth(
                             agent = agent, 
@@ -455,8 +454,7 @@ def vanilla_pgd_attack(epsilon_1=0.002, epsilon_2=0.002, alpha_1 = 0.02, alpha_2
         adv_position = torch.tensor([
             torch.clamp(x + x_eta, min = original_xyz_position - alpha_1, max = original_xyz_position + alpha_1),
             torch.clamp(y + y_eta, min = original_xyz_position - alpha_1, max = original_xyz_position + alpha_1),
-            z
-        ], device=device)
+            z], device=device)
         """ attack on position """
 
         """ attack on rotation"""
