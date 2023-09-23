@@ -156,11 +156,11 @@ class ObjectGrasping(BaseEnv):
         pre_obj_grasped = self.obj_grasped
         self.takeAction(action)
         self.wait(100)
+        hold = self.robot.holding_obj != None
 
         state, in_hand, obs, _, _ = self._getObservationAttack(action)
 
         done = self._checkTermination()
-        hold = self.robot.holding_obj != None
 
         reward = 1.0 if self.obj_grasped > pre_obj_grasped else 0.0
 
