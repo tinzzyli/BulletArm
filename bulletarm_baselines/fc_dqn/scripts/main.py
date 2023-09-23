@@ -452,8 +452,8 @@ def vanilla_pgd_attack(epsilon_1 = 0.002, epsilon_2 = 0.002, alpha_1 = 0.02, alp
         # accumulated change should not exceed the boundaries
 
         adv_position = torch.tensor([
-            torch.clamp(x + x_eta, min = torch.tensor([original_xyz_position - alpha_1]), max = torch.tensor([original_xyz_position + alpha_1])),
-            torch.clamp(y + y_eta, min = torch.tensor([original_xyz_position - alpha_1]), max = torch.tensor([original_xyz_position + alpha_1])),
+            torch.clamp(x + x_eta, min = original_xyz_position[0] - alpha_1, max = original_xyz_position[0] + alpha_1),
+            torch.clamp(y + y_eta, min = original_xyz_position[1] - alpha_1, max = original_xyz_position[1] + alpha_1),
             z])
         """ attack on position """
 
