@@ -378,7 +378,7 @@ def vanilla_pgd_attack(epsilon_1=0.002, epsilon_2=0.002, alpha_1 = 0.02, alpha_2
 
     agent = createAgent(test=True)
     agent.eval()
-    agent.loadModel("/content/drive/MyDrive/my_archive/ck3/models/snapshot")
+    agent.loadModel("/content/drive/MyDrive/my_archive/ck3/snapshot")
 
     with torch.no_grad():
         states, in_hands, obs, ORI_OBJECT_LIST, params = envs.resetAttack() 
