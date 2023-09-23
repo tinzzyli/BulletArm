@@ -451,10 +451,9 @@ def vanilla_pgd_attack(epsilon_1 = 0.002, epsilon_2 = 0.002, alpha_1 = 0.02, alp
         # valid range of x and y is 0.2 while for z the range is 0.000025
         # accumulated change should not exceed the boundaries
 
-        adv_position = torch.tensor([
-            torch.clamp(x + x_eta, min = original_xyz_position - alpha_1, max = original_xyz_position + alpha_1),
-            torch.clamp(y + y_eta, min = original_xyz_position - alpha_1, max = original_xyz_position + alpha_1),
-            z], device=device)
+        xyz_position[0] = torch.clamp(x + x_eta, min = original_xyz_position - alpha_1, max = original_xyz_position + alpha_1)
+        xyz_position[1] = torch.clamp(y + y_eta, min = original_xyz_position - alpha_1, max = original_xyz_position + alpha_1)
+        
         """ attack on position """
 
         """ attack on rotation"""
@@ -474,15 +473,13 @@ def vanilla_pgd_attack(epsilon_1 = 0.002, epsilon_2 = 0.002, alpha_1 = 0.02, alp
         l.debug("gradient: "+str([x_grad, y_grad]))
         l.debug("OG position: "+str(xyz_position))
         l.debug("eta: "+str([x_eta, y_eta]))
-        l.debug("ADV position: "+str(adv_position)) 
         # l.debug("successful grasp: "+str(success))    
         l.debug("actions: "+str(actions))  
         l.debug("rotation: "+str(rot_mat))
         # print("successful grasp: "+str(success))
-        print("\n"+adv_position+"\n")
         print("\n"+rot_mat+"\n")
         
-        xyz_position = adv_position.clone().detach()
+        xyz_position = xyz_position.clone().detach()
         rot_mat = rot_mat.clone().detach()
         scale *= scale.clone().detach()
         obs = obs.clone().detach()
