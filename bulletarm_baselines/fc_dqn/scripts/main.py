@@ -433,7 +433,8 @@ def vanilla_pgd_attack(epsilon_1 = 0.002, epsilon_2 = 0.002, alpha_1 = 0.02, alp
         MSE = nn.MSELoss()
 
         """ attack on position """
-        pos_loss = MSE(pos_target, actions[:2])        
+        pos_loss = MSE(target, actions)      
+          
         # pos_grad = torch.autograd.grad(outputs=pos_loss, 
         #                            inputs=xyz_position, 
         #                            grad_outputs=None, 
