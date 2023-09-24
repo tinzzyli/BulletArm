@@ -327,7 +327,8 @@ def getGroundTruth(agent,
                    xyz_position,
                    rot_mat,
                    scale,
-                   device):
+                   device,
+                   step = False):
     
     with torch.no_grad():
         states = states.unsqueeze(dim = 0) # new variable
@@ -352,8 +353,11 @@ def getGroundTruth(agent,
     states = states.to(device)
     actions = torch.cat((actions, states.unsqueeze(1)), dim=1)
     actions = actions.reshape(4)
-    # _, _, _, _, _, success = envs.stepAttack(actions.detach())
 
+    if step:
+        _, _, _, _, _, success = envs.stepAttack(actions.detach())
+        return (actions, success)
+    
     return actions
 
 
@@ -391,21 +395,21 @@ def vanilla_pgd_attack(epsilon_1 = 0.002, epsilon_2 = 0.002, alpha_1 = 0.02, alp
         rot_mat = torch.tensor(original_rot_mat)
         # scale is within 0.6 ~ 0.7 in obj grasping
 
-    target = getGroundTruth(
-                            agent = agent, 
-                            envs = envs,
-                            states = states,
-                            in_hands = in_hands,
-                            obs = obs,
-                            original_object_list = ORI_OBJECT_LIST,
-                            xyz_position = xyz_position,
-                            rot_mat = rot_mat,
-                            scale = scale,
-                            device = device
-                            )
-    
-    pos_target = target[:2].detach()
-    rot_target = target[2].detach()
+        target = getGroundTruth(
+                                agent = agent, 
+                                envs = envs,
+                                states = states,
+                                in_hands = in_hands,
+                                obs = obs,
+                                original_object_list = ORI_OBJECT_LIST,
+                                xyz_position = xyz_position,
+                                rot_mat = rot_mat,
+                                scale = scale,
+                                device = device
+                                )
+        
+        pos_target = target[:2]
+        rot_target = target[2]
 
     l.info('\n device: '+str(device)+
            '\n epsilon_1: '+str(epsilon_1)+
@@ -429,9 +433,6 @@ def vanilla_pgd_attack(epsilon_1 = 0.002, epsilon_2 = 0.002, alpha_1 = 0.02, alp
                                 rot_mat = rot_mat,
                                 scale = scale,
                                 device = device)
-        
-        print("actions.requires_grad: ", actions.requires_grad)
-        print("actions: ", actions)
 
         MSE = nn.MSELoss()
 
@@ -444,6 +445,11 @@ def vanilla_pgd_attack(epsilon_1 = 0.002, epsilon_2 = 0.002, alpha_1 = 0.02, alp
                                    retain_graph=True, 
                                    create_graph=False)[0]
         x_grad, y_grad, _ = pos_grad
+
+        print(x_grad, y_grad)
+        print(pos_target)
+        print(actions[:2])
+
         x,y,z = xyz_position.clone().detach()
         x_eta = torch.clamp(x_grad, min = -epsilon_1,  max = epsilon_1)
         y_eta = torch.clamp(y_grad, min = -epsilon_1,  max = epsilon_1)
