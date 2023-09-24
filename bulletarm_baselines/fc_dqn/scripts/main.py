@@ -342,9 +342,10 @@ def getGroundTruth(agent,
 
     rot_mat_T = rot_mat.T.float()
     new_vertices = torch.matmul(new_vertices, rot_mat_T)
-    new_vertices[:,0:1] += xyz_position[0]
-    new_vertices[:,1:2] += xyz_position[1]
-    new_vertices[:,2:3] += xyz_position[2]
+    x,y,z = xyz_position
+    new_vertices[:,0:1] += x
+    new_vertices[:,1:2] += y
+    new_vertices[:,2:3] += z
     object_list[0].vertices = new_vertices.clone()
 
     obs = rendering(obj_list=object_list).reshape(1,1,128,128)    
@@ -383,7 +384,7 @@ def vanilla_pgd_attack(epsilon_1 = 0.002, epsilon_2 = 0.002, alpha_1 = 0.02, alp
 
     envs = EnvWrapper(num_processes, env, env_config, planner_config)
 
-    agent = createAgent(test=True)
+    agent = createAgent(test=False)
     agent.eval()
     agent.loadModel("/content/drive/MyDrive/my_archive/ck3/snapshot")
 
@@ -738,7 +739,7 @@ if __name__ == '__main__':
     # torch.multiprocessing.set_start_method('spawn')
     # train()    
     # trainAttack()
-    vanilla_pgd_attack(iters=25)
+    vanilla_pgd_attack(iters=5)
     # np_pos = [p.numpy() for p in pos]
     # np.save("/Users/tingxi/BulletArm/np_pos.txt", np.pos)
     
