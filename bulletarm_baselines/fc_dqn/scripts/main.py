@@ -385,8 +385,8 @@ def vanilla_pgd_attack(epsilon_1 = 0.002, epsilon_2 = 0.002, alpha_1 = 0.02, alp
     envs = EnvWrapper(num_processes, env, env_config, planner_config)
 
     agent = createAgent(test=False)
-    agent.eval()
     agent.loadModel("/content/drive/MyDrive/my_archive/ck3/snapshot")
+    agent.eval()
 
     with torch.no_grad():
         states, in_hands, obs, ORI_OBJECT_LIST, params = envs.resetAttack() 
