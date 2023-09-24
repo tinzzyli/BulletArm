@@ -388,6 +388,7 @@ def vanilla_pgd_attack(epsilon_1 = 0.002, epsilon_2 = 0.002, alpha_1 = 0.02, alp
         original_xyz_position, original_rot_mat, scale = params
         xyz_position = original_xyz_position.clone()
         rot_mat = original_rot_mat.clone()
+        scale = scale.clone()
         # scale is within 0.6 ~ 0.7 in obj grasping
 
         target = getGroundTruth(
@@ -441,6 +442,7 @@ def vanilla_pgd_attack(epsilon_1 = 0.002, epsilon_2 = 0.002, alpha_1 = 0.02, alp
                                    create_graph=False)[0]
         x_grad, y_grad, _ = pos_grad
 
+        print("loss: ", pos_loss)
         print("grad: ", pos_grad)
         print("pos_target ", pos_target)
         print("actions[:2] ", actions[:2])
