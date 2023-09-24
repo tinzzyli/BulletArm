@@ -376,10 +376,10 @@ def vanilla_pgd_attack(epsilon_1 = 0.002, epsilon_2 = 0.002, alpha_1 = 0.02, alp
     # to avoid potential errors, run code in single process
     # single runner has only step function, no stepAsync and stepWait
 
-    if torch.cuda.is_available():
-        device = torch.device("cuda")
-    else:
-        device = torch.device("cpu")    
+    # if torch.cuda.is_available():
+    #     device = torch.device("cuda")
+    # else:
+    #     device = torch.device("cpu")    
 
     envs = EnvWrapper(num_processes, env, env_config, planner_config)
 
@@ -446,9 +446,9 @@ def vanilla_pgd_attack(epsilon_1 = 0.002, epsilon_2 = 0.002, alpha_1 = 0.02, alp
                                    create_graph=False)[0]
         x_grad, y_grad, _ = pos_grad
 
-        print(x_grad, y_grad)
-        print(pos_target)
-        print(actions[:2])
+        print("grad: ", pos_grad)
+        print("pos_target ", pos_target)
+        print("actions[:2] ", actions[:2])
 
         x,y,z = xyz_position.clone().detach()
         x_eta = torch.clamp(x_grad, min = -epsilon_1,  max = epsilon_1)
