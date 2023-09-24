@@ -377,23 +377,17 @@ def vanilla_pgd_attack(epsilon_1 = 0.002, epsilon_2 = 0.002, alpha_1 = 0.02, alp
     # to avoid potential errors, run code in single process
     # single runner has only step function, no stepAsync and stepWait
 
-    # if torch.cuda.is_available():
-    #     device = torch.device("cuda")
-    # else:
-    #     device = torch.device("cpu")    
-
     envs = EnvWrapper(num_processes, env, env_config, planner_config)
 
     agent = createAgent(test=False)
-    agent.loadModel("/content/drive/MyDrive/my_archive/ck3/snapshot")
     agent.eval()
+    agent.loadModel("/content/drive/MyDrive/my_archive/ck3/snapshot")
 
     with torch.no_grad():
         states, in_hands, obs, ORI_OBJECT_LIST, params = envs.resetAttack() 
         original_xyz_position, original_rot_mat, scale = params
-        original_xyz_position = torch.tensor(original_xyz_position)
-        xyz_position = torch.tensor(original_xyz_position)
-        rot_mat = torch.tensor(original_rot_mat)
+        xyz_position = original_xyz_position.clone()
+        rot_mat = original_rot_mat.clone()
         # scale is within 0.6 ~ 0.7 in obj grasping
 
         target = getGroundTruth(
