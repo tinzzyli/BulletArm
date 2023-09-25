@@ -111,7 +111,7 @@ class DQN3DASR(Base3D):
         assert voxels.dim()==5
         # alpha is here to make the largest element really big, so it
         # would become very close to 1 after softmax
-        alpha = 1000.0 
+        alpha = 100.0 
         N,C,H,W,D = voxels.shape
         soft_max = nn.functional.softmax(voxels.view(N,C,-1)*alpha,dim=2).to(self.device)
         soft_max = soft_max.view(voxels.shape)
