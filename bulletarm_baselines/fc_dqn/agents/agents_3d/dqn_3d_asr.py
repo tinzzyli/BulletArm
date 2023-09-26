@@ -107,7 +107,7 @@ class DQN3DASR(Base3D):
         d = x.size(2)
         mat1 = torch.ones(1, d).to(self.device)
         mat2 = torch.ones(d, 2).to(self.device)
-        return mat1 @ torch.softmax(x,dim=3).reshape(d,d).to(self.device) @ mat2
+        return mat1 @ torch.softmax(x,dim=2).reshape(d,d).to(self.device) @ mat2
     
 
     
