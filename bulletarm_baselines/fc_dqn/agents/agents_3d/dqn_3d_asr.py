@@ -121,8 +121,8 @@ class DQN3DASR(Base3D):
         pixels = self.soft_argmax(q_value_maps).to(self.device)
 
         q2_output = self.forwardQ2(states, in_hand, obs, obs_encoding, pixels, to_cpu=False).to(self.device)
-        print("q2: ", q2_output.requires_grad)
         a2_id = torch.argmax(q2_output, 1).to(self.device)
+        print("a2_id: ", a2_id.requires_grad)
 
         rand = torch.tensor(np.random.uniform(0, 1, states.size(0))).to(self.device)
         rand_mask = rand < eps
