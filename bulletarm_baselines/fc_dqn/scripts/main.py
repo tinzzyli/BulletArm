@@ -349,10 +349,7 @@ def getGroundTruth(agent,
     object_list[0].vertices = new_vertices.clone()
 
     obs = rendering(obj_list=object_list).reshape(1,1,128,128)   
-    print("obs: ", obs.requires_grad) 
-
     _, _, actions = agent.getEGreedyActionsAttack(states, in_hands, obs, 0)
-    print("actions: ", actions.requires_grad) 
     
     actions = actions.to(device)
     states = states.to(device)
