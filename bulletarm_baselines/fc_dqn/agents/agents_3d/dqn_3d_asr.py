@@ -115,7 +115,6 @@ class DQN3DASR(Base3D):
     def getEGreedyActionsAttack(self, states, in_hand, obs, eps, coef=0.):
         
         q_value_maps, obs_encoding = self.forwardFCN(states, in_hand, obs, to_cpu=False)
-        print("q: ", q_value_maps.shape, q_value_maps.requires_grad)
 
         # pixels = torch_utils.argmax2d(q_value_maps).long()
         # while making pixels as a part of the computational graph, we leave a2_id not requires gradient
