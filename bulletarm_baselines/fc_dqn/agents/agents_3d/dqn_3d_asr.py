@@ -100,30 +100,16 @@ class DQN3DASR(Base3D):
         return q_value_maps, action_idx, actions
     
 
-    def soft_argmax(self, voxels):
-        """
-        credits to:
-        https://github.com/Fdevmsy/PyTorch-Soft-Argmax/tree/master
-        Arguments: voxel patch in shape (batch_size, channel, H, W, depth)
-        Return: 3D coordinates in shape (batch_size, channel, 3)
-        """
+    def soft_argmax(self, t):
+        return self.new_softmax(t) + torch_utils.argmax2d(t) - self.new_softmax(t).detach()
 
-        assert voxels.dim()==5
-        # alpha is here to make the largest element really big, so it
-        # would become very close to 1 after softmax
-        alpha = 100.0 
-        N,C,H,W,D = voxels.shape
-        soft_max = nn.functional.softmax(voxels.view(N,C,-1)*alpha,dim=2).to(self.device)
-        soft_max = soft_max.view(voxels.shape)
-        indices_kernel = torch.arange(start=0,end=H*W*D).unsqueeze(0).to(self.device)
-        indices_kernel = indices_kernel.view((H,W,D))
-        conv = soft_max*indices_kernel
-        indices = conv.sum(2).sum(2).sum(2)
-        z = indices%D
-        y = (indices/D).floor()%W
-        x = (((indices/D).floor())/W).floor()%H
-        coords = torch.stack([x,y,z],dim=2)
-        return torch.div(coords, 1, rounding_mode='floor')
+    def new_softmax(self, x):
+        d = x.size(2)
+        mat1 = torch.ones(1, d)
+        mat2 = torch.ones(d, 2)
+        return mat1 @ torch.softmax(x,dim=3).reshape(d,d) @ mat2
+    
+
     
 
     def getEGreedyActionsAttack(self, states, in_hand, obs, eps, coef=0.):
@@ -132,7 +118,7 @@ class DQN3DASR(Base3D):
         q_value_maps = q_value_maps.reshape(1,1,128,128,1)
         # pixels = torch_utils.argmax2d(q_value_maps).long()
         # while making pixels as a part of the computational graph, we leave a2_id not requires gradient
-        pixels = self.soft_argmax(q_value_maps)[:,:,:2].squeeze(dim=0).to(self.device)
+        pixels = self.soft_argmax(q_value_maps).to(self.device)
 
         q2_output = self.forwardQ2(states, in_hand, obs, obs_encoding, pixels, to_cpu=False).to(self.device)
         a2_id = torch.argmax(q2_output, 1).to(self.device)
