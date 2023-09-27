@@ -109,9 +109,6 @@ class DQN3DASR(Base3D):
         ret =  torch.cat(((m / d).view(-1, 1), (m % d).view(-1, 1)), dim=1)
         return ret - (ret%1.0).detach() 
             
-
-    
-
     def getEGreedyActionsAttack(self, states, in_hand, obs, eps, coef=0.):
         
         q_value_maps, obs_encoding = self.forwardFCN(states, in_hand, obs, to_cpu=False)
@@ -125,7 +122,6 @@ class DQN3DASR(Base3D):
 
         rand = torch.tensor(np.random.uniform(0, 1, states.size(0))).to(self.device)
         rand_mask = rand < eps
-        print("params: ", states.shape, in_hand.shape)
 
         if type(obs) is tuple:
             hm, ih = obs

@@ -432,7 +432,7 @@ def vanilla_pgd_attack(epsilon_1 = 0.002, epsilon_2 = 0.002, alpha_1 = 0.02, alp
                                 device = device)
         
         loss = q_value_maps.mean()
-        print(torch.autograd.grad(loss, xyz_position))
+        print(torch.autograd.grad(loss, xyz_position,allow_unused=True))
 
         MSE = nn.MSELoss()
 
