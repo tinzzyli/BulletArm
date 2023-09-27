@@ -100,15 +100,15 @@ class DQN3DASR(Base3D):
         return q_value_maps, action_idx, actions
     
 
-    def soft_argmax(self, t):
-        return self.new_softmax(t) + torch_utils.argmax2d(t) - self.new_softmax(t).detach()
+    def soft_argmax2d(self, tensor):
 
-    def new_softmax(self, x):
-        d = x.size(2)
-        mat1 = torch.ones(1, d).to(self.device)
-        mat2 = torch.ones(d, 2).to(self.device)
-        return mat1 @ torch.softmax(x,dim=2).reshape(d,d).to(self.device) @ mat2
-    
+        n = tensor.size(0)
+        d = tensor.size(2) + torch.min(tensor) - torch.min(tensor).detach()
+        m = tensor.view(n, -1).argmax(1) + torch.max(tensor) - torch.max(tensor).detach()
+        
+        ret =  torch.cat(((m / d).view(-1, 1), (m % d).view(-1, 1)), dim=1)
+        return ret - (ret%1).detach() 
+            
 
     
 
@@ -116,13 +116,11 @@ class DQN3DASR(Base3D):
         
         q_value_maps, obs_encoding = self.forwardFCN(states, in_hand, obs, to_cpu=False)
 
-        # pixels = torch_utils.argmax2d(q_value_maps).long()
+        pixels = self.soft_argmax2d(q_value_maps)
         # while making pixels as a part of the computational graph, we leave a2_id not requires gradient
-        pixels = self.soft_argmax(q_value_maps).to(self.device)
 
         q2_output = self.forwardQ2(states, in_hand, obs, obs_encoding, pixels, to_cpu=False).to(self.device)
         a2_id = torch.argmax(q2_output, 1).to(self.device)
-        print("a2_id: ", a2_id.requires_grad)
 
         rand = torch.tensor(np.random.uniform(0, 1, states.size(0))).to(self.device)
         rand_mask = rand < eps
