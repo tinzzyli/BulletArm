@@ -742,15 +742,28 @@ def test():
     qmaps, _ , actions = agent.getEGreedyActionsAttack(states, in_hand, obs,0)
     qmaps = qmaps.to(device)
     actions = actions.to(device)
+
+
     lf = nn.MSELoss()
     q_loss = lf(qmaps, obs)
     q_grad = torch.autograd.grad(q_loss, obs, retain_graph=True)
     print(q_grad)
 
+
     a_loss = actions.mean()
-    a_grad = torch.autograd.grad(a_loss, obs)
+    a_grad = torch.autograd.grad(a_loss, obs, retain_graph=True)
     print(a_grad)
 
+    n = qmaps.size(0)
+    d = qmaps.size(2) + torch.min(qmaps) - torch.min(qmaps).detach()
+    m = qmaps.view(n, -1).argmax(1) + torch.max(qmaps) - torch.max(qmaps).detach()
+    ret =  torch.cat(((m / d).view(-1, 1), (m % d).view(-1, 1)), dim=1)
+    ret = ret - (ret%1.0).detach()
+
+    a2_loss = ret.mean()
+    a2_grad = torch.autograd.grad(a2_loss, obs)
+    print(a2_grad)
+          
 if __name__ == '__main__':
     # torch.multiprocessing.set_start_method('spawn')
     # train()    
