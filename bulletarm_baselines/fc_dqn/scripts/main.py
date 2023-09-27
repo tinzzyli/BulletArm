@@ -737,11 +737,24 @@ def trainAttack():
 def test():
     agent = createAgent(test=True)
     obs = torch.rand(1,1,128,128,requires_grad = True)
-    qmaps, _ , actions = agent.getEGreedyActionsAttack(obs,0)
+    states = torch.rand(1)
+    in_hand = torch.rand(1,1,24,24)
+    qmaps, _ , actions = agent.getEGreedyActionsAttack(states, in_hand, obs,0)
+
+    lf = nn.MSELoss()
+    q_loss = lf(qmaps, obs)
+    q_grad = torch.autograd.grad(q_loss, obs, retain_graph=True)
+    print(q_grad)
+
+    a_loss = actions.mean()
+    a_grad = torch.autograd.grad(a_loss, obs)
+    print(a_grad)
+
 if __name__ == '__main__':
     # torch.multiprocessing.set_start_method('spawn')
     # train()    
     # trainAttack()
+    test()
     vanilla_pgd_attack(iters=5)
     # np_pos = [p.numpy() for p in pos]
     # np.save("/Users/tingxi/BulletArm/np_pos.txt", np.pos)
