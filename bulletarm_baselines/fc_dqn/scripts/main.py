@@ -736,7 +736,8 @@ def trainAttack():
 
 def test():
     agent = createAgent(test=True)
-    obs = torch.rand(1,1,128,128,requires_grad = True).to(device)
+    inp = torch.rand(3,requires_grad = True)
+    obs = torch.rand(1,1,128,128).to(device) + inp[0] - inp[1]
     states = torch.rand(1).to(device)
     in_hand = torch.rand(1,1,24,24).to(device)
     qmaps, _ , actions = agent.getEGreedyActionsAttack(states, in_hand, obs,0)
@@ -745,13 +746,13 @@ def test():
 
 
     lf = nn.MSELoss()
-    q_loss = lf(qmaps, obs)
-    q_grad = torch.autograd.grad(q_loss, obs, retain_graph=True)
+    q_loss = lf(qmaps, obs.detach())
+    q_grad = torch.autograd.grad(q_loss, inp, retain_graph=True)
     print(q_grad)
 
 
     a_loss = actions.mean()
-    a_grad = torch.autograd.grad(a_loss, obs, retain_graph=True)
+    a_grad = torch.autograd.grad(a_loss, inp, retain_graph=True)
     print(a_grad)
 
     n = qmaps.size(0)
@@ -761,7 +762,7 @@ def test():
     ret = ret - (ret%1.0).detach()
 
     a2_loss = ret.mean()
-    a2_grad = torch.autograd.grad(a2_loss, obs)
+    a2_grad = torch.autograd.grad(a2_loss, inp)
     print(a2_grad)
           
 if __name__ == '__main__':
