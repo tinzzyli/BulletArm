@@ -405,8 +405,8 @@ def vanilla_pgd_attack(epsilon_1 = 0.002, epsilon_2 = 0.002, alpha_1 = 0.02, alp
                                 device = device
                                 )
         
-        pos_target = target[:2]
-        rot_target = target[2]
+        action_pos_target = target[:2]
+        action_rot_target = target[2]
 
     l.info('\n device: '+str(device)+
            '\n epsilon_1: '+str(epsilon_1)+
@@ -434,10 +434,10 @@ def vanilla_pgd_attack(epsilon_1 = 0.002, epsilon_2 = 0.002, alpha_1 = 0.02, alp
         MSE = nn.MSELoss()
 
         """ attack on position """
-        pos_loss = MSE(target, actions)      
+        pos_loss = MSE(target[:2], actions)      
           
         pos_grad = torch.autograd.grad(outputs=pos_loss, 
-                                   inputs=xyz_position, 
+                                   inputs=xyz_position[:2], 
                                    grad_outputs=None, 
                                    allow_unused=False, 
                                    retain_graph=True, 
@@ -447,7 +447,7 @@ def vanilla_pgd_attack(epsilon_1 = 0.002, epsilon_2 = 0.002, alpha_1 = 0.02, alp
 
         print("loss: ", pos_loss)
         print("grad: ", pos_grad)
-        print("pos_target ", pos_target)
+        print("pos_target ", action_pos_target)
         print("actions[:2] ", actions[:2])
 
         x,y,z = xyz_position.clone().detach()
@@ -464,7 +464,7 @@ def vanilla_pgd_attack(epsilon_1 = 0.002, epsilon_2 = 0.002, alpha_1 = 0.02, alp
         """ attack on position """
 
         """ attack on rotation"""
-        rot_loss = MSE(rot_target, actions[2])
+        rot_loss = MSE(action_rot_target, actions[2])
         rot_grad = torch.autograd.grad(outputs=rot_loss, 
                                    inputs=rot_mat, 
                                    grad_outputs=None, 
