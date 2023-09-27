@@ -105,7 +105,7 @@ class DQN3DASR(Base3D):
         n = tensor.size(0)
         d = tensor.size(2) + torch.min(tensor) - torch.min(tensor).detach()
         m = tensor.view(n, -1).argmax(1) + torch.max(tensor) - torch.max(tensor).detach()
-        
+
         ret =  torch.cat(((m / d).view(-1, 1), (m % d).view(-1, 1)), dim=1)
         return ret - (ret%1).detach() 
             
@@ -117,6 +117,7 @@ class DQN3DASR(Base3D):
         q_value_maps, obs_encoding = self.forwardFCN(states, in_hand, obs, to_cpu=False)
 
         pixels = self.soft_argmax2d(q_value_maps)
+
         # while making pixels as a part of the computational graph, we leave a2_id not requires gradient
 
         q2_output = self.forwardQ2(states, in_hand, obs, obs_encoding, pixels, to_cpu=False).to(self.device)
