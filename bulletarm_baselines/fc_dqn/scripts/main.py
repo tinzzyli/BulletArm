@@ -349,7 +349,7 @@ def getGroundTruth(agent,
     object_list[0].vertices = new_vertices.clone()
 
     obs = rendering(obj_list=object_list).reshape(1,1,128,128)   
-    _, _, actions = agent.getEGreedyActionsAttack(states, in_hands, obs, 0)
+    q_value_maps, _, actions = agent.getEGreedyActionsAttack(states, in_hands, obs, 0)
     
     actions = actions.to(device)
     states = states.to(device)
@@ -360,7 +360,7 @@ def getGroundTruth(agent,
         _, _, _, _, _, success = envs.stepAttack(actions.detach())
         return (actions, success)
     
-    return actions
+    return q_value_maps, actions
 
 
 def vanilla_pgd_attack(epsilon_1 = 0.002, epsilon_2 = 0.002, alpha_1 = 0.02, alpha_2 = 0.02, iters=10):
@@ -392,7 +392,7 @@ def vanilla_pgd_attack(epsilon_1 = 0.002, epsilon_2 = 0.002, alpha_1 = 0.02, alp
         scale = scale.clone()
         # scale is within 0.6 ~ 0.7 in obj grasping
 
-        target = getGroundTruth(
+        _, target = getGroundTruth(
                                 agent = agent, 
                                 envs = envs,
                                 states = states,
@@ -419,39 +419,28 @@ def vanilla_pgd_attack(epsilon_1 = 0.002, epsilon_2 = 0.002, alpha_1 = 0.02, alp
         xyz_position.requires_grad = True
         rot_mat.requires_grad = True
 
-#======================================
-        states = states.unsqueeze(dim = 0) # new variable
-        in_hands = in_hands.unsqueeze(dim = 0) # new variable
-        obs = obs.unsqueeze(dim = 0) # new variable
-        object_list = ORI_OBJECT_LIST[:]
-        new_vertices = object_list[0].vertices.to(device) # new variable
-        scale = torch.tensor(scale)
-
-        new_vertices *= scale
-
-        rot_mat_T = rot_mat.T.float()
-        new_vertices = torch.matmul(new_vertices, rot_mat_T)
-        x,y,z = xyz_position
-        new_vertices[:,0:1] += x
-        new_vertices[:,1:2] += y
-        new_vertices[:,2:3] += z
-        object_list[0].vertices = new_vertices.clone()
-
-        obs = rendering(obj_list=object_list).reshape(1,1,128,128)   
-        _, _, actions = agent.getEGreedyActionsAttack(states, in_hands, obs, 0)
+        q_value_maps, actions = getGroundTruth(
+                                agent = agent, 
+                                envs = envs,
+                                states = states,
+                                in_hands = in_hands,
+                                obs = obs,
+                                original_object_list = ORI_OBJECT_LIST,
+                                xyz_position = xyz_position,
+                                rot_mat = rot_mat,
+                                scale = scale,
+                                device = device)
         
-        actions = actions.to(device)
-        states = states.to(device)
-        actions = torch.cat((actions, states.unsqueeze(1)), dim=1)
-        actions = actions.reshape(4)
-#======================================
+        loss = q_value_maps.mean()
+        print(torch.autograd.grad(loss, xyz_position))
+
         MSE = nn.MSELoss()
 
         """ attack on position """
         pos_loss = MSE(target[:2], actions[:2])      
           
         pos_grad = torch.autograd.grad(outputs=pos_loss, 
-                                   inputs=xyz_position, 
+                                   inputs=xyz_position[:2], 
                                    grad_outputs=None, 
                                    allow_unused=False, 
                                    retain_graph=True, 
