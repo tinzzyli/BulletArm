@@ -736,7 +736,8 @@ def trainAttack():
 
 def test():
     agent = createAgent(test=True)
-
+    obs = torch.rand(1,1,128,128,requires_grad = True)
+    qmaps, _ , actions = agent.getEGreedyActionsAttack(obs,0)
 if __name__ == '__main__':
     # torch.multiprocessing.set_start_method('spawn')
     # train()    
