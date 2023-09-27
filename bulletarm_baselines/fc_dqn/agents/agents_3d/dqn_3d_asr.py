@@ -107,7 +107,7 @@ class DQN3DASR(Base3D):
         m = tensor.view(n, -1).argmax(1) + torch.max(tensor) - torch.max(tensor).detach()
 
         ret =  torch.cat(((m / d).view(-1, 1), (m % d).view(-1, 1)), dim=1)
-        return ret #- (ret%1.0).detach() 
+        return ret - (ret%1.0).detach() 
             
 
     

@@ -383,6 +383,7 @@ def vanilla_pgd_attack(epsilon_1 = 0.002, epsilon_2 = 0.002, alpha_1 = 0.02, alp
     agent = createAgent(test=False)
     agent.eval()
     agent.loadModel("/content/drive/MyDrive/my_archive/ck3/snapshot")
+    agent.train()
 
     with torch.no_grad():
         states, in_hands, obs, ORI_OBJECT_LIST, params = envs.resetAttack() 
@@ -734,46 +735,9 @@ def trainAttack():
     envs.close()
     eval_envs.close()
 
-def test():
-    agent = createAgent(test=True)
-    inp = torch.rand(1,3,requires_grad = True)
-    obs = inp @ torch.rand(3,128) * torch.rand(128,128)
-    obs = obs.reshape(1,1,128,128).to(device) 
-    states = torch.rand(1).to(device)
-    in_hand = torch.rand(1,1,24,24).to(device)
-    qmaps, _ , actions = agent.getEGreedyActionsAttack(states, in_hand, obs,0)
-    qmaps = qmaps.to(device)
-    actions = actions.to(device)
-
-
-    lf = nn.MSELoss()
-    q_loss = lf(qmaps, obs.detach())
-    q_grad = torch.autograd.grad(q_loss, inp, retain_graph=True)
-    print(q_grad)
-
-
-    a_loss = actions.mean()
-    a_grad = torch.autograd.grad(a_loss, inp, retain_graph=True)
-    print(a_grad)
-
-    n = qmaps.size(0)
-    d = qmaps.size(2) + torch.min(qmaps) - torch.min(qmaps).detach()
-    m = qmaps.view(n, -1).argmax(1) + torch.max(qmaps) - torch.max(qmaps).detach()
-    ret =  torch.cat(((m / d).view(-1, 1), (m % d).view(-1, 1)), dim=1)
-    ret = ret - (ret%1.0).detach()
-
-    a2_loss = ret.mean()
-    a2_grad = torch.autograd.grad(a2_loss, inp)
-    print(a2_grad)
           
 if __name__ == '__main__':
-    # torch.multiprocessing.set_start_method('spawn')
     # train()    
     # trainAttack()
-    test()
     vanilla_pgd_attack(iters=5)
-    # np_pos = [p.numpy() for p in pos]
-    # np.save("/Users/tingxi/BulletArm/np_pos.txt", np.pos)
-    
-    # train()
     print("end")
