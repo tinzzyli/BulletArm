@@ -384,26 +384,28 @@ def vanilla_pgd_attack(epsilon_1 = 0.002, epsilon_2 = 0.002, alpha_1 = 0.02, alp
     agent.eval()
     agent.loadModel("/content/drive/MyDrive/my_archive/ck3/snapshot")
 
-    # with torch.no_grad():
-    #     states, in_hands, obs, ORI_OBJECT_LIST, params = envs.resetAttack() 
-    #     original_xyz_position, original_rot_mat, scale = params
-    #     xyz_position = original_xyz_position.clone()
-    #     rot_mat = original_rot_mat.clone()
-    #     scale = scale.clone()
-    #     # scale is within 0.6 ~ 0.7 in obj grasping
+    with torch.no_grad():
+        pass
+    for _ in range(1):
+        states, in_hands, obs, ORI_OBJECT_LIST, params = envs.resetAttack() 
+        original_xyz_position, original_rot_mat, scale = params
+        xyz_position = original_xyz_position.clone()
+        rot_mat = original_rot_mat.clone()
+        scale = scale.clone()
+        # scale is within 0.6 ~ 0.7 in obj grasping
 
-    #     target = getGroundTruth(
-    #                             agent = agent, 
-    #                             envs = envs,
-    #                             states = states,
-    #                             in_hands = in_hands,
-    #                             obs = obs,
-    #                             original_object_list = ORI_OBJECT_LIST,
-    #                             xyz_position = xyz_position,
-    #                             rot_mat = rot_mat,
-    #                             scale = scale,
-    #                             device = device
-    #                             )
+        target = getGroundTruth(
+                                agent = agent, 
+                                envs = envs,
+                                states = states,
+                                in_hands = in_hands,
+                                obs = obs,
+                                original_object_list = ORI_OBJECT_LIST,
+                                xyz_position = xyz_position,
+                                rot_mat = rot_mat,
+                                scale = scale,
+                                device = device
+                                )
     
     target = torch.rand(1,3)
     pos_target = target[:2]
