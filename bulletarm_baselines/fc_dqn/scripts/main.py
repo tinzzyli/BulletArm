@@ -385,8 +385,6 @@ def vanilla_pgd_attack(epsilon_1 = 0.002, epsilon_2 = 0.002, alpha_1 = 0.02, alp
     agent.loadModel("/content/drive/MyDrive/my_archive/ck3/snapshot")
 
     with torch.no_grad():
-        pass
-    for _ in range(1):
         states, in_hands, obs, ORI_OBJECT_LIST, params = envs.resetAttack() 
         original_xyz_position, original_rot_mat, scale = params
         xyz_position = original_xyz_position.clone()
@@ -407,7 +405,6 @@ def vanilla_pgd_attack(epsilon_1 = 0.002, epsilon_2 = 0.002, alpha_1 = 0.02, alp
                                 device = device
                                 )
     
-    target = torch.rand(1,3)
     pos_target = target[:2]
     rot_target = target[2]
 
@@ -437,7 +434,7 @@ def vanilla_pgd_attack(epsilon_1 = 0.002, epsilon_2 = 0.002, alpha_1 = 0.02, alp
         MSE = nn.MSELoss()
 
         """ attack on position """
-        pos_loss = MSE(target, actions)      
+        pos_loss = MSE(target[:2], actions[:2])      
           
         pos_grad = torch.autograd.grad(outputs=pos_loss, 
                                    inputs=xyz_position, 
@@ -736,6 +733,9 @@ def trainAttack():
     logger.saveCheckPoint(agent.getSaveState(), replay_buffer.getSaveState())
     envs.close()
     eval_envs.close()
+
+def test():
+    agent = createAgent(test=True)
 
 if __name__ == '__main__':
     # torch.multiprocessing.set_start_method('spawn')

@@ -125,12 +125,14 @@ class DQN3DASR(Base3D):
 
         rand = torch.tensor(np.random.uniform(0, 1, states.size(0))).to(self.device)
         rand_mask = rand < eps
+        print("rand_mask: ", rand_mask)
 
         if type(obs) is tuple:
             hm, ih = obs
         else:
             hm = obs
         for i, m in enumerate(rand_mask):
+            print("i, m: ", i, m)
             if m:
                 pixel_candidates = torch.nonzero(hm[i, 0]>-0.01)
                 rand_pixel = pixel_candidates[np.random.randint(pixel_candidates.size(0))]
