@@ -736,11 +736,12 @@ def trainAttack():
 
 def test():
     agent = createAgent(test=True)
-    obs = torch.rand(1,1,128,128,requires_grad = True)
-    states = torch.rand(1)
-    in_hand = torch.rand(1,1,24,24)
+    obs = torch.rand(1,1,128,128,requires_grad = True).to(device)
+    states = torch.rand(1).to(device)
+    in_hand = torch.rand(1,1,24,24).to(device)
     qmaps, _ , actions = agent.getEGreedyActionsAttack(states, in_hand, obs,0)
-
+    qmaps = qmaps.to(device)
+    actions = actions.to(device)
     lf = nn.MSELoss()
     q_loss = lf(qmaps, obs)
     q_grad = torch.autograd.grad(q_loss, obs, retain_graph=True)
