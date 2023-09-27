@@ -737,7 +737,7 @@ def trainAttack():
 def test():
     agent = createAgent(test=True)
     inp = torch.rand(3,requires_grad = True)
-    obs = torch.rand(1,1,128,128).to(device) + inp[0] - inp[1]
+    obs = torch.rand(1,1,128,128).to(device) * inp[0] * inp[1]
     states = torch.rand(1).to(device)
     in_hand = torch.rand(1,1,24,24).to(device)
     qmaps, _ , actions = agent.getEGreedyActionsAttack(states, in_hand, obs,0)
