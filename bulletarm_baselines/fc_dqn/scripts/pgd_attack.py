@@ -30,6 +30,30 @@ from bulletarm_baselines.fc_dqn.utils.parameters import *
 from bulletarm_baselines.fc_dqn.utils.torch_utils import augmentBuffer, augmentBufferD4
 from bulletarm_baselines.fc_dqn.scripts.fill_buffer_deconstruct import fillDeconstructUsingRunner
 
+def rendering(obj_list):
+    
+    cam_look_at = torch.tensor([0.5, 0.0, 0.0])
+    cam_position = torch.tensor([0.5, 0.0, 10.0])
+    camera = pyredner.Camera(position = cam_position,
+                        look_at = cam_look_at,
+                        up = torch.tensor([-1.0, 0.0, 0.0]),
+                        fov = torch.tensor([2.291525676350207]), # in degree
+                        clip_near = 1e-2, # needs to > 0
+                        resolution = (128, 128),
+                        )
+    scene = pyredner.Scene(camera = camera, objects = obj_list)
+    chan_list = [pyredner.channels.depth]
+    depth_img = pyredner.render_generic(scene, chan_list)
+    # return depth_img.reshape(128,128)
+    near = 0.09
+    far = 0.010
+    depth = near * far /(far - depth_img)
+    heightmap = torch.abs(depth - torch.max(depth))
+    heightmap =  heightmap*37821.71428571428 - 3407.3605408838816
+    heightmap = torch.relu(heightmap)
+    heightmap = torch.where(heightmap > 1.0, 6e-3, heightmap) 
+
+    return heightmap.reshape(128,128)
 
 def getGroundTruth(agent, 
                    states,
@@ -76,7 +100,7 @@ def getGroundTruth(agent,
     
     return q_value_maps, actions
 
-def pgd_attack(epsilon_1 = 0.002, epsilon_2 = 0.002, alpha_1 = 0.02, alpha_2 = 0.02, iters=10):
+def pgd_attack(envs, agent, epsilon_1 = 0.002, epsilon_2 = 0.002, alpha_1 = 0.02, alpha_2 = 0.02, iters=10):
     
     l = logging.getLogger('my_logger')
     l.setLevel(logging.DEBUG)
@@ -90,10 +114,7 @@ def pgd_attack(epsilon_1 = 0.002, epsilon_2 = 0.002, alpha_1 = 0.02, alpha_2 = 0
     l.addHandler(file_handler)
     # to avoid potential errors, run code in single process
 
-    envs = EnvWrapper(num_processes, env, env_config, planner_config)
-    agent = createAgent(test=False)
-    agent.eval()
-    # agent.loadModel("/content/drive/MyDrive/my_archive/ck3/snapshot")
+
     states, in_hands, obs, object_dir_list, params = envs.resetAttack() 
     original_xyz_position, original_rot_mat, scale = params
 
@@ -126,15 +147,14 @@ def pgd_attack(epsilon_1 = 0.002, epsilon_2 = 0.002, alpha_1 = 0.02, alpha_2 = 0
         xyz_position.requires_grad = True
         rot_mat.requires_grad = True
 
-        q_value_maps, actions = getGroundTruth(
-                                agent = agent, 
-                                states = states,
-                                in_hands = in_hands,
-                                object_dir_list = object_dir_list,
-                                xyz_position = xyz_position,
-                                rot_mat = rot_mat,
-                                scale = scale,
-                                device = device)
+        q_value_maps, actions = getGroundTruth(agent = agent, 
+                                               states = states,
+                                               in_hands = in_hands,
+                                               object_dir_list = object_dir_list,
+                                               xyz_position = xyz_position,
+                                               rot_mat = rot_mat,
+                                               scale = scale,
+                                               device = device)
 
         """ attack on position """
         loss = loss_function(target, actions)      
@@ -149,8 +169,7 @@ def pgd_attack(epsilon_1 = 0.002, epsilon_2 = 0.002, alpha_1 = 0.02, alpha_2 = 0
 
         print("loss: ", loss)
         print("grad: ", grad)
-        print("pos_target ", target)
-        print("actions[:2] ", actions[:2])
+        print("actions ", actions)
 
         x,y,z = xyz_position.clone().detach()
         x_eta = torch.clamp(x_grad, min = -epsilon_1,  max = epsilon_1)
@@ -185,12 +204,64 @@ def pgd_attack(epsilon_1 = 0.002, epsilon_2 = 0.002, alpha_1 = 0.02, alpha_2 = 0
         xyz_position = adv_position.clone().detach()
         rot_mat = rot_mat.clone().detach()
         scale = scale.clone().detach()
-
+    
+    _, actions = getGroundTruth(agent = agent,
+                                states = states,
+                                in_hands = in_hands,
+                                object_dir_list = object_dir_list,
+                                xyz_position = xyz_position,
+                                rot_mat = rot_mat,
+                                scale = scale,
+                                device = device)
+    
+    _, _, actions = agent.getEGreedyActionsAttack(states, in_hands, obs, 0)
+    actions = actions.to(device)
+    states = states.to(device)
+    actions = torch.cat((actions, states.unsqueeze(1)), dim=1)
+    actions = actions.reshape(4)
+    _, _, _, reward, _ = envs.step(actions.detach())
+    
     l.removeHandler(file_handler)
     logging.shutdown()
-    return 0
+
+    return reward
+
+def heightmapAttack(envs, agent, epsilon = 1e-5, alpha = 4e-4, iters = 5):
+
+    states, in_hands, obs = envs.reset() 
+    loss_function = nn.MSELoss()
+    obs = obs.unsqueeze(dim = 0).detach() # new variable
+    states = states.unsqueeze(dim = 0).detach() # new variable
+    in_hands = in_hands.unsqueeze(dim = 0).detach() # new variable
+
+    original_obs = obs.clone().detach()
+    _, _, target = agent.getEGreedyActionsAttack(states, in_hands, obs, 0)
+
+    for _ in range(iters):
+        obs.requires_grad = True
+        _, _, actions = agent.getEGreedyActionsAttack(states, in_hands, obs, 0)
+        loss = loss_function(actions, target)
+        grad = torch.autograd.grad(loss, obs)[0]
+
+        eta = grad.sign() * epsilon
+        obs = obs.detach()
+        obs = torch.clamp(obs + eta, min = original_obs - alpha, max = original_obs + alpha)
+    
+    _, _, actions = agent.getEGreedyActionsAttack(states, in_hands, obs, 0)
+    actions = actions.to(device)
+    states = states.to(device)
+    actions = torch.cat((actions, states.unsqueeze(1)), dim=1)
+    actions = actions.reshape(4)
+    _, _, _, reward, _ = envs.step(actions.detach())
+    
+    return reward
 
 
 if __name__ == '__main__':
-    pgd_attack(iters=5)
+    envs = EnvWrapper(num_processes, env, env_config, planner_config)
+    agent = createAgent(test=False)
+    agent.eval()
+    # agent.loadModel("/content/drive/MyDrive/my_archive/ck3/snapshot")
+
+    pgd_attack(envs, agent, iters=5)
     print("end")

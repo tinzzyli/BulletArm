@@ -97,7 +97,6 @@ def evaluate(envs, agent, logger):
 
 def train():
     
-
     eval_thread = None
     start_time = time.time()
     if seed is not None:
@@ -160,7 +159,6 @@ def train():
                 planner_bar = tqdm(total=planner_episode)
             local_transitions = [[] for _ in range(planner_num_process)]
             while j < planner_episode:
-                print("------------------> j: ", j+1)
 
                 plan_actions = planner_envs.getNextAction()
                 planner_actions_star_idx, planner_actions_star = agent.getActionFromPlan(plan_actions)
@@ -349,6 +347,7 @@ def trainAttack():
             planner_envs = envs
             planner_num_process = num_processes
             j = 0
+            """states, in_hands and obs comes in a different shape in single process"""
             states, in_hands, obs, _, _ = planner_envs.resetAttack()
             states = states.unsqueeze(dim=0)
             in_hands = in_hands.unsqueeze(dim=0)
@@ -357,22 +356,19 @@ def trainAttack():
             s = 0
             if not no_bar:
                 planner_bar = tqdm(total=planner_episode)
+            """num_process == 0 but this loop is expected to run one time"""
             local_transitions = [[] for _ in range(1)]
             while j < planner_episode:
-                print("------------------> j: ", j+1)
 
                 plan_actions = planner_envs.getNextAction()
+                plan_actions = plan_actions.unsqueeze(dim=0)
                 plan_actions = plan_actions.to(device)
                 states = states.to(device)
                 in_hands = in_hands.to(device)
                 obs = obs.to(device)
-                plan_actions = plan_actions.unsqueeze(dim=0)
 
                 planner_actions_star_idx, planner_actions_star = agent.getActionFromPlan(plan_actions)
-
                 planner_actions_star = planner_actions_star.to(device)
-                print(planner_actions_star)
-
                 planner_actions_star = torch.cat((planner_actions_star, states.unsqueeze(1)), dim=1)
                 planner_actions_star = planner_actions_star.reshape(4)
 
@@ -444,7 +440,7 @@ def trainAttack():
         else:
             eps = exploration.value(logger.num_eps)
         is_expert = 0
-        q_value_maps, actions_star_idx, actions_star = agent.getEGreedyActions(states, in_hands, obs, eps)
+        q_value_maps, actions_star_idx, actions_star = agent.getEGreedyActionsAttack(states, in_hands, obs, eps)
 
         buffer_obs = getCurrentObs(in_hands, obs)
 
@@ -529,6 +525,4 @@ def trainAttack():
 
 if __name__ == '__main__':
     # train()    
-
-    vanilla_pgd_attack(iters=5)
     print("end")
