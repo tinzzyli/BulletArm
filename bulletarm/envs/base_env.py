@@ -383,14 +383,14 @@ class BaseEnv:
 
   def _getObservationAttack(self, action=None):
     old_heightmap = copy.copy(self.heightmap)
-    self.heightmap, ORI_OBJECT_LIST, params = self._getHeightmapAttack()
+    self.heightmap, object_dir_list, params = self._getHeightmapAttack()
     if action is None or self._isHolding() == False:
       in_hand_img = self.getEmptyInHand()
     else:
       motion_primative, x, y, z, rot = self._decodeAction(action)
       in_hand_img = self.getInHandImage(old_heightmap, x, y, z, rot, self.heightmap)
 
-    return self._isHolding(), in_hand_img, self.heightmap.reshape([1, self.heightmap_size, self.heightmap_size]), ORI_OBJECT_LIST, params
+    return self._isHolding(), in_hand_img, self.heightmap.reshape([1, self.heightmap_size, self.heightmap_size]), object_dir_list, params
   
 
   def _getHeightmap(self):

@@ -54,10 +54,11 @@ class Sensor(object):
 
   def importSingleObject(self, scale, object_index):
     object_index = str(object_index).zfill(3)
-    dir = "./bulletarm/pybullet/urdf/object/GraspNet1B_object/*/convex.obj"
-    dir = dir.replace("*", object_index)
-    o = pyredner.load_obj(dir, return_objects=True)
-    new_obj = o[0]
+    object_dir = "./bulletarm/pybullet/urdf/object/GraspNet1B_object/*/convex.obj"
+    object_dir = object_dir.replace("*", object_index)
+    o = pyredner.load_obj(object_dir, return_objects=True)
+    ORI_OBJECT = o[0]
+    new_object = o[0]
 
     orien = self.objs[0].getRotation()
     _x, _y, _z, _w = orien
@@ -73,21 +74,20 @@ class Sensor(object):
     z = self.objs[0].getZPosition()
     xyz_position = np.array([x, y, z])
 
-    new_vertices = new_obj.vertices.clone()
+    new_vertices = new_object.vertices.clone()
     new_vertices = new_vertices.to(self.device)
     new_vertices = new_vertices.float()
-    ORI_OBJECT = o[0]
     new_vertices *= scale
     scale = np.copy(scale)
     new_vertices = torch.matmul(new_vertices, R.T)
     new_vertices[:,0:1] += x
     new_vertices[:,1:2] += y
     new_vertices[:,2:3] += z
-    new_obj.vertices = new_vertices
+    new_object.vertices = new_vertices
 
     # print(scale, quat_rotation, xyz_position)
 
-    return [new_obj], [ORI_OBJECT], [xyz_position, R, scale]
+    return [new_object], [object_dir], [xyz_position, R, scale]
   
   def rendering(self, cam_pos, cam_up_vector, target_pos, fov, obj_list, size):
 
@@ -163,7 +163,7 @@ class Sensor(object):
     self.objs = objs
     self.scale = scale
     self.size = size      
-    rendering_list, ORI_OBJECT_LIST, params = self.importSingleObject(scale=self.scale, 
+    rendering_list, object_dir_list, params = self.importSingleObject(scale=self.scale, 
                                                                       object_index=self.object_index)
     tray_dir = "./tray.obj"
     t = pyredner.load_obj(tray_dir, return_objects=True, device=self.device)
@@ -173,10 +173,9 @@ class Sensor(object):
     tray.vertices[:,1:2] += -0.0
     tray.vertices[:,2:3] += -0.0
     rendering_list.append(tray)
-    ORI_OBJECT_LIST.append(tray)
     img = self.rendering(self.cam_pos, self.cam_up_vector, self.target_pos, self.fov, rendering_list, self.size)
     img = img.cpu().detach().numpy()
-    return img, ORI_OBJECT_LIST, params
+    return img, object_dir_list, params
   
 
 

@@ -318,8 +318,8 @@ class ObjectGrasping(BaseEnv):
         return 0, np.zeros_like(in_hand), obs
 
     def _getObservationAttack(self, action=None):
-        state, in_hand, obs, ORI_OBJECT_LIST, params = super(ObjectGrasping, self)._getObservationAttack()
-        return 0, np.zeros_like(in_hand), obs, ORI_OBJECT_LIST, params
+        state, in_hand, obs, object_dir_list, params = super(ObjectGrasping, self)._getObservationAttack()
+        return 0, np.zeros_like(in_hand), obs, object_dir_list, params
 
 def createObjectGrasping(config):
     return ObjectGrasping(config)
