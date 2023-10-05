@@ -372,7 +372,7 @@ def trainAttack():
                 planner_actions_star = torch.cat((planner_actions_star, states.unsqueeze(1)), dim=1)
                 planner_actions_star = planner_actions_star.reshape(4)
 
-                states_, in_hands_, obs_, rewards, dones, _ = planner_envs.stepAttack(planner_actions_star, auto_reset=True)
+                _, _, _, rewards, dones = planner_envs.stepAttack(planner_actions_star, auto_reset=True)
                 states_, in_hands_, obs_, _, _ = planner_envs.resetAttack()
 
                 states_ = states_.unsqueeze(dim=0)
@@ -456,7 +456,7 @@ def trainAttack():
 
         # states_, in_hands_, obs_, rewards, dones = envs.stepWait()
         actions_star = actions_star.reshape(4)
-        states_, in_hands_, obs_, rewards, dones, _ = envs.stepAttack(actions_star.detach())
+        states_, in_hands_, obs_, rewards, dones = envs.stepAttack(actions_star.detach())
 
         states_ = states_.unsqueeze(dim=0)
         in_hands_ = in_hands_.unsqueeze(dim=0)

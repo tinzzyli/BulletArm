@@ -20,7 +20,7 @@ from bulletarm.pybullet.utils import pybullet_util
 from bulletarm.pybullet.utils import constants
 from bulletarm.pybullet.utils import object_generation
 from bulletarm.pybullet.utils import transformations
-
+from time import sleep
 class RobotBase:
   '''
   Base Robot Class.
@@ -125,9 +125,10 @@ class RobotBase:
 
       # Adjust gripper command after moving to pre-grasp pose. Useful in cluttered domains.
       # This will increase grasp chance but gripper will shift while lifting object.
-      if self.adjust_gripper_after_lift:
+      if self.adjust_gripper_after_lift: # false by default
         self.moveTo(pre_pos, pre_rot, True)
         self.adjustGripperCommand()
+
       # Adjust gripper command before moving to pre-grasp pose.
       # This will increase gripper stabilization but will reduce grasp chance.
       else:
@@ -138,7 +139,6 @@ class RobotBase:
         pb.stepSimulation()
     else:
       self.moveTo(pos, rot, dynamic)
-
     self.holding_obj = self.getPickedObj(objects)
     self.moveToJ(self.home_positions_joint, dynamic)
     self.checkGripperClosed()

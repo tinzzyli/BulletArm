@@ -156,7 +156,6 @@ class ObjectGrasping(BaseEnv):
         pre_obj_grasped = self.obj_grasped
         self.takeAction(action)
         self.wait(100)
-        hold = self.robot.holding_obj != None
 
         state, in_hand, obs, _, _ = self._getObservationAttack(action)
 
@@ -166,8 +165,8 @@ class ObjectGrasping(BaseEnv):
 
         self.current_episode_steps += 1
 
-        return (state, in_hand, obs), reward, True, hold
-
+        return (state, in_hand, obs), reward, True
+    
     def isSimValid(self):
         for obj in self.objects:
             p = obj.getPosition()
@@ -308,6 +307,22 @@ class ObjectGrasping(BaseEnv):
                 # ZXP getPos z > threshold is more robust than _isObjectHeld()
                 self.obj_grasped += 1
                 self._removeObject(obj)
+                if self.obj_grasped == self.num_obj or len(self.objects) == 0:
+                    return True
+                return False
+        return False
+    
+    def isSuccessfulGrasp(self):
+        '''
+        - Modified based on _checkTermination(), but this function does not change the bulletarm environment
+        as far as we know, in object grasping, the q network gives an action [x, y, rot],
+        then the env checks if perfect grasp(the relative rotation between the gripper and object is less than pi/12)
+        
+        if true, the robot will try to pick the object
+        '''
+        for obj in self.objects:
+            if obj.getPosition()[2] >= 0.35 or self._isObjectHeld(obj):
+                # ZXP getPos z > threshold is more robust than _isObjectHeld()
                 if self.obj_grasped == self.num_obj or len(self.objects) == 0:
                     return True
                 return False

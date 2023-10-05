@@ -100,7 +100,7 @@ def getGroundTruth(agent,
     
     return q_value_maps, actions
 
-def pgd_attack(envs, agent, epsilon_1 = 0.002, epsilon_2 = 0.002, alpha_1 = 0.02, alpha_2 = 0.02, iters=10):
+def pgd_attack(envs, agent, epsilon_1 = 0.002, epsilon_2 = 0.002, alpha_1 = 0.02, alpha_2 = 0.02, iters=10, device = None):
     
     l = logging.getLogger('my_logger')
     l.setLevel(logging.DEBUG)
@@ -114,16 +114,12 @@ def pgd_attack(envs, agent, epsilon_1 = 0.002, epsilon_2 = 0.002, alpha_1 = 0.02
     l.addHandler(file_handler)
     # to avoid potential errors, run code in single process
 
-
     states, in_hands, obs, object_dir_list, params = envs.resetAttack() 
     original_xyz_position, original_rot_mat, scale = params
-
     xyz_position = original_xyz_position.clone().detach()
     rot_mat = original_rot_mat.clone().detach()
     scale = scale.clone().detach()
-    # scale is within 0.6 ~ 0.7 in obj grasping
 
-    loss_function = nn.MSELoss()
 
     _, target = getGroundTruth(agent = agent,
                                states = states,
@@ -139,7 +135,7 @@ def pgd_attack(envs, agent, epsilon_1 = 0.002, epsilon_2 = 0.002, alpha_1 = 0.02
            '\n epsilon_2: '+str(epsilon_2)+
            '\n iters: '+str(iters))
     
-    torch.autograd.set_detect_anomaly(True)
+    loss_function = nn.MSELoss()
 
     for iter in range(iters):
         l.info('Iteration '+str(iter)+'/'+str(iters))
@@ -204,6 +200,7 @@ def pgd_attack(envs, agent, epsilon_1 = 0.002, epsilon_2 = 0.002, alpha_1 = 0.02
         xyz_position = adv_position.clone().detach()
         rot_mat = rot_mat.clone().detach()
         scale = scale.clone().detach()
+    #end of loop
     
     _, actions = getGroundTruth(agent = agent,
                                 states = states,
@@ -263,5 +260,5 @@ if __name__ == '__main__':
     agent.eval()
     # agent.loadModel("/content/drive/MyDrive/my_archive/ck3/snapshot")
 
-    pgd_attack(envs, agent, iters=5)
+    pgd_attack(envs, agent, iters=5, device = device)
     print("end")
