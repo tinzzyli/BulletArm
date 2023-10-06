@@ -68,10 +68,25 @@ def getGroundTruth(agent,
     in_hands = in_hands.unsqueeze(dim = 0).detach() # new variable
     object_list = []
 
-    for d in object_dir_list:
-        o = pyredner.load_obj(object_dir_list[0], return_objects=True)[0]
-        object_list.append(o)
+    for idx, dir in enumerate(object_dir_list):
+        obj = pyredner.load_obj(dir, return_objects=True)[0]
 
+        new_vertices = obj.vertices.to(device).detach() # new variable
+
+        scale = scale.clone().detach()
+
+        new_vertices *= scale
+
+        rot_mat_T = rot_mat.T.float()
+        new_vertices = torch.matmul(new_vertices, rot_mat_T)
+
+        new_vertices[:,0:1] += xyz_position[0]
+        new_vertices[:,1:2] += xyz_position[1]
+        new_vertices[:,2:3] += xyz_position[2]
+        obj.vertices = new_vertices.clone()
+
+        object_list.append(obj)
+    
     tray_dir = "./tray.obj"
     tray = pyredner.load_obj(tray_dir, return_objects=True)[0]
     tray.vertices /= 1000
@@ -79,18 +94,6 @@ def getGroundTruth(agent,
     tray.vertices[:,1:2] += 0.0
     tray.vertices[:,2:3] += 0.0
     object_list.append(tray)
-
-    new_vertices = object_list[0].vertices.to(device).detach() # new variable
-    scale = scale.clone().detach()
-
-    new_vertices *= scale
-
-    rot_mat_T = rot_mat.T.float()
-    new_vertices = torch.matmul(new_vertices, rot_mat_T)
-    new_vertices[:,0:1] += xyz_position[0]
-    new_vertices[:,1:2] += xyz_position[1]
-    new_vertices[:,2:3] += xyz_position[2]
-    object_list[0].vertices = new_vertices.clone()
 
     obs = rendering(obj_list=object_list).reshape(1,1,128,128)   
     q_value_maps, _, actions = agent.getEGreedyActionsAttack(states, in_hands, obs, 0)
@@ -114,12 +117,11 @@ def pgd_attack(envs, agent, epsilon_1 = 0.002, epsilon_2 = 0.002, alpha_1 = 0.02
     l.addHandler(file_handler)
     # to avoid potential errors, run code in single process
 
-    states, in_hands, obs, object_dir_list, params = envs.resetAttack() 
-    original_xyz_position, original_rot_mat, scale = params
+    states, in_hands, obs, object_dir_list, object_param_list = envs.resetAttack() 
+    original_xyz_position, original_rot_mat, scale = object_param_list[0]
     xyz_position = original_xyz_position.clone().detach()
     rot_mat = original_rot_mat.clone().detach()
     scale = scale.clone().detach()
-
 
     _, target = getGroundTruth(agent = agent,
                                states = states,

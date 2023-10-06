@@ -52,42 +52,51 @@ class Sensor(object):
     )
     self.proj_matrix = pb.computeProjectionMatrixFOV(70, 1, 0.001, 0.3)
 
-  def importSingleObject(self, scale, object_index):
-    object_index = str(object_index).zfill(3)
-    object_dir = "./bulletarm/pybullet/urdf/object/GraspNet1B_object/*/convex.obj"
-    object_dir = object_dir.replace("*", object_index)
-    o = pyredner.load_obj(object_dir, return_objects=True)
-    ORI_OBJECT = o[0]
-    new_object = o[0]
+  def importObject(self, object_scale_list, object_index_list):
+    object_list = []
+    object_dir_list = []
+    object_param_list = []
+    for idx, object_index in enumerate(object_index_list):
+      object_index = str(object_index).zfill(3)
+      object_dir = "./bulletarm/pybullet/urdf/object/GraspNet1B_object/*/convex.obj"
+      object_dir = object_dir.replace("*", object_index)
+      o = pyredner.load_obj(object_dir, return_objects=True)
+      new_object = o[0]
 
-    orien = self.objs[0].getRotation()
-    _x, _y, _z, _w = orien
-    orien = _w, _x, _y, _z
-    quat_rotation = np.array([_w, _x, _y, _z])
-    R = quaternions.quat2mat(orien)
-    R = torch.Tensor(R)
-    R = R.to(self.device)
-    R = R.float()
+      orien = self.objs[0].getRotation()
+      _x, _y, _z, _w = orien
+      orien = _w, _x, _y, _z
+      R = quaternions.quat2mat(orien)
+      R = torch.Tensor(R)
+      R = R.to(self.device)
+      R = R.float()
 
-    x = self.objs[0].getXPosition()
-    y = self.objs[0].getYPosition()
-    z = self.objs[0].getZPosition()
-    xyz_position = np.array([x, y, z])
+      x = self.objs[idx].getXPosition()
+      y = self.objs[idx].getYPosition()
+      z = self.objs[idx].getZPosition()
+      xyz_position = np.array([x, y, z])
 
-    new_vertices = new_object.vertices.clone()
-    new_vertices = new_vertices.to(self.device)
-    new_vertices = new_vertices.float()
-    new_vertices *= scale
-    scale = np.copy(scale)
-    new_vertices = torch.matmul(new_vertices, R.T)
-    new_vertices[:,0:1] += x
-    new_vertices[:,1:2] += y
-    new_vertices[:,2:3] += z
-    new_object.vertices = new_vertices
+      new_vertices = new_object.vertices.clone()
+      new_vertices = new_vertices.to(self.device)
+      new_vertices = new_vertices.float()
+      scale = object_scale_list[idx]
+      new_vertices *= scale
+      scale = np.copy(scale)
+      new_vertices = torch.matmul(new_vertices, R.T)
+      new_vertices[:,0:1] += x
+      new_vertices[:,1:2] += y
+      new_vertices[:,2:3] += z
+      new_object.vertices = new_vertices
+
+      object_list.append(new_object)
+      object_dir_list.append(object_dir)
+      object_param_list.append([torch.tensor(xyz_position), 
+                                torch.tensor(R), 
+                                torch.tensor(scale)])
 
     # print(scale, quat_rotation, xyz_position)
 
-    return [new_object], [object_dir], [xyz_position, R, scale]
+    return object_list, object_dir_list, object_param_list
   
   def rendering(self, cam_pos, cam_up_vector, target_pos, fov, obj_list, size):
 
@@ -121,50 +130,21 @@ class Sensor(object):
     heightmap = torch.where(heightmap > 1.0, 6e-3, heightmap) 
     return heightmap.reshape(128,128)
   
-  def getHeightmap(self, objs, object_index, size, scale):
-
-
-    self.object_index = object_index
-    self.objs = objs
-    self.scale = scale
+  def getHeightmap(self,size):
     self.size = size      
-    
-    #===HERE IS THE DIFFERENTIABLE RENDERER===#
-    rendering_list, _, _ = self.importSingleObject(scale=self.scale, 
-                                                   object_index=self.object_index)
-
-    tray_dir = "./tray.obj"
-    t = pyredner.load_obj(tray_dir, return_objects=True, device=pyredner.device)
-    tray = t[0]   
-    tray.vertices = tray.vertices.to(self.device)
-    tray.vertices /= 1000
-    tray.vertices[:,0:1] +=  0.5
-    tray.vertices[:,1:2] += -0.0
-    tray.vertices[:,2:3] += -0.0
-    rendering_list.append(tray)
-
-    img = self.rendering(self.cam_pos, self.cam_up_vector, self.target_pos, self.fov, rendering_list, self.size)
-    img = img.cpu().detach().numpy()
-    #===HERE IS THE DIFFERENTIABLE RENDERER===#
-
-    #===HERE IS THE ORIGINAL RENDERER===#
-    # image_arr = pb.getCameraImage(width=self.size, height=self.size,
-    #                               viewMatrix=self.view_matrix,
-    #                               projectionMatrix=self.proj_matrix,
-    #                               renderer=pb.ER_TINY_RENDERER)
-    # depth_img = np.array(image_arr[3])
-    # depth = self.far * self.near / (self.far - (self.far - self.near) * depth_img)
-    # depth = np.abs(depth - np.max(depth)).reshape(self.size, self.size)
-    #===HERE IS THE ORIGINAL RENDERER===#
+    image_arr = pb.getCameraImage(width=self.size, height=self.size,
+                                  viewMatrix=self.view_matrix,
+                                  projectionMatrix=self.proj_matrix,
+                                  renderer=pb.ER_TINY_RENDERER)
+    depth_img = np.array(image_arr[3])
+    depth = self.far * self.near / (self.far - (self.far - self.near) * depth_img)
+    depth = np.abs(depth - np.max(depth)).reshape(self.size, self.size)
+    img = depth
     return img
   
-  def getHeightmapAttack(self, objs, object_index, size, scale):
-    self.object_index = object_index
-    self.objs = objs
-    self.scale = scale
+  def getHeightmapAttack(self, objs, object_index_list, size, object_scale_list):
     self.size = size      
-    rendering_list, object_dir_list, params = self.importSingleObject(scale=self.scale, 
-                                                                      object_index=self.object_index)
+    rendering_list, object_dir_list, object_param_list = self.importObject(object_scale_list=object_scale_list, object_index_list=object_index_list)
     tray_dir = "./tray.obj"
     t = pyredner.load_obj(tray_dir, return_objects=True, device=self.device)
     tray = t[0]   
@@ -175,11 +155,11 @@ class Sensor(object):
     rendering_list.append(tray)
     img = self.rendering(self.cam_pos, self.cam_up_vector, self.target_pos, self.fov, rendering_list, self.size)
     img = img.cpu().detach().numpy()
-    return img, object_dir_list, params
+    return img, object_dir_list, object_param_list
   
 
 
-  def getRGBImg(self, size, objs):
+  def getRGBImg(self, size):
     image_arr = pb.getCameraImage(width=size, height=size,
                                   viewMatrix=self.view_matrix,
                                   projectionMatrix=self.proj_matrix,
