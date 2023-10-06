@@ -148,13 +148,14 @@ class Sensor(object):
     #===HERE IS THE DIFFERENTIABLE RENDERER===#
 
     #===HERE IS THE ORIGINAL RENDERER===#
-    # image_arr = pb.getCameraImage(width=self.size, height=self.size,
-    #                               viewMatrix=self.view_matrix,
-    #                               projectionMatrix=self.proj_matrix,
-    #                               renderer=pb.ER_TINY_RENDERER)
-    # depth_img = np.array(image_arr[3])
-    # depth = self.far * self.near / (self.far - (self.far - self.near) * depth_img)
-    # depth = np.abs(depth - np.max(depth)).reshape(self.size, self.size)
+    image_arr = pb.getCameraImage(width=self.size, height=self.size,
+                                  viewMatrix=self.view_matrix,
+                                  projectionMatrix=self.proj_matrix,
+                                  renderer=pb.ER_TINY_RENDERER)
+    depth_img = np.array(image_arr[3])
+    depth = self.far * self.near / (self.far - (self.far - self.near) * depth_img)
+    depth = np.abs(depth - np.max(depth)).reshape(self.size, self.size)
+    img = depth
     #===HERE IS THE ORIGINAL RENDERER===#
     return img
   

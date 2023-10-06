@@ -29,35 +29,40 @@ def test():
     plt.style.use('default')
     envs = EnvWrapper(num_processes, env, env_config, planner_config)
     agent = createAgent()
-    agent.train()
-    agent.loadModel(load_model_pre)
     agent.eval()
-    states, in_hands, obs = envs.reset()
+    # agent.loadModel(load_model_pre) 
+    # replace load_model_pre your checkpoint path like "/content/drive/MyDrive/my_archive/ck3/snapshot", ck3 in the folder name and it has to end with snapshot
+    states, in_hands, obs, _, _ = envs.resetAttack()
+    states = states.unsqueeze(dim=0)
+    in_hands = in_hands.unsqueeze(dim=0)
+    obs = obs.unsqueeze(dim=0)
     test_episode = 100
     total = 0
     s = 0
     step_times = []
     pbar = tqdm(total=test_episode)
     while total < 100:
-        q_value_maps, actions_star_idx, actions_star = agent.getEGreedyActions(states, in_hands, obs, 0, 0)
+        q_value_maps, actions_star_idx, actions_star = agent.getEGreedyActionsAttack(states, in_hands, obs, 0, 0)
         # plt.imshow(obs[0, 0])
         # plt.show()
         # plotQMaps(q_value_maps)
         # plotSoftmax(q_value_maps)
         # plotQMaps(q_value_maps, save='/media/dian/hdd/analysis/qmap/house1_dqfdall', j=j)
         # plotSoftmax(q_value_maps, save='/media/dian/hdd/analysis/qmap/house1_dqfd_400k', j=j)
+        actions_star = actions_star.to(device=device)
+        states = states.to(device=device)
         actions_star = torch.cat((actions_star, states.unsqueeze(1)), dim=1)
-
+        actions_star = actions_star.reshape(4)
         # plan_actions = envs.getPlan()
         # planner_actions_star_idx, planner_actions_star = agent.getActionFromPlan(plan_actions)
         # ranks.extend(rankOfAction(q_value_maps, planner_actions_star_idx))
         # print('avg rank of ae: {}'.format(np.mean(ranks)))
 
-        states_, in_hands_, obs_, rewards, dones = envs.step(actions_star, auto_reset=True)
-
+        states_, in_hands_, obs_, rewards, dones = envs.stepAttack(actions_star, auto_reset=True)
+        states_, in_hands_, obs_, _, _ = envs.resetAttack()
         states = copy.copy(states_)
         obs = copy.copy(obs_)
-        in_hands = in_hands_
+        in_hands = copy.copy(in_hands_)
 
         s += rewards.sum().int().item()
 
