@@ -62,7 +62,7 @@ def saveModelAndInfo(logger, agent):
 
 
 def evaluate(envs, agent, logger):
-  states, in_hands, obs = envs.reset()
+  states, in_hands, obs = envs.resetAttack()
   states = states.unsqueeze(dim=0)
   in_hands = in_hands.unsqueeze(dim=0)
   obs = obs.unsqueeze(dim=0)
@@ -72,22 +72,28 @@ def evaluate(envs, agent, logger):
   if not no_bar:
     eval_bar = tqdm(total=num_eval_episodes)
   while evaled < num_eval_episodes:
-    q_value_maps, actions_star_idx, actions_star = agent.getEGreedyActions(states, in_hands, obs, 0)
+    q_value_maps, actions_star_idx, actions_star = agent.getEGreedyActionsAttack(states, in_hands, obs, 0)
+
+    actions_star = actions_star.to(device)
+    states = states.to(device)
     actions_star = torch.cat((actions_star, states.unsqueeze(1)), dim=1)
+
     actions_star = actions_star.reshape(4)
-    states_, in_hands_, obs_, rewards, dones = envs.step(actions_star, auto_reset=True)
+    states_, in_hands_, obs_, rewards, dones = envs.stepAttack(actions_star, auto_reset=True)
+    states_, in_hands_, obs_, _, _ = envs.resetAttack()
 
     states_ = states_.unsqueeze(dim=0)
     in_hands_ = in_hands_.unsqueeze(dim=0)
     obs_ = obs_.unsqueeze(dim=0)
     rewards = rewards.unsqueeze(dim=0)
     dones = dones.unsqueeze(dim=0)
-    
+
     rewards = rewards.numpy()
     dones = dones.numpy()
     states = copy.copy(states_)
     in_hands = copy.copy(in_hands_)
     obs = copy.copy(obs_)
+
     for i, r in enumerate(rewards.reshape(-1)):
       temp_reward[i].append(r)
     evaled += int(np.sum(dones))
@@ -536,5 +542,5 @@ def trainAttack():
 
 
 if __name__ == '__main__':
-    train()    
+    # trainAttack() 
     print("end")
