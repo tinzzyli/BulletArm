@@ -69,7 +69,7 @@ class DQN3DASR(Base3D):
         x = (pixels[:, 0].float() * self.heightmap_resolution + self.workspace[0][0]).reshape(pixels.size(0), 1).to(self.device)
         y = (pixels[:, 1].float() * self.heightmap_resolution + self.workspace[1][0]).reshape(pixels.size(0), 1).to(self.device)
         actions = torch.cat((x, y, rz), dim=1).to(self.device)
-        action_idx = torch.cat((pixels, rz_id), dim=1).to(self.device)
+        action_idx = torch.cat((pixels.long(), rz_id), dim=1).to(self.device)
         return action_idx, actions
 
     def getEGreedyActions(self, states, in_hand, obs, eps, coef=0.):
