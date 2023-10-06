@@ -62,7 +62,7 @@ def saveModelAndInfo(logger, agent):
 
 
 def evaluate(envs, agent, logger):
-  states, in_hands, obs = envs.resetAttack()
+  states, in_hands, obs, _, _ = envs.resetAttack()
   states = states.unsqueeze(dim=0)
   in_hands = in_hands.unsqueeze(dim=0)
   obs = obs.unsqueeze(dim=0)
