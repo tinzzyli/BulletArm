@@ -309,7 +309,7 @@ def train():
 
 def trainAttack():
     assert num_processes == 0
-    pyredner.get_print_timing(False)
+    pyredner.set_print_timing(False)
 
     eval_thread = None
     start_time = time.time()
