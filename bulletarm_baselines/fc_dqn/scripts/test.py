@@ -33,9 +33,9 @@ def test():
     # agent.loadModel(load_model_pre) 
     # replace load_model_pre your checkpoint path like "/content/drive/MyDrive/my_archive/ck3/snapshot", ck3 in the folder name and it has to end with snapshot
     states, in_hands, obs, _, _ = envs.resetAttack()
-    states = states.unsqueeze(dim=0)
-    in_hands = in_hands.unsqueeze(dim=0)
-    obs = obs.unsqueeze(dim=0)
+    states = states.unsqueeze(dim=0).detach()
+    in_hands = in_hands.unsqueeze(dim=0).detach()
+    obs = obs.unsqueeze(dim=0).detach()
     test_episode = 100
     total = 0
     s = 0
@@ -58,8 +58,12 @@ def test():
         # ranks.extend(rankOfAction(q_value_maps, planner_actions_star_idx))
         # print('avg rank of ae: {}'.format(np.mean(ranks)))
 
-        states_, in_hands_, obs_, rewards, dones = envs.stepAttack(actions_star, auto_reset=True)
+        states_, in_hands_, obs_, rewards, dones = envs.stepAttack(actions_star.detach(), auto_reset=True)
         states_, in_hands_, obs_, _, _ = envs.resetAttack()
+        states_ = states_.unsqueeze(dim=0).detach()
+        in_hands_ = in_hands_.unsqueeze(dim=0).detach()
+        obs_ = obs_.unsqueeze(dim=0).detach()
+
         states = copy.copy(states_)
         obs = copy.copy(obs_)
         in_hands = copy.copy(in_hands_)
