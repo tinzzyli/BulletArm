@@ -52,7 +52,7 @@ class Sensor(object):
     )
     self.proj_matrix = pb.computeProjectionMatrixFOV(70, 1, 0.001, 0.3)
 
-  def importSingleObject(self, scale, object_index):
+  def importSingleObject(self, scale, object_index, objs):
     object_index = str(object_index).zfill(3)
     object_dir = "./bulletarm/pybullet/urdf/object/GraspNet1B_object/*/convex.obj"
     object_dir = object_dir.replace("*", object_index)
@@ -60,7 +60,7 @@ class Sensor(object):
     ORI_OBJECT = o[0]
     new_object = o[0]
 
-    orien = self.objs[0].getRotation()
+    orien = objs[0].getRotation()
     _x, _y, _z, _w = orien
     orien = _w, _x, _y, _z
     quat_rotation = np.array([_w, _x, _y, _z])
@@ -69,9 +69,9 @@ class Sensor(object):
     R = R.to(self.device)
     R = R.float()
 
-    x = self.objs[0].getXPosition()
-    y = self.objs[0].getYPosition()
-    z = self.objs[0].getZPosition()
+    x = objs[0].getXPosition()
+    y = objs[0].getYPosition()
+    z = objs[0].getZPosition()
     xyz_position = np.array([x, y, z])
 
     new_vertices = new_object.vertices.clone()
@@ -130,21 +130,22 @@ class Sensor(object):
     self.size = size      
     
     #===HERE IS THE DIFFERENTIABLE RENDERER===#
-    rendering_list, _, _ = self.importSingleObject(scale=self.scale, 
-                                                   object_index=self.object_index)
+    # rendering_list, _, _ = self.importSingleObject(scale=self.scale, 
+    #                                                object_index=self.object_index,
+    #                                                objs=self.objs)
 
-    tray_dir = "./tray.obj"
-    t = pyredner.load_obj(tray_dir, return_objects=True, device=pyredner.device)
-    tray = t[0]   
-    tray.vertices = tray.vertices.to(self.device)
-    tray.vertices /= 1000
-    tray.vertices[:,0:1] +=  0.5
-    tray.vertices[:,1:2] += -0.0
-    tray.vertices[:,2:3] += -0.0
-    rendering_list.append(tray)
+    # tray_dir = "./tray.obj"
+    # t = pyredner.load_obj(tray_dir, return_objects=True, device=pyredner.device)
+    # tray = t[0]   
+    # tray.vertices = tray.vertices.to(self.device)
+    # tray.vertices /= 1000
+    # tray.vertices[:,0:1] +=  0.5
+    # tray.vertices[:,1:2] += -0.0
+    # tray.vertices[:,2:3] += -0.0
+    # rendering_list.append(tray)
 
-    img = self.rendering(self.cam_pos, self.cam_up_vector, self.target_pos, self.fov, rendering_list, self.size)
-    img = img.cpu().detach().numpy()
+    # img = self.rendering(self.cam_pos, self.cam_up_vector, self.target_pos, self.fov, rendering_list, self.size)
+    # img = img.cpu().detach().numpy()
     #===HERE IS THE DIFFERENTIABLE RENDERER===#
 
     #===HERE IS THE ORIGINAL RENDERER===#
@@ -165,7 +166,8 @@ class Sensor(object):
     self.scale = scale
     self.size = size      
     rendering_list, object_dir_list, params = self.importSingleObject(scale=self.scale, 
-                                                                      object_index=self.object_index)
+                                                                      object_index=self.object_index,
+                                                                      objs=self.objs)
     tray_dir = "./tray.obj"
     t = pyredner.load_obj(tray_dir, return_objects=True, device=self.device)
     tray = t[0]   
