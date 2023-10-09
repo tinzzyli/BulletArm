@@ -68,7 +68,9 @@ def evaluate(envs, agent, logger):
   obs = obs.unsqueeze(dim=0)
 
   evaled = 0
-  temp_reward = [[] for _ in range(num_eval_processes)]
+#   temp_reward = [[] for _ in range(num_eval_processes)]
+  temp_reward = [[] for _ in range(1)]
+
   if not no_bar:
     eval_bar = tqdm(total=num_eval_episodes)
   while evaled < num_eval_episodes:
