@@ -7,6 +7,7 @@ import collections
 from tqdm import tqdm
 
 import torch
+import pyredner
 
 import numpy as np
 import matplotlib.pyplot as plt
