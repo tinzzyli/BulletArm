@@ -131,6 +131,8 @@ def pgd_attack(envs, agent, epsilon_1 = 0.002, epsilon_2 = 0.002, alpha_1 = 0.02
                                scale = scale,
                                device = device)
 
+    print("target: ", target)
+
     l.info('\n device: '+str(device)+
            '\n epsilon_1: '+str(epsilon_1)+
            '\n epsilon_2: '+str(epsilon_2)+
@@ -159,10 +161,12 @@ def pgd_attack(envs, agent, epsilon_1 = 0.002, epsilon_2 = 0.002, alpha_1 = 0.02
                                    inputs=(xyz_position, rot_mat), 
                                    grad_outputs=None, 
                                    allow_unused=False, 
-                                   retain_graph=True, 
+                                   retain_graph=False, 
                                    create_graph=False)
         x_grad, y_grad, _ = grad[0]
-        rot_grad = grad[1]
+        rot_grad = grad[1] * 0.2
+        # rot_mat [-1, 1] positoin [0.3, 0.7] or [-0.2, 0.2] 
+        # in_hand [1,1,24,24]
 
         print("loss: ", loss)
         print("grad: ", grad)
@@ -253,6 +257,22 @@ def heightmapAttack(envs, agent, epsilon = 1e-5, alpha = 4e-4, iters = 5):
     
     return reward
 
+def testGetGroundTruth():
+    states, in_hands, obs, object_dir_list, params = envs.resetAttack() 
+    original_xyz_position, original_rot_mat, scale = params
+    xyz_position = original_xyz_position.clone().detach()
+    rot_mat = original_rot_mat.clone().detach()
+    scale = scale.clone().detach()
+    for _ in range(10):
+        _, actions = getGroundTruth(agent = agent,
+                            states = states,
+                            in_hands = in_hands,
+                            object_dir_list = object_dir_list,
+                            xyz_position = xyz_position,
+                            rot_mat = rot_mat,
+                            scale = scale,
+                            device = device)
+        print(actions)
 
 if __name__ == '__main__':
     envs = EnvWrapper(num_processes, env, env_config, planner_config)
@@ -261,6 +281,7 @@ if __name__ == '__main__':
     
     # agent.loadModel("/content/drive/MyDrive/my_archive/ck3/snapshot")
     # for _ in range(10):
+    testGetGroundTruth()
     reward = pgd_attack(envs, agent, iters=5, device = device)
     print(reward)
     print("end")
