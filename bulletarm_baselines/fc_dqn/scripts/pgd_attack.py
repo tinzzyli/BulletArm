@@ -259,7 +259,7 @@ if __name__ == '__main__':
     agent.eval()
     
     # agent.loadModel("/content/drive/MyDrive/my_archive/ck3/snapshot")
-    for _ in range(10):
-        reward = pgd_attack(envs, agent, iters=5, device = device)
-        print(reward)
+    # for _ in range(10):
+    reward = pgd_attack(envs, agent, iters=5, device = device)
+    print(reward)
     print("end")
