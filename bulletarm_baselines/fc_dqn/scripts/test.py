@@ -30,7 +30,7 @@ def test():
     envs = EnvWrapper(num_processes, env, env_config, planner_config)
     agent = createAgent()
     agent.eval()
-    # agent.loadModel(load_model_pre) 
+    agent.loadModel(load_model_pre) 
     # replace load_model_pre your checkpoint path like "/content/drive/MyDrive/my_archive/ck3/snapshot", ck3 in the folder name and it has to end with snapshot
     states, in_hands, obs, _, _ = envs.resetAttack()
     states = states.unsqueeze(dim=0).detach()

@@ -102,7 +102,7 @@ def getGroundTruth(agent,
     return q_value_maps, actions
 
 def pgd_attack(envs, agent, epsilon_1 = 0.002, epsilon_2 = 0.002, alpha_1 = 0.02, alpha_2 = 0.02, iters=10, device = None):
-    
+    pyredner.set_print_timing(False)
     l = logging.getLogger('my_logger')
     l.setLevel(logging.DEBUG)
     log_dir = './outputAttack/VanillaPGD'  
@@ -278,7 +278,7 @@ if __name__ == '__main__':
     envs = EnvWrapper(num_processes, env, env_config, planner_config)
     agent = createAgent(test=False)
     agent.eval()
-    
+    agent.loadModel(load_model_pre)
     # agent.loadModel("/content/drive/MyDrive/my_archive/ck3/snapshot")
     # for _ in range(10):
     testGetGroundTruth()
