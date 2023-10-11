@@ -26,6 +26,7 @@ ExpertTransition = collections.namedtuple('ExpertTransition', 'state obs action 
 
 
 def test():
+    pyredner.set_print_timing(False)
     plt.style.use('default')
     envs = EnvWrapper(num_processes, env, env_config, planner_config)
     agent = createAgent()
