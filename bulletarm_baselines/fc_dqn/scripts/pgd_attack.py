@@ -286,6 +286,6 @@ if __name__ == '__main__':
     # agent.loadModel("/content/drive/MyDrive/my_archive/ck3/snapshot")
     # for _ in range(10):
     # testGetGroundTruth()
-    reward = pgd_attack(envs, agent, iters=100, device = device)
+    reward = pgd_attack(envs, agent, iters=200, device = device)
     print(reward)
     print("end")
