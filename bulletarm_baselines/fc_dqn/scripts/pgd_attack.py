@@ -258,12 +258,14 @@ def heightmapAttack(envs, agent, epsilon = 1e-5, alpha = 4e-4, iters = 5):
     return reward
 
 def testGetGroundTruth():
+    pyredner.set_print_timing(False)
+
     states, in_hands, obs, object_dir_list, params = envs.resetAttack() 
     original_xyz_position, original_rot_mat, scale = params
     xyz_position = original_xyz_position.clone().detach()
     rot_mat = original_rot_mat.clone().detach()
     scale = scale.clone().detach()
-    for _ in range(10):
+    for _ in range(100):
         _, actions = getGroundTruth(agent = agent,
                             states = states,
                             in_hands = in_hands,
@@ -282,6 +284,6 @@ if __name__ == '__main__':
     # agent.loadModel("/content/drive/MyDrive/my_archive/ck3/snapshot")
     # for _ in range(10):
     testGetGroundTruth()
-    reward = pgd_attack(envs, agent, iters=50, device = device)
+    reward = pgd_attack(envs, agent, iters=5, device = device)
     print(reward)
     print("end")
