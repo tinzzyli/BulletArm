@@ -68,9 +68,9 @@ def getGroundTruth(agent,
     in_hands = in_hands.unsqueeze(dim = 0).detach() # new variable
     object_list = []
 
-    for d in object_dir_list:
-        o = pyredner.load_obj(object_dir_list[0], return_objects=True)[0]
-        object_list.append(o)
+    # for d in object_dir_list:
+    o = pyredner.load_obj(object_dir_list[0], return_objects=True)[0]
+    object_list.append(o)
 
     tray_dir = "./tray.obj"
     tray = pyredner.load_obj(tray_dir, return_objects=True)[0]
