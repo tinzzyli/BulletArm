@@ -171,8 +171,9 @@ def pgd_attack(envs, agent, epsilon_1 = 0.002, epsilon_2 = 0.002, alpha_1 = 0.02
         # in_hand [1,1,24,24]
 
         print("loss: ", loss)
-        print("grad: ", grad)
-        print("actions ", actions)
+        print("grad[0]: ", grad[0])
+        print("grad[1]: ", grad[1])
+        print("actions: ", actions)
 
         x,y,z = xyz_position.clone().detach()
         x_eta = torch.clamp(x_grad, min = -epsilon_1,  max = epsilon_1)
@@ -201,8 +202,8 @@ def pgd_attack(envs, agent, epsilon_1 = 0.002, epsilon_2 = 0.002, alpha_1 = 0.02
         l.debug("actions: "+str(actions))  
         l.debug("rotation: "+str(rot_mat))
         # print("successful grasp: "+str(success))
-        print("\n", adv_position, "\n")
-        print("\n", rot_mat, "\n")
+        print("adv_position: ", adv_position)
+        print("rot_mat: ", rot_mat)
         
         xyz_position = adv_position.clone().detach()
         rot_mat = rot_mat.clone().detach()

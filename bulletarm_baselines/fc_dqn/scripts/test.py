@@ -57,7 +57,7 @@ def test():
         # planner_actions_star_idx, planner_actions_star = agent.getActionFromPlan(plan_actions)
         # ranks.extend(rankOfAction(q_value_maps, planner_actions_star_idx))
         # print('avg rank of ae: {}'.format(np.mean(ranks)))
-
+    
         states_, in_hands_, obs_, rewards, dones = envs.stepAttack(actions_star.detach(), auto_reset=True)
         states_, in_hands_, obs_, _, _ = envs.resetAttack()
         states_ = states_.unsqueeze(dim=0).detach()
