@@ -130,6 +130,8 @@ def pgd_attack(envs, agent, epsilon_1 = 0.002, epsilon_2 = 0.002, alpha_1 = 0.02
                                rot_mat = rot_mat,
                                scale = scale,
                                device = device)
+    
+    target += 0.00001
 
     print("target: ", target)
 
