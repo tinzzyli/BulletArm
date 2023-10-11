@@ -211,9 +211,8 @@ def pgd_attack(envs, agent, epsilon_1 = 0.002, epsilon_2 = 0.002, alpha_1 = 0.02
                                 scale = scale,
                                 device = device)
     
-    _, _, actions = agent.getEGreedyActionsAttack(states, in_hands, obs, 0)
     actions = actions.to(device)
-    states = states.to(device)
+    states = states.to(device).unsqueeze(dim=0)
     actions = torch.cat((actions, states.unsqueeze(1)), dim=1)
     actions = actions.reshape(4)
     _, _, _, reward, _ = envs.step(actions.detach())
@@ -258,6 +257,7 @@ if __name__ == '__main__':
     envs = EnvWrapper(num_processes, env, env_config, planner_config)
     agent = createAgent(test=False)
     agent.eval()
+    
     # agent.loadModel("/content/drive/MyDrive/my_archive/ck3/snapshot")
     for _ in range(10):
         reward = pgd_attack(envs, agent, iters=5, device = device)
