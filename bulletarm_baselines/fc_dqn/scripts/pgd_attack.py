@@ -131,7 +131,7 @@ def pgd_attack(envs, agent, epsilon_1 = 0.002, epsilon_2 = 0.002, alpha_1 = 0.02
                                scale = scale,
                                device = device)
     
-    target += 0.00001
+    target += 0.0000001
 
     print("target: ", target)
 
@@ -285,7 +285,7 @@ if __name__ == '__main__':
     agent.loadModel(load_model_pre)
     # agent.loadModel("/content/drive/MyDrive/my_archive/ck3/snapshot")
     # for _ in range(10):
-    testGetGroundTruth()
-    reward = pgd_attack(envs, agent, iters=5, device = device)
+    # testGetGroundTruth()
+    reward = pgd_attack(envs, agent, iters=100, device = device)
     print(reward)
     print("end")
