@@ -223,7 +223,7 @@ def pgd_attack(envs, agent, epsilon_1 = 0.002, epsilon_2 = 0.002, alpha_1 = 0.02
     states = states.to(device).unsqueeze(dim=0)
     actions = torch.cat((actions, states.unsqueeze(1)), dim=1)
     actions = actions.reshape(4)
-    _, _, _, reward, _ = envs.step(actions.detach())
+    _, _, _, reward, _ = envs.stepAttack(actions.detach())
     
     # l.removeHandler(file_handler)
     # logging.shutdown()
@@ -290,7 +290,7 @@ if __name__ == '__main__':
         reward = pgd_attack(envs, agent, iters=200, device = device)
         s += reward
     sr_value = float(s)/100.0
-    f=open("./object_info.txt","w")
+    f=open("./object_info_1.txt","a")
     f.write("index: " + str(object_index) + ", num: " + str(num_objects) + ", SR: " + str(sr_value) + "\n")
     # print(reward)
     print("end")
