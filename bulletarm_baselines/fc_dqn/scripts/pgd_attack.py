@@ -103,16 +103,16 @@ def getGroundTruth(agent,
 
 def pgd_attack(envs, agent, epsilon_1 = 0.002, epsilon_2 = 0.002, alpha_1 = 0.02, alpha_2 = 0.02, iters=10, device = None):
     pyredner.set_print_timing(False)
-    l = logging.getLogger('my_logger')
-    l.setLevel(logging.DEBUG)
-    log_dir = './outputAttack/VanillaPGD'  
-    os.makedirs(log_dir, exist_ok=True)  
-    log_file_name = f'auto_generated_log_{int(time.time())}.log'
-    log_file_path = os.path.join(log_dir, log_file_name)
-    file_handler = logging.FileHandler(log_file_path, mode='a')
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    file_handler.setFormatter(formatter)
-    l.addHandler(file_handler)
+    # l = logging.getLogger('my_logger')
+    # l.setLevel(logging.DEBUG)
+    # log_dir = './outputAttack/VanillaPGD'  
+    # os.makedirs(log_dir, exist_ok=True)  
+    # log_file_name = f'auto_generated_log_{int(time.time())}.log'
+    # log_file_path = os.path.join(log_dir, log_file_name)
+    # file_handler = logging.FileHandler(log_file_path, mode='a')
+    # formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    # file_handler.setFormatter(formatter)
+    # l.addHandler(file_handler)
     # to avoid potential errors, run code in single process
 
     states, in_hands, obs, object_dir_list, params = envs.resetAttack() 
@@ -131,19 +131,19 @@ def pgd_attack(envs, agent, epsilon_1 = 0.002, epsilon_2 = 0.002, alpha_1 = 0.02
                                scale = scale,
                                device = device)
     
-    target += 0.0000001
+    target += 0.0000001 #1e-6
 
-    print("target: ", target)
+    # print("target: ", target)
 
-    l.info('\n device: '+str(device)+
-           '\n epsilon_1: '+str(epsilon_1)+
-           '\n epsilon_2: '+str(epsilon_2)+
-           '\n iters: '+str(iters))
+    # l.info('\n device: '+str(device)+
+    #        '\n epsilon_1: '+str(epsilon_1)+
+    #        '\n epsilon_2: '+str(epsilon_2)+
+    #        '\n iters: '+str(iters))
     
     loss_function = nn.MSELoss()
 
     for iter in range(iters):
-        l.info('Iteration '+str(iter)+'/'+str(iters))
+        # l.info('Iteration '+str(iter)+'/'+str(iters))
 
         xyz_position.requires_grad = True
         rot_mat.requires_grad = True
@@ -170,10 +170,10 @@ def pgd_attack(envs, agent, epsilon_1 = 0.002, epsilon_2 = 0.002, alpha_1 = 0.02
         # rot_mat [-1, 1] positoin [0.3, 0.7] or [-0.2, 0.2] 
         # in_hand [1,1,24,24]
 
-        print("loss: ", loss)
-        print("grad[0]: ", grad[0])
-        print("grad[1]: ", grad[1])
-        print("actions: ", actions)
+        # print("loss: ", loss)
+        # print("grad[0]: ", grad[0])
+        # print("grad[1]: ", grad[1])
+        # print("actions: ", actions)
 
         x,y,z = xyz_position.clone().detach()
         x_eta = torch.clamp(x_grad, min = -epsilon_1,  max = epsilon_1)
@@ -194,16 +194,16 @@ def pgd_attack(envs, agent, epsilon_1 = 0.002, epsilon_2 = 0.002, alpha_1 = 0.02
         rot_mat = torch.clamp(rot_mat + rot_eta, min = original_rot_mat - alpha_2, max = original_rot_mat + alpha_2)
         """ attack on rotation"""
 
-        l.debug("gradient: "+str([x_grad, y_grad]))
-        l.debug("OG position: "+str(xyz_position))
-        l.debug("eta: "+str([x_eta, y_eta]))
-        l.debug("ADV position: "+str(adv_position)) 
-        # l.debug("successful grasp: "+str(success))    
-        l.debug("actions: "+str(actions))  
-        l.debug("rotation: "+str(rot_mat))
-        # print("successful grasp: "+str(success))
-        print("adv_position: ", adv_position)
-        print("rot_mat: ", rot_mat)
+        # l.debug("gradient: "+str([x_grad, y_grad]))
+        # l.debug("OG position: "+str(xyz_position))
+        # l.debug("eta: "+str([x_eta, y_eta]))
+        # l.debug("ADV position: "+str(adv_position)) 
+        # # l.debug("successful grasp: "+str(success))    
+        # l.debug("actions: "+str(actions))  
+        # l.debug("rotation: "+str(rot_mat))
+        # # print("successful grasp: "+str(success))
+        # print("adv_position: ", adv_position)
+        # print("rot_mat: ", rot_mat)
         
         xyz_position = adv_position.clone().detach()
         rot_mat = rot_mat.clone().detach()
@@ -225,8 +225,8 @@ def pgd_attack(envs, agent, epsilon_1 = 0.002, epsilon_2 = 0.002, alpha_1 = 0.02
     actions = actions.reshape(4)
     _, _, _, reward, _ = envs.step(actions.detach())
     
-    l.removeHandler(file_handler)
-    logging.shutdown()
+    # l.removeHandler(file_handler)
+    # logging.shutdown()
 
     return reward
 
@@ -285,8 +285,12 @@ if __name__ == '__main__':
     agent.eval()
     agent.loadModel(load_model_pre)
     # agent.loadModel("/content/drive/MyDrive/my_archive/ck3/snapshot")
-    # for _ in range(10):
-    # testGetGroundTruth()
-    reward = pgd_attack(envs, agent, iters=200, device = device)
-    print(reward)
+    s = 0.
+    for _ in range(100):
+        reward = pgd_attack(envs, agent, iters=200, device = device)
+        s += reward
+    sr_value = float(s)/100.0
+    f=open("./object_info.txt","w")
+    f.write("index: " + str(object_index) + ", num: " + str(num_objects) + ", SR: " + str(sr_value) + "\n")
+    # print(reward)
     print("end")
