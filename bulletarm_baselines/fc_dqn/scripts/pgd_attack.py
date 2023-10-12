@@ -234,7 +234,7 @@ def pgd_attack(envs, agent, epsilon_1 = 0.002, epsilon_2 = 0.002, alpha_1 = 0.02
     f=open("./object_info_1.txt","a")
     f.write("object_dir_list[0] -> " + str(object_dir_list[0]) + 
             ", reward -> " + str(reward) + 
-            ", original_xyz_position -> " + str(original_xyz_position),
+            ", original_xyz_position -> " + str(original_xyz_position) +
             ", adv_position -> " + str(adv_position)+ "\n")
     return reward
 
