@@ -202,8 +202,8 @@ def pgd_attack(envs, agent, epsilon_1 = 0.002, epsilon_2 = 0.002, alpha_1 = 0.02
         # l.debug("actions: "+str(actions))  
         # l.debug("rotation: "+str(rot_mat))
         # # print("successful grasp: "+str(success))
-        # print("adv_position: ", adv_position)
-        # print("rot_mat: ", rot_mat)
+        print("adv_position: ", adv_position)
+        print("rot_mat: ", rot_mat)
         
         xyz_position = adv_position.clone().detach()
         rot_mat = rot_mat.clone().detach()
@@ -293,7 +293,7 @@ if __name__ == '__main__':
         s += reward
     sr_value = float(s)/100.0
     print("sr_value: ", sr_value)
-    
+
     f=open("./object_info_1.txt","a")
     f.write("index: " + str(object_index) + ", num: " + str(num_objects) + ", SR: " + str(sr_value) + "\n")
     # print(reward)
