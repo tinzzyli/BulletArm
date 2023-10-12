@@ -286,10 +286,14 @@ if __name__ == '__main__':
     agent.loadModel(load_model_pre)
     # agent.loadModel("/content/drive/MyDrive/my_archive/ck3/snapshot")
     s = 0.
-    for _ in range(100):
+    
+    print("object_index: ", object_index)
+    for i in range(100):
         reward = pgd_attack(envs, agent, iters=200, device = device)
         s += reward
     sr_value = float(s)/100.0
+    print("sr_value: ", sr_value)
+    
     f=open("./object_info_1.txt","a")
     f.write("index: " + str(object_index) + ", num: " + str(num_objects) + ", SR: " + str(sr_value) + "\n")
     # print(reward)
