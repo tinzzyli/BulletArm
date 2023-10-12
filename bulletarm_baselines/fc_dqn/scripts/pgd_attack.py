@@ -202,8 +202,8 @@ def pgd_attack(envs, agent, epsilon_1 = 0.002, epsilon_2 = 0.002, alpha_1 = 0.02
         # l.debug("actions: "+str(actions))  
         # l.debug("rotation: "+str(rot_mat))
         # # print("successful grasp: "+str(success))
-        print("adv_position: ", adv_position)
-        print("rot_mat: ", rot_mat)
+        # print("adv_position: ", adv_position)
+        # print("rot_mat: ", rot_mat)
         
         xyz_position = adv_position.clone().detach()
         rot_mat = rot_mat.clone().detach()
@@ -227,7 +227,15 @@ def pgd_attack(envs, agent, epsilon_1 = 0.002, epsilon_2 = 0.002, alpha_1 = 0.02
     
     # l.removeHandler(file_handler)
     # logging.shutdown()
-
+    print("object_dir_list[0] -> ",object_dir_list[0])
+    print("reward -> ",reward)
+    print("original_xyz_position -> ", original_xyz_position)
+    print("adv_position -> ", adv_position)
+    f=open("./object_info_1.txt","a")
+    f.write("object_dir_list[0] -> " + str(object_dir_list[0]) + 
+            ", reward -> " + str(reward) + 
+            ", original_xyz_position -> " + str(original_xyz_position),
+            ", adv_position -> " + str(adv_position)+ "\n")
     return reward
 
 def heightmapAttack(envs, agent, epsilon = 1e-5, alpha = 4e-4, iters = 5):
@@ -287,14 +295,14 @@ if __name__ == '__main__':
     # agent.loadModel("/content/drive/MyDrive/my_archive/ck3/snapshot")
     s = 0.
     
-    print("object_index: ", object_index)
+    # print("object_index: ", object_index)
     for i in range(100):
         reward = pgd_attack(envs, agent, iters=200, device = device)
-        s += reward
-    sr_value = float(s)/100.0
-    print("sr_value: ", sr_value)
+    #     s += reward
+    # sr_value = float(s)/100.0
+    # print("sr_value: ", sr_value)
 
-    f=open("./object_info_1.txt","a")
-    f.write("index: " + str(object_index) + ", num: " + str(num_objects) + ", SR: " + str(sr_value) + "\n")
+    # f=open("./object_info_1.txt","a")
+    # f.write("index: " + str(object_index) + ", num: " + str(num_objects) + ", SR: " + str(sr_value) + "\n")
     # print(reward)
     print("end")
