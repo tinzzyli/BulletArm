@@ -162,11 +162,13 @@ def pgd_attack(envs, agent, epsilon_1 = 0.0005, epsilon_2 = 0.0005, alpha_1 = 0.
     target += 0.0000001 #1e-6
     
     # image = saveImage(object_dir_list,xyz_position,rot_mat,scale,device)
-    path =  os.path.join(".","object_data",str(object_index),str(test_i),"data.txt")
-    f = open(path, "a")
-    f.write("original_xyz_position: "+str(original_xyz_position))
-    f.write("original_rot_mat: "+str(original_rot_mat))
-    f.write("scale: "+str(scale))
+    path =  os.path.join(".","object_data",str(object_index),str(test_i))
+    os.makedirs(path, exist_ok=True)
+    file_path = path+"/data.txt"
+    f = open(file_path, "a")
+    f.write("original_xyz_position: "+str(original_xyz_position)+ "\n")
+    f.write("original_rot_mat: "+str(original_rot_mat)+ "\n")
+    f.write("scale: "+str(scale)+ "\n")
 
     
     loss_function = nn.MSELoss()
@@ -223,8 +225,8 @@ def pgd_attack(envs, agent, epsilon_1 = 0.0005, epsilon_2 = 0.0005, alpha_1 = 0.
 
 
     #end of loop
-    f.write("xyz_position: "+str(xyz_position))
-    f.write("rot_mat: "+str(rot_mat))
+    f.write("xyz_position: "+str(xyz_position)+ "\n")
+    f.write("rot_mat: "+str(rot_mat)+ "\n")
 
     _, actions = getGroundTruth(agent = agent,
                                 states = states,

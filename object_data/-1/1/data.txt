@@ -1,0 +1,5 @@
+original_xyz_position: tensor([0.4357, 0.0433, 0.0236], dtype=torch.float64)original_rot_mat: tensor([[ 0.6829,  0.7024, -0.2006],
+        [-0.7001,  0.7077,  0.0944],
+        [ 0.2083,  0.0760,  0.9751]])scale: tensor(0.3144, dtype=torch.float64)xyz_position: tensor([0.4337, 0.0363, 0.0236], dtype=torch.float64)rot_mat: tensor([[ 0.6819,  0.7034, -0.2006],
+        [-0.7031,  0.7097,  0.1024],
+        [ 0.2073,  0.0810,  0.9731]])
