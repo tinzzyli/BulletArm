@@ -52,18 +52,21 @@ class Sensor(object):
     )
     self.proj_matrix = pb.computeProjectionMatrixFOV(70, 1, 0.001, 0.3)
 
-  def importObject(self, object_scale_list, object_index_list):
+  def importObject(self, objs):
     object_list = []
     object_dir_list = []
     object_param_list = []
-    for idx, object_index in enumerate(object_index_list):
-      object_index = str(object_index).zfill(3)
+    for obj in objs:
+      object_index = str(obj.OBJ_INDEX).zfill(3)
+      """
+      directory hard-coded
+      """
       object_dir = "./bulletarm/pybullet/urdf/object/GraspNet1B_object/*/convex.obj"
       object_dir = object_dir.replace("*", object_index)
       o = pyredner.load_obj(object_dir, return_objects=True)
       new_object = o[0]
 
-      orien = self.objs[0].getRotation()
+      orien = obj.getRotation()
       _x, _y, _z, _w = orien
       orien = _w, _x, _y, _z
       R = quaternions.quat2mat(orien)
@@ -71,15 +74,15 @@ class Sensor(object):
       R = R.to(self.device)
       R = R.float()
 
-      x = self.objs[idx].getXPosition()
-      y = self.objs[idx].getYPosition()
-      z = self.objs[idx].getZPosition()
+      x = obj.getXPosition()
+      y = obj.getYPosition()
+      z = obj.getZPosition()
       xyz_position = np.array([x, y, z])
 
       new_vertices = new_object.vertices.clone()
       new_vertices = new_vertices.to(self.device)
       new_vertices = new_vertices.float()
-      scale = object_scale_list[idx]
+      scale = torch.tensor(obj.OBJ_SCALE)
       new_vertices *= scale
       scale = np.copy(scale)
       new_vertices = torch.matmul(new_vertices, R.T)
@@ -142,9 +145,9 @@ class Sensor(object):
     img = depth
     return img
   
-  def getHeightmapAttack(self, objs, object_index_list, size, object_scale_list):
+  def getHeightmapAttack(self, objs, size):
     self.size = size      
-    rendering_list, object_dir_list, object_param_list = self.importObject(object_scale_list=object_scale_list, object_index_list=object_index_list)
+    rendering_list, object_dir_list, object_param_list = self.importObject(objs)
     tray_dir = "./tray.obj"
     t = pyredner.load_obj(tray_dir, return_objects=True, device=self.device)
     tray = t[0]   
