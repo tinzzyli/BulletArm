@@ -149,7 +149,6 @@ def pgd_attack(envs, agent, epsilon_1 = 0.0005, epsilon_2 = 0.0005, alpha_1 = 0.
     rot_mat = original_rot_mat.clone().detach()
     scale = scale.clone().detach()
 
-
     _, target = getGroundTruth(agent = agent,
                                states = states,
                                in_hands = in_hands,

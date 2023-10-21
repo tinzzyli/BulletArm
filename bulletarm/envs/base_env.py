@@ -35,7 +35,8 @@ class BaseEnv:
     config: Config used to specify various environment details
   '''
   def __init__(self, config):
-    self.OBJ_SCALE_FOR_PYREDNER = None
+    # self.OBJ_SCALE_FOR_PYREDNER = []
+    # self.OBJ_INDEX_FOR_PYREDNER = []
 
     # Load the default config and replace any duplicate values with the config
     config = {**env_configs.DEFAULT_CONFIG, **config}
@@ -394,10 +395,10 @@ class BaseEnv:
   
 
   def _getHeightmap(self):
-    return self.sensor.getHeightmap(self.objects, self.OBJ_INDEX_FOR_PYREDNER, self.heightmap_size, self.OBJ_SCALE_FOR_PYREDNER)
+    return self.sensor.getHeightmap(self.heightmap_size)
   
   def _getHeightmapAttack(self):
-    return self.sensor.getHeightmapAttack(self.objects, self.OBJ_INDEX_FOR_PYREDNER, self.heightmap_size, self.OBJ_SCALE_FOR_PYREDNER)
+    return self.sensor.getHeightmapAttack(self.objects, self.heightmap_size)
 
   def _getValidPositions(self, border_padding, min_distance, existing_positions, num_shapes, sample_range=None):
     existing_positions_copy = copy.deepcopy(existing_positions)
@@ -585,8 +586,8 @@ class BaseEnv:
       elif shape_type == constants.GRASP_NET_OBJ:
         handle = pb_obj_generation.generateGraspNetObject(position, orientation, scale, model_id)
       
-        self.OBJ_SCALE_FOR_PYREDNER = handle.OBJ_SCALE
-        self.OBJ_INDEX_FOR_PYREDNER = handle.OBJ_INDEX
+        # self.OBJ_SCALE_FOR_PYREDNER.append(handle.OBJ_SCALE)
+        # self.OBJ_INDEX_FOR_PYREDNER.append(handle.OBJ_INDEX)
       else:
         raise NotImplementedError
 

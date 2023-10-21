@@ -13,14 +13,14 @@ class EnvWrapper:
         return states, in_hands, obs
     
     def resetAttack(self):
-        (states, in_hands, obs, object_dir_list, params) = self.envs.resetAttack()
+        (states, in_hands, obs, object_dir_list, object_param_list) = self.envs.resetAttack()
         states = torch.tensor(states).float()
         in_hands = torch.tensor(in_hands).float()
         obs = torch.tensor(obs).float()
-        params = [torch.tensor(param) for param in params]
+        # object_param_list = [torch.tensor(param) for param in object_param_list]
         # params = [param.float() for param in params]
         
-        return states, in_hands, obs, object_dir_list, params
+        return states, in_hands, obs, object_dir_list, object_param_list
     
     def getNextAction(self):
         return torch.tensor(self.envs.getNextAction()).float()
