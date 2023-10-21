@@ -56,6 +56,9 @@ class Sensor(object):
     object_list = []
     object_dir_list = []
     object_param_list = []
+    pos_list = []
+    rot_list = []
+    scale_list = []
     for obj in objs:
       object_index = str(obj.OBJ_INDEX).zfill(3)
       """
@@ -93,10 +96,14 @@ class Sensor(object):
 
       object_list.append(new_object)
       object_dir_list.append(object_dir)
-      object_param_list.append([torch.tensor(xyz_position), 
-                                torch.tensor(R), 
-                                torch.tensor(scale)])
+      pos_list.append(torch.tensor(xyz_position))
+      rot_list.append(torch.tensor(R))
+      scale_list.append(torch.tensor(scale))
+    
 
+    object_param_list.append(pos_list)
+    object_param_list.append(rot_list)
+    object_param_list.append(scale_list)
     # print(scale, quat_rotation, xyz_position)
 
     return object_list, object_dir_list, object_param_list

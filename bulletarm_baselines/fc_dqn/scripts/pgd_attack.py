@@ -31,6 +31,13 @@ from bulletarm_baselines.fc_dqn.utils.parameters import *
 from bulletarm_baselines.fc_dqn.utils.torch_utils import augmentBuffer, augmentBufferD4
 from bulletarm_baselines.fc_dqn.scripts.fill_buffer_deconstruct import fillDeconstructUsingRunner
 
+def unify(R):
+    for idx,r in enumerate(R):
+        mod = r[0]**2 + r[1]**2 + r[2]**2
+        r /= torch.sqrt(mod)
+        R[idx] = r
+    return R
+
 def rendering(obj_list):
     
     cam_look_at = torch.tensor([0.5, 0.0, 0.0])
@@ -64,7 +71,7 @@ def saveImage(object_dir_list, # this variable must not change
     object_list = []
 
     for d in object_dir_list:
-        o = pyredner.load_obj(object_dir_list[0], return_objects=True)[0]
+        o = pyredner.load_obj(d, return_objects=True)[0]
 
         new_vertices = o.vertices.to(device).detach().clone() # new variable
         scale = scale.clone().detach()
@@ -98,27 +105,27 @@ def getGroundTruth(agent,
                    states,
                    in_hands,
                    object_dir_list, # this variable must not change
-                   xyz_position,
-                   rot_mat,
-                   scale,
+                   xyz_position_list,
+                   rot_mat_list,
+                   scale_list,
                    device):
     
     states = states.unsqueeze(dim = 0).detach() # new variable
     in_hands = in_hands.unsqueeze(dim = 0).detach() # new variable
     object_list = []
 
-    for d in object_dir_list:
-        o = pyredner.load_obj(object_dir_list[0], return_objects=True)[0]
+    for idx,d in enumerate(object_dir_list):
+        o = pyredner.load_obj(d, return_objects=True)[0]
 
         new_vertices = o.vertices.to(device).detach().clone() # new variable
-        scale = scale.clone().detach()
+        scale = scale_list[idx].clone().detach()
 
         new_vertices *= scale
 
-        new_vertices = torch.matmul(new_vertices, rot_mat.T.float())
-        new_vertices[:,0:1] += xyz_position[0]
-        new_vertices[:,1:2] += xyz_position[1]
-        new_vertices[:,2:3] += xyz_position[2]
+        new_vertices = torch.matmul(new_vertices, rot_mat_list[idx].T.float())
+        new_vertices[:,0:1] += xyz_position_list[idx][0]
+        new_vertices[:,1:2] += xyz_position_list[idx][1]
+        new_vertices[:,2:3] += xyz_position_list[idx][2]
         o.vertices = new_vertices.clone()
 
         object_list.append(o)
@@ -140,34 +147,39 @@ def getGroundTruth(agent,
     
     return q_value_maps, actions
 
-def pgd_attack(envs, agent, epsilon_1 = 0.0005, epsilon_2 = 0.0005, alpha_1 = 0.02, alpha_2 = 0.02, iters=10, device = None, test_i = 0):
+def pgd_attack(envs, agent, epsilon_1 = 0.0005, epsilon_2 = 0.0005, alpha_1 = 0.02, alpha_2 = 0.1, iters=10, device = None, test_i = 0):
     pyredner.set_print_timing(False)
 
     states, in_hands, obs, object_dir_list, params = envs.resetAttack() 
-    original_xyz_position, original_rot_mat, scale = params
-    xyz_position = original_xyz_position.clone().detach()
-    rot_mat = original_rot_mat.clone().detach()
-    scale = scale.clone().detach()
+    original_xyz_position_list, original_rot_mat_list, scale_list = params
+
+    num_objects = len(object_dir_list)
+    # xyz_position = original_xyz_position.clone().detach()
+    # rot_mat = original_rot_mat.clone().detach()
+    # scale = scale.clone().detach()
+    xyz_position_list = copy.deepcopy(original_xyz_position_list)
+    rot_mat_list = copy.deepcopy(original_rot_mat_list)
+    scale_list = copy.deepcopy(scale)
 
     _, target = getGroundTruth(agent = agent,
                                states = states,
                                in_hands = in_hands,
                                object_dir_list = object_dir_list,
-                               xyz_position = xyz_position,
-                               rot_mat = rot_mat,
-                               scale = scale,
+                               xyz_position_list = xyz_position_list,
+                               rot_mat_list = rot_mat_list,
+                               scale_list = scale_list,
                                device = device)
     
     target += 0.0000001 #1e-6
     
     # image = saveImage(object_dir_list,xyz_position,rot_mat,scale,device)
-    path =  os.path.join(".","object_data",str(object_index),str(test_i))
-    os.makedirs(path, exist_ok=True)
-    file_path = path+"/data.txt"
-    f = open(file_path, "a")
-    f.write("original_xyz_position: "+str(original_xyz_position)+ "\n")
-    f.write("original_rot_mat: "+str(original_rot_mat)+ "\n")
-    f.write("scale: "+str(scale)+ "\n")
+    # path =  os.path.join(".","object_data",str(object_index),str(test_i))
+    # os.makedirs(path, exist_ok=True)
+    # file_path = path+"/data.txt"
+    # f = open(file_path, "a")
+    # f.write("original_xyz_position: "+str(original_xyz_position)+ "\n")
+    # f.write("original_rot_mat: "+str(original_rot_mat)+ "\n")
+    # f.write("scale: "+str(scale)+ "\n")
 
     
     loss_function = nn.MSELoss()
@@ -176,22 +188,22 @@ def pgd_attack(envs, agent, epsilon_1 = 0.0005, epsilon_2 = 0.0005, alpha_1 = 0.
     for iter in range(iters):
         # l.info('Iteration '+str(iter)+'/'+str(iters))
 
-        xyz_position.requires_grad = True
-        rot_mat.requires_grad = True
+        xyz_position_list[0].requires_grad = True
+        rot_mat_list[0].requires_grad = True
 
-        q_value_maps, actions = getGroundTruth(agent = agent, 
-                                               states = states,
-                                               in_hands = in_hands,
-                                               object_dir_list = object_dir_list,
-                                               xyz_position = xyz_position,
-                                               rot_mat = rot_mat,
-                                               scale = scale,
-                                               device = device)
+        _, actions = getGroundTruth(agent = agent,
+                                    states = states,
+                                    in_hands = in_hands,
+                                    object_dir_list = object_dir_list,
+                                    xyz_position_list = xyz_position_list,
+                                    rot_mat_list = rot_mat_list,
+                                    scale_list = scale_list,
+                                    device = device)
 
         """ attack on position """
         loss = loss_function(target, actions)      
         grad = torch.autograd.grad(outputs=loss, 
-                                   inputs=(xyz_position, rot_mat), 
+                                   inputs=(xyz_position_list[0], rot_mat_list[0]), 
                                    grad_outputs=None, 
                                    allow_unused=False, 
                                    retain_graph=False, 
@@ -207,15 +219,15 @@ def pgd_attack(envs, agent, epsilon_1 = 0.0005, epsilon_2 = 0.0005, alpha_1 = 0.
         # accumulated change should not exceed the boundaries
 
         xyz_position = torch.tensor([
-            torch.clamp(x + x_eta, min = original_xyz_position[0] - alpha_1, max = original_xyz_position[0] + alpha_1),
-            torch.clamp(y + y_eta, min = original_xyz_position[1] - alpha_1, max = original_xyz_position[1] + alpha_1),
+            torch.clamp(x + x_eta, min = original_xyz_position_list[0][0] - alpha_1, max = original_xyz_position_list[0][0] + alpha_1),
+            torch.clamp(y + y_eta, min = original_xyz_position_list[0][1] - alpha_1, max = original_xyz_position_list[0][1] + alpha_1),
             z])
         """ attack on position """
 
         """ attack on rotation"""
         rot_eta = rot_grad.sign() * epsilon_2
         rot_mat = rot_mat.detach()
-        rot_mat = torch.clamp(rot_mat + rot_eta, min = original_rot_mat - alpha_2, max = original_rot_mat + alpha_2)
+        rot_mat = torch.clamp(unify(rot_mat + rot_eta), min = original_rot_mat_list[0] - alpha_2, max = original_rot_mat_list[0] + alpha_2)
         """ attack on rotation"""
 
         xyz_position = xyz_position.clone().detach()
@@ -224,16 +236,16 @@ def pgd_attack(envs, agent, epsilon_1 = 0.0005, epsilon_2 = 0.0005, alpha_1 = 0.
 
 
     #end of loop
-    f.write("xyz_position: "+str(xyz_position)+ "\n")
-    f.write("rot_mat: "+str(rot_mat)+ "\n")
+    # f.write("xyz_position: "+str(xyz_position)+ "\n")
+    # f.write("rot_mat: "+str(rot_mat)+ "\n")
 
     _, actions = getGroundTruth(agent = agent,
                                 states = states,
                                 in_hands = in_hands,
                                 object_dir_list = object_dir_list,
-                                xyz_position = xyz_position,
-                                rot_mat = rot_mat,
-                                scale = scale,
+                                xyz_position_list = xyz_position_list,
+                                rot_mat_list = rot_mat_list,
+                                scale_list = scale_list,
                                 device = device)
     
     actions = actions.to(device)
