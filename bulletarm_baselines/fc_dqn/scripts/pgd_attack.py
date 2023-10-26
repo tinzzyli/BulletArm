@@ -259,9 +259,11 @@ if __name__ == '__main__':
         agent.loadModel(load_model_pre)
     # agent.loadModel("/content/drive/MyDrive/my_archive/ck3/snapshot")
     s = 0.
+
+
     
     print("object_index: ", object_index)
-    for i in range(100):
+    for i in range(1):
         reward = pgd_attack(envs, agent, iters=100, device = device, test_i = i)
         s += reward
     sr_value = float(s)/100.0
