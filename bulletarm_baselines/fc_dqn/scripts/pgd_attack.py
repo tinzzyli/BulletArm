@@ -159,7 +159,7 @@ def pgd_attack(envs, agent, epsilon_1 = 0.0005, epsilon_2 = 0.0005, alpha_1 = 0.
     # scale = scale.clone().detach()
     xyz_position_list = copy.deepcopy(original_xyz_position_list)
     rot_mat_list = copy.deepcopy(original_rot_mat_list)
-    scale_list = copy.deepcopy(scale)
+    scale_list = copy.deepcopy(scale_list)
 
     _, target = getGroundTruth(agent = agent,
                                states = states,
