@@ -63,43 +63,6 @@ def rendering(obj_list):
 
     return heightmap.reshape(128,128)
 
-def saveImage(object_dir_list, # this variable must not change
-              xyz_position,
-              rot_mat,
-              scale,
-              device):
-    object_list = []
-
-    for d in object_dir_list:
-        o = pyredner.load_obj(d, return_objects=True)[0]
-
-        new_vertices = o.vertices.to(device).detach().clone() # new variable
-        scale = scale.clone().detach()
-
-        new_vertices *= scale
-
-        new_vertices = torch.matmul(new_vertices, rot_mat.T.float())
-        new_vertices[:,0:1] += xyz_position[0]
-        new_vertices[:,1:2] += xyz_position[1]
-        new_vertices[:,2:3] += xyz_position[2]
-        o.vertices = new_vertices.clone()
-
-        object_list.append(o)
-
-    tray_dir = "./tray.obj"
-    tray = pyredner.load_obj(tray_dir, return_objects=True)[0]
-    tray.vertices /= 1000
-    tray.vertices[:,0:1] += 0.5
-    tray.vertices[:,1:2] += 0.0
-    tray.vertices[:,2:3] += 0.0
-    object_list.append(tray)
-
-    obs = rendering(obj_list=object_list).reshape(128,128).detach()
-
-    scaled_obs = (obs * 25500).byte()
-    image = Image.fromarray(scaled_obs.numpy())
-    return image
-
 
 def getGroundTruth(agent, 
                    states,
@@ -187,9 +150,12 @@ def pgd_attack(envs, agent, epsilon_1 = 0.0005, epsilon_2 = 0.0005, alpha_1 = 0.
 
     for iter in range(iters):
         # l.info('Iteration '+str(iter)+'/'+str(iters))
-
+        
         xyz_position_list[0].requires_grad = True
         rot_mat_list[0].requires_grad = True
+
+        xyz_position = xyz_position_list[0].detach().clone()
+        rot_mat = rot_mat_list[0].detach().clone()
 
         _, actions = getGroundTruth(agent = agent,
                                     states = states,
@@ -226,13 +192,12 @@ def pgd_attack(envs, agent, epsilon_1 = 0.0005, epsilon_2 = 0.0005, alpha_1 = 0.
 
         """ attack on rotation"""
         rot_eta = rot_grad.sign() * epsilon_2
-        rot_mat = rot_mat.detach()
         rot_mat = torch.clamp(unify(rot_mat + rot_eta), min = original_rot_mat_list[0] - alpha_2, max = original_rot_mat_list[0] + alpha_2)
         """ attack on rotation"""
 
-        xyz_position = xyz_position.clone().detach()
-        rot_mat = rot_mat.clone().detach()
-        scale = scale.clone().detach()
+        xyz_position_list[0] = xyz_position.detach().clone()
+        rot_mat_list[0] = rot_mat.detach().clone()
+        scale = scale.detach().clone()
 
 
     #end of loop
@@ -285,25 +250,6 @@ def heightmapAttack(envs, agent, epsilon = 1e-5, alpha = 4e-4, iters = 5):
     _, _, _, reward, _ = envs.step(actions.detach())
     
     return reward
-
-def testGetGroundTruth():
-    pyredner.set_print_timing(False)
-
-    states, in_hands, obs, object_dir_list, params = envs.resetAttack() 
-    original_xyz_position, original_rot_mat, scale = params
-    xyz_position = original_xyz_position.clone().detach()
-    rot_mat = original_rot_mat.clone().detach()
-    scale = scale.clone().detach()
-    for _ in range(100):
-        _, actions = getGroundTruth(agent = agent,
-                            states = states,
-                            in_hands = in_hands,
-                            object_dir_list = object_dir_list,
-                            xyz_position = xyz_position,
-                            rot_mat = rot_mat,
-                            scale = scale,
-                            device = device)
-        print(actions)
 
 if __name__ == '__main__':
     envs = EnvWrapper(num_processes, env, env_config, planner_config)
