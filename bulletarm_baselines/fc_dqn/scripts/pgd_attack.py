@@ -197,7 +197,7 @@ def pgd_attack(envs, agent, epsilon_1 = 0.0005, epsilon_2 = 0.0005, alpha_1 = 0.
 
         xyz_position_list[0] = xyz_position.detach().clone()
         rot_mat_list[0] = rot_mat.detach().clone()
-        scale = scale.detach().clone()
+        # scale = scale.detach().clone()
 
 
     #end of loop
