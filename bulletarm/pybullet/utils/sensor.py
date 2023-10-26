@@ -59,6 +59,7 @@ class Sensor(object):
     pos_list = []
     rot_list = []
     scale_list = []
+    
     for obj in objs:
       object_index = str(obj.OBJ_INDEX).zfill(3)
       """
