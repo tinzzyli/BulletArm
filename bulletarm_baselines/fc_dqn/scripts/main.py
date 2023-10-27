@@ -81,7 +81,7 @@ def evaluate(envs, agent, logger):
     actions_star = torch.cat((actions_star, states.unsqueeze(1)), dim=1)
 
     actions_star = actions_star.reshape(4)
-    states_, in_hands_, obs_, rewards, dones = envs.stepAttack(actions_star, auto_reset=True)
+    states_, in_hands_, obs_, rewards, dones = envs.stepAttack(actions_star.detach(), auto_reset=True)
     states_, in_hands_, obs_, _, _ = envs.resetAttack()
 
     states_ = states_.unsqueeze(dim=0)
