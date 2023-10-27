@@ -63,9 +63,9 @@ def saveModelAndInfo(logger, agent):
 
 def evaluate(envs, agent, logger):
   states, in_hands, obs, _, _ = envs.resetAttack()
-  states = states.unsqueeze(dim=0)
-  in_hands = in_hands.unsqueeze(dim=0)
-  obs = obs.unsqueeze(dim=0)
+  states = states.unsqueeze(dim=0).detach()
+  in_hands = in_hands.unsqueeze(dim=0).detach()
+  obs = obs.unsqueeze(dim=0).detach()
 
   evaled = 0
 #   temp_reward = [[] for _ in range(num_eval_processes)]
@@ -76,19 +76,19 @@ def evaluate(envs, agent, logger):
   while evaled < num_eval_episodes:
     q_value_maps, actions_star_idx, actions_star = agent.getEGreedyActionsAttack(states, in_hands, obs, 0)
 
-    actions_star = actions_star.to(device)
-    states = states.to(device)
+    actions_star = actions_star.to(device).detach()
+    states = states.to(device).detach()
     actions_star = torch.cat((actions_star, states.unsqueeze(1)), dim=1)
 
-    actions_star = actions_star.reshape(4)
+    actions_star = actions_star.reshape(4).detach()
     states_, in_hands_, obs_, rewards, dones = envs.stepAttack(actions_star.detach(), auto_reset=True)
     states_, in_hands_, obs_, _, _ = envs.resetAttack()
 
-    states_ = states_.unsqueeze(dim=0)
-    in_hands_ = in_hands_.unsqueeze(dim=0)
-    obs_ = obs_.unsqueeze(dim=0)
-    rewards = rewards.unsqueeze(dim=0)
-    dones = dones.unsqueeze(dim=0)
+    states_ = states_.unsqueeze(dim=0).detach()
+    in_hands_ = in_hands_.unsqueeze(dim=0).detach()
+    obs_ = obs_.unsqueeze(dim=0).detach()
+    rewards = rewards.unsqueeze(dim=0).detach()
+    dones = dones.unsqueeze(dim=0).detach()
 
     rewards = rewards.numpy()
     dones = dones.numpy()
