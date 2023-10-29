@@ -139,7 +139,7 @@ class Sensor(object):
     heightmap =  heightmap*37821.71428571428 - 3407.3605408838816
     heightmap = torch.relu(heightmap)
     heightmap = torch.where(heightmap > 1.0, 6e-3, heightmap) 
-    return heightmap.reshape(128,128)
+    return heightmap.reshape(size, size)
   
   def getHeightmap(self,size):
     self.size = size      

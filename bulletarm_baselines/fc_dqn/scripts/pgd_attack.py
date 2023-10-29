@@ -47,12 +47,12 @@ def rendering(obj_list):
                         up = torch.tensor([-1.0, 0.0, 0.0]),
                         fov = torch.tensor([2.291525676350207]), # in degree
                         clip_near = 1e-2, # needs to > 0
-                        resolution = (128, 128),
+                        resolution = (heightmap_size, heightmap_size),
                         )
     scene = pyredner.Scene(camera = camera, objects = obj_list)
     chan_list = [pyredner.channels.depth]
     depth_img = pyredner.render_generic(scene, chan_list)
-    # return depth_img.reshape(128,128)
+    # return depth_img.reshape(heightmap_size,heightmap_size)
     near = 0.09
     far = 0.010
     depth = near * far /(far - depth_img)
@@ -61,7 +61,7 @@ def rendering(obj_list):
     heightmap = torch.relu(heightmap)
     heightmap = torch.where(heightmap > 1.0, 6e-3, heightmap) 
 
-    return heightmap.reshape(128,128)
+    return heightmap.reshape(heightmap_size,heightmap_size)
 
 
 def getGroundTruth(agent, 
@@ -102,7 +102,7 @@ def getGroundTruth(agent,
     tray.vertices[:,2:3] += 0.0
     object_list.append(tray)
 
-    obs = rendering(obj_list=object_list).reshape(1,1,128,128)   
+    obs = rendering(obj_list=object_list).reshape(1,1,heightmap_size,heightmap_size)   
     q_value_maps, _, actions = agent.getEGreedyActionsAttack(states, in_hands, obs, 0)
     
     actions = actions.to(device)
