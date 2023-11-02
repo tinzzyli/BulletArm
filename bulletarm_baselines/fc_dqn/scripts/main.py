@@ -116,7 +116,6 @@ def evaluate(envs, agent, logger):
     eval_bar.close()
 
 def train():
-    
     eval_thread = None
     start_time = time.time()
     if seed is not None:
@@ -131,7 +130,6 @@ def train():
 
     if load_model_pre:
         agent.loadModel(load_model_pre)
-
     agent.train()
     eval_agent.train()
 
@@ -173,27 +171,21 @@ def train():
             planner_num_process = num_processes
             j = 0
             states, in_hands, obs = planner_envs.reset()
-
             s = 0
             if not no_bar:
                 planner_bar = tqdm(total=planner_episode)
             local_transitions = [[] for _ in range(planner_num_process)]
             while j < planner_episode:
-
                 plan_actions = planner_envs.getNextAction()
-                plan_actions = plan_actions.to(device)
                 planner_actions_star_idx, planner_actions_star = agent.getActionFromPlan(plan_actions)
                 planner_actions_star = torch.cat((planner_actions_star, states.unsqueeze(1)), dim=1)
                 states_, in_hands_, obs_, rewards, dones = planner_envs.step(planner_actions_star, auto_reset=True)
-
                 buffer_obs = getCurrentObs(in_hands, obs)
                 buffer_obs_ = getCurrentObs(in_hands_, obs_)
-
                 for i in range(planner_num_process):
                   transition = ExpertTransition(states[i], buffer_obs[i], planner_actions_star_idx[i], rewards[i], states_[i],
                                                 buffer_obs_[i], dones[i], torch.tensor(100), torch.tensor(1))
                   local_transitions[i].append(transition)
-
                 states = copy.copy(states_)
                 obs = copy.copy(obs_)
                 in_hands = copy.copy(in_hands_)
@@ -215,7 +207,6 @@ def train():
             augmentBuffer(replay_buffer, expert_aug_n, agent.rzs)
         elif expert_aug_d4:
             augmentBufferD4(replay_buffer, agent.rzs)
-
 
     # pre train
     if pre_train_step > 0:
@@ -248,7 +239,6 @@ def train():
         q_value_maps, actions_star_idx, actions_star = agent.getEGreedyActions(states, in_hands, obs, eps)
 
         buffer_obs = getCurrentObs(in_hands, obs)
-
         actions_star = torch.cat((actions_star, states.unsqueeze(1)), dim=1)
         envs.stepAsync(actions_star, auto_reset=False)
 
