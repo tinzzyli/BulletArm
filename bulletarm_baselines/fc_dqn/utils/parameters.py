@@ -17,7 +17,7 @@ env_group.add_argument('--num_objects', type=int, default=5, help='The number of
 env_group.add_argument('--max_episode_steps', type=int, default=-1, help='The maximal number of steps per episode')
 env_group.add_argument('--action_sequence', type=str, default='xyrp', choices=['xyrp', 'xyp', 'xyzrrrp'], help='The action space')
 env_group.add_argument('--random_orientation', type=strToBool, default=True, help='Allow the environment to initialize with random orientation')
-env_group.add_argument('--num_processes', type=int, default=0, help='The number of parallel environments to run')
+env_group.add_argument('--num_processes', type=int, default=5, help='The number of parallel environments to run')
 env_group.add_argument('--render', type=strToBool, default=False, help='Render the PyBullet GUI or not')
 env_group.add_argument('--workspace_size', type=float, default=0.4, help='Size of the workspace in meters')
 env_group.add_argument('--heightmap_size', type=int, default=128, help='Size of the heightmap in pixels')
