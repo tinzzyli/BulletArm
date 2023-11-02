@@ -69,7 +69,7 @@ def evaluate(envs, agent, logger):
     eval_bar = tqdm(total=num_eval_episodes)
   while evaled < num_eval_episodes:
     q_value_maps, actions_star_idx, actions_star = agent.getEGreedyActions(states, in_hands, obs, 0)
-    actions_star = torch.cat((actions_star.to(device), states.unsqueeze(1)).to(device), dim=1)
+    actions_star = torch.cat((actions_star.to(device), states.unsqueeze(1).to(device)), dim=1)
     states_, in_hands_, obs_, rewards, dones = envs.step(actions_star, auto_reset=True)
     rewards = rewards.numpy()
     dones = dones.numpy()
