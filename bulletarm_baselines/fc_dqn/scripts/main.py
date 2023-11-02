@@ -239,7 +239,7 @@ def train():
         q_value_maps, actions_star_idx, actions_star = agent.getEGreedyActions(states, in_hands, obs, eps)
 
         buffer_obs = getCurrentObs(in_hands, obs)
-        actions_star = torch.cat((actions_star, states.unsqueeze(1)), dim=1)
+        actions_star = torch.cat((actions_star.to(device), states.unsqueeze(1).to(device)), dim=1)
         envs.stepAsync(actions_star, auto_reset=False)
 
         if len(replay_buffer) >= training_offset:
