@@ -179,7 +179,6 @@ class BaseEnv:
     self.pick_top_down_approach = config['pick_top_down_approach']
     self.place_top_down_approach = config['place_top_down_approach']
     self.half_rotation = config['half_rotation']
-    self.object_index = config['object_index']
 
     self.robot.adjust_gripper_after_lift = config['adjust_gripper_after_lift']
     if config['robot'] == 'kuka':
