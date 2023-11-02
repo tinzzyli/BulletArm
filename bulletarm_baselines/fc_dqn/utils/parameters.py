@@ -58,7 +58,7 @@ training_group.add_argument('--aug_type', type=str, choices=['se2', 'cn', 't', '
 
 
 eval_group = parser.add_argument_group('eval')
-eval_group.add_argument('--num_eval_processes', type=int, default=0, help='The number of parallel environments for evaluation')
+eval_group.add_argument('--num_eval_processes', type=int, default=5, help='The number of parallel environments for evaluation')
 eval_group.add_argument('--eval_freq', default=100, type=int, help='The evaluation frequency')
 eval_group.add_argument('--num_eval_episodes', default=50, type=int, help='The number of evaluation episodes')
 eval_group.add_argument('--object_index', default=-1, type=int, help='The index number of objects in object grasping')
