@@ -545,5 +545,5 @@ def trainAttack():
 
 
 if __name__ == '__main__':
-    trainAttack() 
+    train() 
     print("end")
