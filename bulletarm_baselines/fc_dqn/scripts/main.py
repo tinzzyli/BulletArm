@@ -181,6 +181,7 @@ def train():
             while j < planner_episode:
 
                 plan_actions = planner_envs.getNextAction()
+                plan_actions = plan_actions.to(device)
                 planner_actions_star_idx, planner_actions_star = agent.getActionFromPlan(plan_actions)
                 planner_actions_star = torch.cat((planner_actions_star, states.unsqueeze(1)), dim=1)
                 states_, in_hands_, obs_, rewards, dones = planner_envs.step(planner_actions_star, auto_reset=True)
