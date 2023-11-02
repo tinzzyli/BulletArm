@@ -177,8 +177,8 @@ def train():
             local_transitions = [[] for _ in range(planner_num_process)]
             while j < planner_episode:
                 plan_actions = planner_envs.getNextAction().to(device)
-                planner_actions_star_idx, planner_actions_star = agent.getActionFromPlan(plan_actions).to(device)
-                planner_actions_star = torch.cat((planner_actions_star, states.unsqueeze(1)), dim=1)
+                planner_actions_star_idx, planner_actions_star = agent.getActionFromPlan(plan_actions)
+                planner_actions_star = torch.cat((planner_actions_star.to(device), states.unsqueeze(1).to(device)), dim=1)
                 states_, in_hands_, obs_, rewards, dones = planner_envs.step(planner_actions_star, auto_reset=True)
                 buffer_obs = getCurrentObs(in_hands, obs)
                 buffer_obs_ = getCurrentObs(in_hands_, obs_)
