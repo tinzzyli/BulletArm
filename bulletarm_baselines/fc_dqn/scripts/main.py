@@ -120,6 +120,8 @@ def train():
         log_dir = os.path.join(base_dir, timestamp)
     else:
         log_dir = os.path.join(base_dir, log_sub)
+    
+    print(log_dir)
 
     # logger = Logger(log_dir, env, 'train', num_processes, max_episode, log_sub)
 
