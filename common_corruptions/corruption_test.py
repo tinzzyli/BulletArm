@@ -28,6 +28,7 @@ import corruptions
 import corruption_parser
 import corruption_constants
 
+
 def test():
     plt.style.use('default')
     envs = EnvWrapper(num_processes, env, env_config, planner_config)
@@ -43,8 +44,7 @@ def test():
     pbar = tqdm(total=test_episode)
     while total < 1000:
 
-        if corruption_parser.corrupt_func is not None:
-            obs = applyCorruption(obs)
+        obs = applyCorruption(obs)
 
         q_value_maps, actions_star_idx, actions_star = agent.getEGreedyActions(states, in_hands, obs, 0, 0)
         # plt.imshow(obs[0, 0])
@@ -77,19 +77,22 @@ def test():
         )
         pbar.update(dones.sum().int().item())
 
-def getCorruptionFunc():
-    if corruption_parser.corrupt_func in corruption_constants.CONSTANTS:
-        return corruption_constants.CONSTANTS[corruption_parser.corrupt_func]
+def getCorruptionFunc(function_name):
+    if function_name in corruption_constants.CONSTANTS:
+        return corruption_constants.CONSTANTS[function_name]
     else:
         raise ValueError('Invalid corruption type.')
     
 def applyCorruption(obs):
-    Func = getCorruptionFunc()
-    S = corruption_parser.severity
+    corruption_args = corruption_parser.corruption_parser()
+    function_name = corruption_args.corrupt_func
+    if function_name is not None:
+        Func = getCorruptionFunc(function_name)
+        S = corruption_args.severity
 
-    _obs = obs.numpy()
-    _obs = Func(_obs, S)
-    obs = torch.tensor(obs).double()
+        _obs = obs.numpy()
+        _obs = Func(_obs, S)
+        obs = torch.tensor(obs).double()
 
     return obs
     
