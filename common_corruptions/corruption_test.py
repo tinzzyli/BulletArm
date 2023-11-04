@@ -77,6 +77,11 @@ def test():
                 .format(s, total, float(s) / total if total != 0 else 0)
         )
         pbar.update(dones.sum().int().item())
+    
+    SR = float(s) / total if total != 0 else 0
+    with open('./BulletArm/common_corruptions/SR.txt', 'a') as f:
+        f.write(f'{corrupt_func},{severity},{s}, {total}, {SR}')
+
 
 def getCorruptionFunc():
     if corrupt_func in corruption_constants.CONSTANTS:
