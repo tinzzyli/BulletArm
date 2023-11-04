@@ -89,7 +89,7 @@ def applyCorruption(obs):
     S = severity
     _obs = obs.numpy()
     _obs = Func(_obs, S)
-    obs = torch.tensor(obs).double()
+    obs = torch.tensor(obs).float()
     return obs
     
 if __name__ == '__main__':
