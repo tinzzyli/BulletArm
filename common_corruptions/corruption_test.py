@@ -25,7 +25,6 @@ from bulletarm_baselines.fc_dqn.utils.env_wrapper import EnvWrapper
 ExpertTransition = collections.namedtuple('ExpertTransition', 'state obs action reward next_state next_obs done step_left expert')
 
 import corruptions
-import corruption_parser
 import corruption_constants
 
 
@@ -45,7 +44,8 @@ def test():
     pbar = tqdm(total=test_episode)
     while total < 1000:
 
-        obs = applyCorruption(obs)
+        if corrupt_func is not None:
+            obs = applyCorruption(obs)
 
         q_value_maps, actions_star_idx, actions_star = agent.getEGreedyActions(states, in_hands, obs, 0, 0)
         # plt.imshow(obs[0, 0])
@@ -78,26 +78,19 @@ def test():
         )
         pbar.update(dones.sum().int().item())
 
-def getCorruptionFunc(function_name):
-    if function_name in corruption_constants.CONSTANTS:
-        return corruption_constants.CONSTANTS[function_name]
+def getCorruptionFunc():
+    if corrupt_func in corruption_constants.CONSTANTS:
+        return corruption_constants.CONSTANTS[corrupt_func]
     else:
         raise ValueError('Invalid corruption type.')
     
 def applyCorruption(obs):
-    corruption_args = corruption_parser.corruption_parser()
-    function_name = corruption_args.corrupt_func
-    if function_name is not None:
-        Func = getCorruptionFunc(function_name)
-        S = corruption_args.severity
-
-        _obs = obs.numpy()
-        _obs = Func(_obs, S)
-        obs = torch.tensor(obs).double()
+    Func = getCorruptionFunc()
+    S = severity
+    _obs = obs.numpy()
+    _obs = Func(_obs, S)
+    obs = torch.tensor(obs).double()
     return obs
     
-
-
-
 if __name__ == '__main__':
     test()

@@ -83,6 +83,10 @@ logging_group.add_argument('--no_bar', action='store_true')
 logging_group.add_argument('--time_limit', type=float, default=10000)
 logging_group.add_argument('--load_sub', type=str, default=None)
 
+corruption_group = parser.add_argument_group('common corruption')
+parser.add_argument('--corrupt_func',type=str,default=None,help='The common corruption type used')
+parser.add_argument('--severity', type=int, default=1, choices=[1,2,3,4,5],help='severity of corruptions')
+
 args = parser.parse_args()
 # env
 random_orientation = args.random_orientation
@@ -188,6 +192,10 @@ time_limit = args.time_limit
 load_sub = args.load_sub
 if load_sub == 'None':
     load_sub = None
+
+# corruption
+corrupt_func = args.corrupt_func
+severity = args.severity
 
 # z
 num_zs = args.num_zs
