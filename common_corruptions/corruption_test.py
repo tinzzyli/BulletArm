@@ -32,7 +32,7 @@ def test():
     plt.style.use('default')
     envs = EnvWrapper(num_processes, env, env_config, planner_config)
     agent = createAgent()
-    agent.eval()
+    agent.train()
     if load_model_pre:
         agent.loadModel(load_model_pre)
     agent.eval()
