@@ -1,6 +1,6 @@
 #!/bin/bash
 
-value1 = ("gaussian_noise", "shot_noise", "impulse_noise", "motion_blur", "zoom_blur", "fog", "brightness", "contrast", "jpeg_compression")
+value1 = ("gaussian_noise" "shot_noise" "impulse_noise" "motion_blur" "zoom_blur" "fog" "brightness" "contrast" "jpeg_compression")
 
 for value in "${value1[@]}";do
 {
