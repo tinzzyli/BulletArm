@@ -43,7 +43,8 @@ def test():
     pbar = tqdm(total=test_episode)
     while total < 1000:
 
-        obs = applyCorruption(obs)
+        if corruption_parser.corrupt_func is not None:
+            obs = applyCorruption(obs)
 
         q_value_maps, actions_star_idx, actions_star = agent.getEGreedyActions(states, in_hands, obs, 0, 0)
         # plt.imshow(obs[0, 0])
