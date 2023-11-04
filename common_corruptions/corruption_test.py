@@ -34,7 +34,8 @@ def test():
     envs = EnvWrapper(num_processes, env, env_config, planner_config)
     agent = createAgent()
     agent.eval()
-    agent.loadModel(load_model_pre)
+    if load_model_pre:
+        agent.loadModel(load_model_pre)
     agent.eval()
     states, in_hands, obs = envs.reset()
     test_episode = 1000
@@ -93,7 +94,6 @@ def applyCorruption(obs):
         _obs = obs.numpy()
         _obs = Func(_obs, S)
         obs = torch.tensor(obs).double()
-
     return obs
     
 
