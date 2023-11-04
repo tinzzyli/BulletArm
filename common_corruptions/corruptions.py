@@ -14,7 +14,7 @@ import wand.color as WandColor
 import ctypes
 from PIL import Image as PILImage
 import cv2
-from scipy.ndimage import zoom as scizoom
+from scipy.ndimage import zoom as scizoom 
 from scipy.ndimage.interpolation import map_coordinates
 import warnings
 import os
@@ -147,16 +147,16 @@ def speckle_noise(x, severity=1):
     return np.clip(x + x * np.random.normal(size=x.shape, scale=c), 0, 1) * 255
 
 
-def fgsm(x, source_net, severity=1):
-    c = [8, 16, 32, 64, 128][severity - 1]
+# def fgsm(x, source_net, severity=1):
+#     c = [8, 16, 32, 64, 128][severity - 1]
 
-    x = V(x, requires_grad=True)
-    logits = source_net(x)
-    source_net.zero_grad()
-    loss = F.cross_entropy(logits, V(logits.data.max(1)[1].squeeze_()), size_average=False)
-    loss.backward()
+#     x = V(x, requires_grad=True)
+#     logits = source_net(x)
+#     source_net.zero_grad()
+#     loss = F.cross_entropy(logits, V(logits.data.max(1)[1].squeeze_()), size_average=False)
+#     loss.backward()
 
-    return standardize(torch.clamp(unstandardize(x.data) + c / 255. * unstandardize(torch.sign(x.grad.data)), 0, 1))
+#     return standardize(torch.clamp(unstandardize(x.data) + c / 255. * unstandardize(torch.sign(x.grad.data)), 0, 1))
 
 
 def gaussian_blur(x, severity=1):

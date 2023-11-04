@@ -7,8 +7,7 @@ def runDemo():
   obs = env.reset()
   done = False
   # _ = env.step(np.array([[0., 0.7, 0.0, 4.843947]]))
-  for o in env.objects:
-    pass
+  
   while not done:
     action = env.getNextAction()
     obs, reward, done = env.step(action)
