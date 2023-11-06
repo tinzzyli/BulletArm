@@ -37,7 +37,7 @@ training_group.add_argument('--final_eps', type=float, default=0., help='The fin
 training_group.add_argument('--training_iters', type=int, default=1, help='The number of training iterations per step')
 training_group.add_argument('--training_offset', type=int, default=100, help='The minimal number of transitions to start training')
 training_group.add_argument('--max_train_step', type=int, default=20000, help='The maximal number of training steps')
-training_group.add_argument('--device_name', type=str, default='cuda', help='The device for PyTorch')
+training_group.add_argument('--device_name', type=str, default='cpu', help='The device for PyTorch')
 training_group.add_argument('--target_update_freq', type=int, default=100, help='The frequency of updating the target network')
 training_group.add_argument('--save_freq', type=int, default=500, help='The frequency of logging')
 training_group.add_argument('--load_model_pre', type=str, default=None, help='The directory to load model')

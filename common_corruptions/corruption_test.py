@@ -79,7 +79,7 @@ def test():
         pbar.update(dones.sum().int().item())
     
     SR = float(s) / total if total != 0 else 0
-    with open('./common_corruptions/SR_building_house_3.txt', 'a') as f:
+    with open('./common_corruptions/SR_house_building_3.txt', 'a') as f:
         f.write(f'{corrupt_func},{severity},{s}, {total}, {SR}')
 
 
@@ -92,10 +92,9 @@ def getCorruptionFunc():
 def applyCorruption(obs):
     Func = getCorruptionFunc()
     S = severity
-    _obs = obs.numpy()
     _obs = Func(_obs, S)
-    obs = torch.tensor(obs).float()
-    return obs
+
+    return _obs
     
 if __name__ == '__main__':
     test()
