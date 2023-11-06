@@ -11,7 +11,7 @@ def gaussian_noise(x, severity):
     s=torch.tensor([1., 1.25, 1.5, 1,75, 2.])[severity-1]
     mean = torch.mean(x)
     std = torch.std(x)
-    gaussian_noise = torch.normal(mean=mean, std=std, size=x.shape) * s
+    gaussian_noise = torch.normal(mean=mean, std=std, size=x.shape)/100 * s
     return x + gaussian_noise
 
 def poisson_noise(x, severity):
