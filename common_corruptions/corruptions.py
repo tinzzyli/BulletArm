@@ -8,19 +8,22 @@ import random
 
 
 def gaussian_noise(x, severity):
+    x = x.clone()
     s=torch.tensor([1., 1.25, 1.5, 1,75, 2.])[severity-1]
     mean = torch.mean(x)
     std = torch.std(x)
-    gaussian_noise = torch.normal(mean=mean, std=std, size=x.shape)/100 * s
+    gaussian_noise = torch.normal(mean=mean, std=std, size=x.shape)/100. * s
     return x + gaussian_noise
 
 def poisson_noise(x, severity):
+    x = x.clone()
     s = torch.tensor([0.2, 0.4, 0.6, 0.8, 1.])[severity-1]
     std_deviation = torch.std(x)
-    poisson_noise = torch.poisson(x + s) * std_deviation
+    poisson_noise = torch.poisson(x + s)/100. * std_deviation
     return x + poisson_noise
 
 def salt_pepper_noise(x, severity):
+    x = x.clone()
     total_pixel = x.numel()
     s = torch.tensor([0.025, 0.05, 0.075, 0.1, 0.125])[severity-1]
     salt_num = (total_pixel * s).int()
@@ -34,6 +37,7 @@ def salt_pepper_noise(x, severity):
     return x
 
 def rotation(x, severity):
+    x = x.clone()
     angle_degrees = torch.tensor([5., 10., 15., 20., 25])[severity-1]
     assert len(x.shape) == 4
     assert x.shape[1] == 1
@@ -65,6 +69,7 @@ def rotation(x, severity):
     return x
 
 def translation(x, severity):
+    x = x.clone()
     s = torch.tensor([0.02, 0.04, 0.06, 0.08, 0.10])[severity-1]
     num_positions = (x.shape[-1] * s).int()
     assert len(x.shape) == 4
