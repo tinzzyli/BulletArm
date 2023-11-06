@@ -92,9 +92,8 @@ def getCorruptionFunc():
 def applyCorruption(obs):
     Func = getCorruptionFunc()
     S = severity
-    _obs = Func(_obs, S)
-
-    return _obs
+    obs = Func(obs, S)
+    return obs
     
 if __name__ == '__main__':
     test()
