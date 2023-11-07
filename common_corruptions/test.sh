@@ -1,6 +1,8 @@
 #!/bin/bash
 
-values=("gaussian_noise" "poisson_noise" "salt_pepper_noise", "rotation", "translation")
+# values=("gaussian_noise" "poisson_noise" "salt_pepper_noise" "rotation" "translation")
+values=("salt_pepper_noise" "rotation" "translation")
+
 
 for value in "${values[@]}";do
 {
