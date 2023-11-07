@@ -81,6 +81,7 @@ def test():
     SR = float(s) / total if total != 0 else 0
     with open('./common_corruptions/SR_house_building_3.txt', 'a') as f:
         f.write(f'{corrupt_func},{severity},{s}, {total}, {SR}')
+        f.write("\n")
 
 
 def getCorruptionFunc():
