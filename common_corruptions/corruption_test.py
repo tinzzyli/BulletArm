@@ -26,7 +26,7 @@ ExpertTransition = collections.namedtuple('ExpertTransition', 'state obs action 
 
 import corruptions
 import corruption_constants
-
+from PIL import Image
 
 def test():
     plt.style.use('default')
@@ -42,11 +42,14 @@ def test():
     s = 0
     step_times = []
     pbar = tqdm(total=test_episode)
+    if corrupt_func is not None:
+        obs = applyCorruption(obs)
     while total < 1000:
 
         if corrupt_func is not None:
-            obs = applyCorruption(obs)
-
+            # obs = applyCorruption(obs)
+            pass
+        
         q_value_maps, actions_star_idx, actions_star = agent.getEGreedyActions(states, in_hands, obs, 0, 0)
         # plt.imshow(obs[0, 0])
         # plt.show()
@@ -95,6 +98,14 @@ def applyCorruption(obs):
     S = severity
     obs = Func(obs, S)
     return obs
+
+def saveImage(obss):
+    random_number = torch.randint(low=1000, high=10000, size=(1,)).item()
+    for idx,obs in enumerate(obss):
+        numpy_array = obs.unsqueeze().numpy()
+        normalized_tensor = ((numpy_array - numpy_array.min()) / (numpy_array.max() - numpy_array.min()) * 255).astype(np.uint8)
+        image = Image.fromarray(normalized_tensor)
+        image.save(f'{random_number},{idx}.png')
     
 if __name__ == '__main__':
     test()
