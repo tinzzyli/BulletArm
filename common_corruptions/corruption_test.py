@@ -74,6 +74,8 @@ def test():
 
         if dones.sum():
             total += dones.sum().int().item()
+            if corrupt_func is not None:
+                obs = applyCorruption(obs)
 
         pbar.set_description(
             '{}/{}, SR: {:.3f}'
