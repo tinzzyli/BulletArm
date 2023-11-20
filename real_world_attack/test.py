@@ -75,13 +75,13 @@ def saveImage(obss, text):
         numpy_array = obs.squeeze().numpy()
         normalized_tensor = ((numpy_array - numpy_array.min()) / (numpy_array.max() - numpy_array.min()) * 255).astype(np.uint8)
         image = Image.fromarray(normalized_tensor)
-        image.save(f'{text}_{idx}.png')
+        image.save(f'file/{text}_{idx}.png')
 
 def saveMatrix(mats, text):
     text = str(text)
     for idx,mat in enumerate(mats):
         numpy_array = mat.squeeze().numpy()
-        np.savetxt(f'{text}_{idx}.txt', numpy_array, fmt='%f')
+        np.savetxt(f'file/{text}_{idx}.txt', numpy_array, fmt='%f')
 
 
 if __name__ == '__main__':
