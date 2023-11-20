@@ -70,6 +70,7 @@ def test():
         pbar.update(dones.sum().int().item())
 
 def saveImage(obss, text):
+    os.makedirs('./file', exist_ok=True)
     text = str(text)
     for idx,obs in enumerate(obss):
         numpy_array = obs.squeeze().numpy()
