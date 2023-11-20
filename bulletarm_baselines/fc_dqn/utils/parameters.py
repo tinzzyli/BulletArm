@@ -11,7 +11,7 @@ def strToBool(value):
 
 parser = argparse.ArgumentParser()
 env_group = parser.add_argument_group('environment')
-env_group.add_argument('--env', type=str, default='block_stacking', help='The training environment')
+env_group.add_argument('--env', type=str, default='house_building_3', help='The training environment')
 env_group.add_argument('--robot', type=str, default='kuka', choices=['kuka', 'ur5', 'ur5_robotiq'], help='The robot to use in the environment')
 env_group.add_argument('--num_objects', type=int, default=-1, help='The number of objects in the environment. When set to -1, will use the default value')
 env_group.add_argument('--max_episode_steps', type=int, default=-1, help='The maximal number of steps per episode')

@@ -24,8 +24,6 @@ from bulletarm_baselines.fc_dqn.utils.env_wrapper import EnvWrapper
 
 ExpertTransition = collections.namedtuple('ExpertTransition', 'state obs action reward next_state next_obs done step_left expert')
 
-import corruptions
-import corruption_constants
 from PIL import Image
 
 def test():
@@ -40,21 +38,21 @@ def test():
     test_episode = 1000
     total = 0
     s = 0
-    episode_count = 0
     step_times = []
     pbar = tqdm(total=test_episode)
-    # saveImage(obs, 'before')
-    if corrupt_func is not None:
-        obs = applyCorruption(obs)
-    while total < 1000:
+    
+    saveImage(obs, "obs")
 
-        if corrupt_func is not None:
-            # obs = applyCorruption(obs)
-            pass
-        
+    while total < 1000:
         q_value_maps, actions_star_idx, actions_star = agent.getEGreedyActions(states, in_hands, obs, 0, 0)
+
+        saveImage(q_value_maps, "q_map")
+        saveMatrix(q_value_maps, "q_map")
+
         actions_star = torch.cat((actions_star, states.unsqueeze(1)), dim=1)
         states_, in_hands_, obs_, rewards, dones = envs.step(actions_star, auto_reset=True)
+
+        raise ValueError("just a break point")
 
         states = copy.copy(states_)
         obs = copy.copy(obs_)
@@ -64,36 +62,12 @@ def test():
 
         if dones.sum():
             total += dones.sum().int().item()
-            episode_count += 1
-            with open('./common_corruptions/episode_step.txt', 'a') as f:
-                f.write(f'{total}, {episode_count}')
-                f.write("\n")
-            if corrupt_func is not None:
-                obs = applyCorruption(obs)
 
         pbar.set_description(
             '{}/{}, SR: {:.3f}'
                 .format(s, total, float(s) / total if total != 0 else 0)
         )
         pbar.update(dones.sum().int().item())
-    
-    SR = float(s) / total if total != 0 else 0
-    with open('./common_corruptions/SR_house_building_3.txt', 'a') as f:
-        f.write(f'{corrupt_func},{severity},{s}, {total}, {SR}')
-        f.write("\n")
-
-
-def getCorruptionFunc():
-    if corrupt_func in corruption_constants.CONSTANTS:
-        return corruption_constants.CONSTANTS[corrupt_func]
-    else:
-        raise ValueError('Invalid corruption type.')
-    
-def applyCorruption(obs):
-    Func = getCorruptionFunc()
-    S = severity
-    obs = Func(obs, S)
-    return obs
 
 def saveImage(obss, text):
     text = str(text)
@@ -101,7 +75,14 @@ def saveImage(obss, text):
         numpy_array = obs.squeeze().numpy()
         normalized_tensor = ((numpy_array - numpy_array.min()) / (numpy_array.max() - numpy_array.min()) * 255).astype(np.uint8)
         image = Image.fromarray(normalized_tensor)
-        image.save(f'{text},{idx}.png')
-    
+        image.save(f'{text}_{idx}.png')
+
+def saveMatrix(mats, text):
+    text = str(text)
+    for idx,mat in enumerate(mats):
+        numpy_array = mat.squeeze().numpy()
+        np.savetxt(f'{text}_{idx}.txt', numpy_array, fmt='%f')
+
+
 if __name__ == '__main__':
     test()
