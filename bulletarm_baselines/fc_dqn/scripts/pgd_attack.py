@@ -38,6 +38,58 @@ def unify(R):
         R[idx] = r
     return R
 
+def argmax2d(tensor):
+    n = tensor.size(0)
+    d = tensor.size(2)
+    m = tensor.view(n, -1).argmax(1)
+    return torch.cat(((m / d).view(-1, 1), (m % d).view(-1, 1)), dim=1)
+
+def adversarial_loss(matrix):
+    minimize_position = argmax2d(matrix).long()[0]
+    maximize_position = find_second_max(matrix)
+    
+    loss_minimize = matrix[minimize_position[0], minimize_position[1]]
+
+    loss_maximize = -matrix[maximize_position[0], maximize_position[1]]
+
+    loss = loss_minimize + loss_maximize
+
+    return loss
+
+def set_center_region(submatrix, n, value):
+    # 获取中心区域的边界
+    min_row = submatrix.shape[0] // 2 - n // 2
+    max_row = min_row + n
+    min_col = submatrix.shape[1] // 2 - n // 2
+    max_col = min_col + n
+
+    # 将中心区域的值设置为指定值
+    submatrix[min_row:max_row, min_col:max_col] = value
+    return submatrix
+
+
+def find_second_max(matrix, center, neighborhood_size=20, min_distance=10):
+
+    a, b = center
+
+    # 定义邻域的边界
+    min_row = max(0, a - neighborhood_size // 2)
+    max_row = min(matrix.shape[0], a + neighborhood_size // 2 + 1)
+    min_col = max(0, b - neighborhood_size // 2)
+    max_col = min(matrix.shape[1], b + neighborhood_size // 2 + 1)
+
+    # 在邻域内找到次最大值的坐标
+    submatrix = matrix[min_row:max_row, min_col:max_col]
+    submatrix = set_center_region(submatrix, min_distance, 0)
+    flattened_indices = np.argsort(submatrix, axis=None)  # 将邻域展平后的索引
+    second_max_index = np.unravel_index(flattened_indices[-2], submatrix.shape)
+
+    # 转换为全局坐标
+    second_max_coord = (a - neighborhood_size // 2 + second_max_index[0],
+                        b - neighborhood_size // 2 + second_max_index[1])
+
+    return second_max_coord
+
 def rendering(obj_list):
     
     cam_look_at = torch.tensor([0.5, 0.0, 0.0])
@@ -124,7 +176,7 @@ def pgd_attack(envs, agent, epsilon_1 = 0.0005, epsilon_2 = 0.0005, alpha_1 = 0.
     rot_mat_list = copy.deepcopy(original_rot_mat_list)
     scale_list = copy.deepcopy(scale_list)
 
-    _, target = getGroundTruth(agent = agent,
+    ori_q_value_map, target = getGroundTruth(agent = agent,
                                states = states,
                                in_hands = in_hands,
                                object_dir_list = object_dir_list,
@@ -145,7 +197,7 @@ def pgd_attack(envs, agent, epsilon_1 = 0.0005, epsilon_2 = 0.0005, alpha_1 = 0.
     # f.write("scale: "+str(scale)+ "\n")
 
     
-    loss_function = nn.MSELoss()
+    loss_function = adversarial_loss
 
 
     for iter in range(iters):
@@ -157,7 +209,7 @@ def pgd_attack(envs, agent, epsilon_1 = 0.0005, epsilon_2 = 0.0005, alpha_1 = 0.
         xyz_position = xyz_position_list[0].detach().clone()
         rot_mat = rot_mat_list[0].detach().clone()
 
-        _, actions = getGroundTruth(agent = agent,
+        q_value_map, actions = getGroundTruth(agent = agent,
                                     states = states,
                                     in_hands = in_hands,
                                     object_dir_list = object_dir_list,
@@ -167,7 +219,7 @@ def pgd_attack(envs, agent, epsilon_1 = 0.0005, epsilon_2 = 0.0005, alpha_1 = 0.
                                     device = device)
 
         """ attack on position """
-        loss = loss_function(target, actions)      
+        loss = loss_function(q_value_map)      
         grad = torch.autograd.grad(outputs=loss, 
                                    inputs=(xyz_position_list[0], rot_mat_list[0]), 
                                    grad_outputs=None, 

@@ -46,6 +46,7 @@ class ObjectGrasping(BaseEnv):
         self.gripper_depth = 0.04
         self.gripper_clearance = 0.01
         self.initialized = False
+        self.object_index = config["object_index"]
 
     def initialize(self):
         super().initialize()
