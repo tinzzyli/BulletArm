@@ -175,7 +175,7 @@ def pgd_attack(envs, agent, epsilon_1 = 0.0005, epsilon_2 = 0.0005, alpha_1 = 0.
                             allow_unused=False, 
                             retain_graph=False, 
                             create_graph=False)
-        x_grad, y_grad = grad[0]
+        x_grad, y_grad = grad[0].to(device)
         # grad = torch.autograd.grad(outputs=loss, 
         #                            inputs=(xyz_position_list[0], rot_mat_list[0]), 
         #                            grad_outputs=None, 
@@ -185,10 +185,10 @@ def pgd_attack(envs, agent, epsilon_1 = 0.0005, epsilon_2 = 0.0005, alpha_1 = 0.
         # x_grad, y_grad, _ = grad[0]
         # rot_grad = grad[1] * 0.2
 
-        xyz_position = xyz_position_list[0].detach().clone()
-        rot_mat = rot_mat_list[0].detach().clone()
+        xyz_position = xyz_position_list[0].detach().clone().to(device)
+        rot_mat = rot_mat_list[0].detach().clone().to(device)
 
-        x,y,z = xyz_position.clone().detach()
+        x,y,z = xyz_position.clone().detach().to(device)
         x_eta = torch.clamp(x_grad, min = -epsilon_1,  max = epsilon_1)
         y_eta = torch.clamp(y_grad, min = -epsilon_1,  max = epsilon_1)
         # coordinate boudary of the object, please do not change these values
@@ -206,8 +206,8 @@ def pgd_attack(envs, agent, epsilon_1 = 0.0005, epsilon_2 = 0.0005, alpha_1 = 0.
         # rot_mat = torch.clamp(unify(rot_mat + rot_eta), min = original_rot_mat_list[0] - alpha_2, max = original_rot_mat_list[0] + alpha_2)
         """ attack on rotation"""
 
-        xyz_position_list[0] = xyz_position.detach().clone()
-        rot_mat_list[0] = rot_mat.detach().clone()
+        xyz_position_list[0] = xyz_position.detach().clone().to(device)
+        rot_mat_list[0] = rot_mat.detach().clone().to(device)
         # scale = scale.detach().clone()
 
 
