@@ -106,7 +106,7 @@ def getGroundTruth(agent,
     q_value_maps, _, actions = agent.getEGreedyActionsAttack(states, in_hands, obs, 0)
     
     actions = actions.to(device)
-    actions = actions[0][:2].to(device)
+    
     states = states.to(device)
     
     return q_value_maps, actions.double()
@@ -166,6 +166,7 @@ def pgd_attack(envs, agent, epsilon_1 = 0.0005, epsilon_2 = 0.0005, alpha_1 = 0.
                                     rot_mat_list = rot_mat_list,
                                     scale_list = scale_list,
                                     device = device)
+        actions = actions[0][:2].to(device)
         
         """ attack on position """
         loss = - mse_loss(leaf_tensor, actions)      
