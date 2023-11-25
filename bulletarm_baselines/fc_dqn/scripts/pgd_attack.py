@@ -189,16 +189,17 @@ def pgd_attack(envs, agent, epsilon_1 = 0.0005, epsilon_2 = 0.0005, alpha_1 = 0.
         rot_mat = rot_mat_list[0].detach().clone().to(device)
 
         x,y,z = xyz_position.clone().detach().to(device)
-        x_eta = torch.clamp(x_grad, min = -epsilon_1,  max = epsilon_1)
-        y_eta = torch.clamp(y_grad, min = -epsilon_1,  max = epsilon_1)
+        x_eta = torch.clamp(x_grad, min = -epsilon_1,  max = epsilon_1).to(device)
+        y_eta = torch.clamp(y_grad, min = -epsilon_1,  max = epsilon_1).to(device)
+        
         # coordinate boudary of the object, please do not change these values
         # valid range of x and y is 0.2 while for z the range is 0.000025
         # accumulated change should not exceed the boundaries
 
         xyz_position = torch.tensor([
-            torch.clamp(x + x_eta, min = original_xyz_position_list[0][0] - alpha_1, max = original_xyz_position_list[0][0] + alpha_1),
-            torch.clamp(y + y_eta, min = original_xyz_position_list[0][1] - alpha_1, max = original_xyz_position_list[0][1] + alpha_1),
-            z])
+            torch.clamp(x + x_eta, min = original_xyz_position_list[0][0].to(device) - alpha_1, max = original_xyz_position_list[0][0].to(device) + alpha_1),
+            torch.clamp(y + y_eta, min = original_xyz_position_list[0][1].to(device) - alpha_1, max = original_xyz_position_list[0][1].to(device) + alpha_1),
+            z]).to(device)
         """ attack on position """
 
         """ attack on rotation"""
