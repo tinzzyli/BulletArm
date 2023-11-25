@@ -106,7 +106,7 @@ def getGroundTruth(agent,
     q_value_maps, _, actions = agent.getEGreedyActionsAttack(states, in_hands, obs, 0)
     
     actions = actions.to(device)
-    actions = actions[0][:2]
+    actions = actions[0][:2].to(device)
     states = states.to(device)
     
     return q_value_maps, actions.double()
@@ -152,7 +152,7 @@ def pgd_attack(envs, agent, epsilon_1 = 0.0005, epsilon_2 = 0.0005, alpha_1 = 0.
 
     for iter in range(iters):
         # l.info('Iteration '+str(iter)+'/'+str(iters))
-        leaf_tensor = xyz_position_list[0][:2].clone()
+        leaf_tensor = xyz_position_list[0][:2].clone().to(device)
         leaf_tensor.requires_grad = True
         xyz_position_list[0][:2] = leaf_tensor
         rot_mat_list[0].requires_grad = True
