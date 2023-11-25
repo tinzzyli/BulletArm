@@ -63,6 +63,7 @@ def rendering(obj_list):
 
     return heightmap.reshape(heightmap_size,heightmap_size)
 
+
 def getGroundTruth(agent, 
                    states,
                    in_hands,
@@ -146,7 +147,7 @@ def pgd_attack(envs, agent, epsilon_1 = 0.0005, epsilon_2 = 0.0005, alpha_1 = 0.
     # f.write("scale: "+str(scale)+ "\n")
 
     
-    loss_function = nn.MSELoss()
+    mse_loss = nn.MSELoss()
 
 
     for iter in range(iters):
@@ -167,7 +168,7 @@ def pgd_attack(envs, agent, epsilon_1 = 0.0005, epsilon_2 = 0.0005, alpha_1 = 0.
                                     device = device)
         
         """ attack on position """
-        loss = loss_function(leaf_tensor, actions)      
+        loss = - mse_loss(leaf_tensor, actions)      
         grad = torch.autograd.grad(outputs=loss, 
                             inputs=leaf_tensor, 
                             grad_outputs=None, 
