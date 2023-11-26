@@ -232,6 +232,9 @@ def pgd_attack(envs, agent, epsilon_1 = 0.0005, epsilon_2 = 0.0005, alpha_1 = 0.
     actions = actions.reshape(4)
     _, _, _, reward, _ = envs.stepAttack(actions.detach())
 
+    f=open("./object_info_2.txt","a")
+    f.write("index: " + str(object_index) + ", reward: " + str(reward) + ", xyz_position: " + str(xyz_position_list[0]) + ", action: " + str(actions) + "\n")
+
     return reward
 
 def heightmapAttack(envs, agent, epsilon = 1e-5, alpha = 4e-4, iters = 5):
