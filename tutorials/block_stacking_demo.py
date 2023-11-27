@@ -1,8 +1,8 @@
 from bulletarm import env_factory
 
 def runDemo():
-  env_config = {'render': True}
-  env = env_factory.createEnvs(0, 'house_building_3', env_config)
+  env_config = {'render': True, 'num_objects': 1,'object_index': 15}
+  env = env_factory.createEnvs(0, 'object_grasping', env_config)
   obs = env.reset()
   done = False
   while not done:

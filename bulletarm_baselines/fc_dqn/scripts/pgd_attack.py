@@ -275,8 +275,6 @@ if __name__ == '__main__':
         agent.loadModel(load_model_pre)
     # agent.loadModel("/content/drive/MyDrive/my_archive/ck3/snapshot")
     s = 0.
-
-
     
     print("object_index: ", object_index)
     for i in range(100):

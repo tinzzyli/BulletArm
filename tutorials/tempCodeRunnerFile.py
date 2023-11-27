@@ -1,1 +1,1 @@
-print(action, type(action))
+, 'object_index': 19
