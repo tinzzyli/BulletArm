@@ -98,7 +98,7 @@ class Sensor(object):
       object_list.append(new_object)
       object_dir_list.append(object_dir)
       pos_list.append(torch.tensor(xyz_position))
-      rot_list.append(torch.tensor(R))
+      rot_list.append(R.clone())
       scale_list.append(torch.tensor(scale))
     
 
