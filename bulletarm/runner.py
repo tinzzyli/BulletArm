@@ -503,6 +503,9 @@ class SingleRunner(object):
   
   def resetAttack(self):
     return self.env.resetAttack()
+  
+  def _resetAttack(self, position):
+    return self.env._resetAttack(position)
 
   def save(self):
     '''
