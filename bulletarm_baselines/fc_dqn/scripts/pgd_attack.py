@@ -111,42 +111,16 @@ def getGroundTruth(agent,
     
     return q_value_maps, actions.double()
 
-def pgd_attack(envs, agent, epsilon_1 = 0.0005, epsilon_2 = 0.0005, alpha_1 = 0.02, alpha_2 = 0.1, iters=10, device = None, test_i = 0):
+def pgd_attack(envs, agent, epsilon_1 = 0.0005, epsilon_2 = 0.0005, alpha_1 = 0.02, alpha_2 = 0.1, iters=100, device = None, test_i = 0):
     pyredner.set_print_timing(False)
 
     states, in_hands, obs, object_dir_list, params = envs.resetAttack() 
     original_xyz_position_list, original_rot_mat_list, scale_list = params
 
     num_objects = len(object_dir_list)
-    # xyz_position = original_xyz_position.clone().detach()
-    # rot_mat = original_rot_mat.clone().detach()
-    # scale = scale.clone().detach()
     xyz_position_list = copy.deepcopy(original_xyz_position_list)
     rot_mat_list = copy.deepcopy(original_rot_mat_list)
-    scale_list = copy.deepcopy(scale_list)
-
-    # _, target = getGroundTruth(agent = agent,
-    #                            states = states,
-    #                            in_hands = in_hands,
-    #                            object_dir_list = object_dir_list,
-    #                            xyz_position_list = xyz_position_list,
-    #                            rot_mat_list = rot_mat_list,
-    #                            scale_list = scale_list,
-    #                            device = device)
-    # target += 0.0000001 #1e-6
-    
-
-
-    # image = saveImage(object_dir_list,xyz_position,rot_mat,scale,device)
-    # path =  os.path.join(".","object_data",str(object_index),str(test_i))
-    # os.makedirs(path, exist_ok=True)
-    # file_path = path+"/data.txt"
-    # f = open(file_path, "a")
-    # f.write("original_xyz_position: "+str(original_xyz_position)+ "\n")
-    # f.write("original_rot_mat: "+str(original_rot_mat)+ "\n")
-    # f.write("scale: "+str(scale)+ "\n")
-
-    
+    scale_list = copy.deepcopy(scale_list)    
     mse_loss = nn.MSELoss()
 
 
@@ -216,6 +190,8 @@ def pgd_attack(envs, agent, epsilon_1 = 0.0005, epsilon_2 = 0.0005, alpha_1 = 0.
     #end of loop
     # f.write("xyz_position: "+str(xyz_position)+ "\n")
     # f.write("rot_mat: "+str(rot_mat)+ "\n")
+    states, in_hands, obs, object_dir_list, params = envs._resetAttack(xyz_position[:2]) 
+    original_xyz_position_list, original_rot_mat_list, scale_list = params
 
     _, actions = getGroundTruth(agent = agent,
                                 states = states,
@@ -236,6 +212,8 @@ def pgd_attack(envs, agent, epsilon_1 = 0.0005, epsilon_2 = 0.0005, alpha_1 = 0.
     f.write("index: " + str(object_index) + ", reward: " + str(reward) + ", xyz_position: " + str(xyz_position_list[0]) + ", action: " + str(actions) + "\n")
 
     return reward
+
+
 
 def heightmapAttack(envs, agent, epsilon = 1e-5, alpha = 4e-4, iters = 5):
 

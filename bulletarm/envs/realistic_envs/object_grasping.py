@@ -278,6 +278,32 @@ class ObjectGrasping(BaseEnv):
         
         _ = self.reset()
         return self._getObservationAttack()
+    
+    def _resetAttack(self, position):
+        if not self.initialized or self.obj_grasped == self.num_obj or self.current_episode_steps > self.max_steps or not self.isSimValid():
+            while True:
+                self.resetPybulletWorkspace()
+                try:
+                    if not self.exhibit_env_obj:
+                        for i in range(self.num_obj):
+                            x = position[0]
+                            y = position[1]
+                            randpos = [x, y, 0.40]
+                            obj = self._generateShapes(constants.GRASP_NET_OBJ, 1, 
+                                                       rot=[pb.getQuaternionFromEuler([0., 0., -np.pi / 4])],
+                                                       pos=[randpos], padding=self.min_boarder_padding,
+                                                       min_distance=self.min_object_distance, model_id=self.object_index)
+                            pb.changeDynamics(obj[0].object_id, -1, lateralFriction=0.6)
+                            self.wait(10)
+                    elif self.exhibit_env_obj:  # exhibit all random objects in this environment
+                        raise NotImplementedError("this method is not implemented")
+                except NoValidPositionException:
+                    continue
+                else:
+                    break
+            self.wait(200)
+            self.obj_grasped = 0
+        return self._getObservationAttack()
 
     def isObjInBox(self, obj_pos, tray_pos, tray_size):
         tray_range = self.tray_range(tray_pos, tray_size)
