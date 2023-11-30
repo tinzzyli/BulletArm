@@ -62,8 +62,8 @@ def test():
         actions_star = actions_star.reshape(4)
         states_, in_hands_, obs_, rewards, dones = envs.stepAttack(actions_star.detach(), auto_reset=True)
         
-        f=open("./object_original_position.txt","a")
-        f.write("index: " + str(object_index) + ", ori_pos: " + str(randomPosition) + ", rewards: " + str(rewards) + "\n")
+        f1=open("./object_original_position.txt","a")
+        f1.write("index: " + str(object_index) + ", ori_pos: " + str(randomPosition) + ", rewards: " + str(rewards) + "\n")
         
         randomPosition = getRandomPosition()
         states_, in_hands_, obs_, _, _ = envs._resetAttack(randomPosition)
