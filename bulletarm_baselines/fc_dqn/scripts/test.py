@@ -63,7 +63,7 @@ def test():
         states_, in_hands_, obs_, rewards, dones = envs.stepAttack(actions_star.detach(), auto_reset=True)
         
         f=open("./object_original_position.txt","a")
-        f.write("ori_pos: " + str(randomPosition) + ", rewards" + str(rewards) + "\n")
+        f.write("ori_pos: " + str(randomPosition) + ", rewards: " + str(rewards) + "\n")
         
         randomPosition = getRandomPosition()
         states_, in_hands_, obs_, _, _ = envs._resetAttack(randomPosition)
