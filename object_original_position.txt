@@ -1,3 +1,0 @@
-ori_pos: [0.4795 0.0031], rewardstensor(0.)
-ori_pos: [0.513 0.036], rewardstensor(0.)
-ori_pos: [0.5243 0.007 ], rewardstensor(0.)
