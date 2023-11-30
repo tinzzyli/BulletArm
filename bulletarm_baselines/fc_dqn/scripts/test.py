@@ -25,6 +25,15 @@ from bulletarm_baselines.fc_dqn.utils.env_wrapper import EnvWrapper
 
 ExpertTransition = collections.namedtuple('ExpertTransition', 'state obs action reward next_state next_obs done step_left expert')
 
+def getRandomPosition():
+    workspace = np.asarray([[0.5-workspace_size/2, 0.5+workspace_size/2],
+                        [0-workspace_size/2, 0+workspace_size/2],
+                        [0, 0+workspace_size]])
+    x = (np.random.rand() - 0.5) * 0.1
+    x += workspace[0].mean()
+    y = (np.random.rand() - 0.5) * 0.1
+    y += workspace[1].mean()
+    return np.array([x,y])
 
 def test():
     pyredner.set_print_timing(False)
@@ -32,9 +41,11 @@ def test():
     envs = EnvWrapper(num_processes, env, env_config, planner_config)
     agent = createAgent()
     agent.eval()
-    agent.loadModel(load_model_pre) 
-    # replace load_model_pre your checkpoint path like "/content/drive/MyDrive/my_archive/ck3/snapshot", ck3 in the folder name and it has to end with snapshot
-    states, in_hands, obs, _, _ = envs.resetAttack()
+    if load_model_pre:
+        agent.loadModel(load_model_pre) 
+    
+    randomPosition = getRandomPosition()
+    states, in_hands, obs, _, _ = envs._resetAttack(randomPosition)
     states = states.unsqueeze(dim=0).detach()
     in_hands = in_hands.unsqueeze(dim=0).detach()
     obs = obs.unsqueeze(dim=0).detach()
@@ -45,23 +56,17 @@ def test():
     pbar = tqdm(total=test_episode)
     while total < 100:
         q_value_maps, actions_star_idx, actions_star = agent.getEGreedyActionsAttack(states, in_hands, obs, 0, 0)
-        # plt.imshow(obs[0, 0])
-        # plt.show()
-        # plotQMaps(q_value_maps)
-        # plotSoftmax(q_value_maps)
-        # plotQMaps(q_value_maps, save='/media/dian/hdd/analysis/qmap/house1_dqfdall', j=j)
-        # plotSoftmax(q_value_maps, save='/media/dian/hdd/analysis/qmap/house1_dqfd_400k', j=j)
         actions_star = actions_star.to(device)
         states = states.to(device)
         actions_star = torch.cat((actions_star, states.unsqueeze(1)), dim=1)
         actions_star = actions_star.reshape(4)
-        # plan_actions = envs.getPlan()
-        # planner_actions_star_idx, planner_actions_star = agent.getActionFromPlan(plan_actions)
-        # ranks.extend(rankOfAction(q_value_maps, planner_actions_star_idx))
-        # print('avg rank of ae: {}'.format(np.mean(ranks)))
-    
         states_, in_hands_, obs_, rewards, dones = envs.stepAttack(actions_star.detach(), auto_reset=True)
-        states_, in_hands_, obs_, _, _ = envs.resetAttack()
+        
+        f=open("./object_original_position.txt","a")
+        f.write("ori_pos: " + str(randomPosition) + ", rewards" + str(rewards) + "\n")
+        
+        randomPosition = getRandomPosition()
+        states_, in_hands_, obs_, _, _ = envs._resetAttack(randomPosition)
         states_ = states_.unsqueeze(dim=0).detach()
         in_hands_ = in_hands_.unsqueeze(dim=0).detach()
         obs_ = obs_.unsqueeze(dim=0).detach()
@@ -80,9 +85,6 @@ def test():
                 .format(s, total, float(s) / total if total != 0 else 0)
         )
         pbar.update(dones.sum().int().item())
-
-    # np.save('ranks_dqfd_all.npy', ranks)
-    # plotRanks(ranks, 1200)
     return float(s) / total if total != 0 else 0
 
 if __name__ == '__main__':
