@@ -30,7 +30,7 @@ from bulletarm_baselines.fc_dqn.utils.env_wrapper import EnvWrapper
 from bulletarm_baselines.fc_dqn.utils.parameters import *
 from bulletarm_baselines.fc_dqn.utils.torch_utils import augmentBuffer, augmentBufferD4
 from bulletarm_baselines.fc_dqn.scripts.fill_buffer_deconstruct import fillDeconstructUsingRunner
-
+import re
 def unify(R):
     for idx,r in enumerate(R):
         mod = r[0]**2 + r[1]**2 + r[2]**2
@@ -111,10 +111,12 @@ def getGroundTruth(agent,
     
     return q_value_maps, actions.double()
 
-def pgd_attack(envs, agent, epsilon_1 = 0.0005, epsilon_2 = 0.0005, alpha_1 = 0.02, alpha_2 = 0.1, iters=100, device = None, test_i = 0):
+def pgd_attack(envs, agent, epsilon_1 = 0.0005, epsilon_2 = 0.0005, alpha_1 = 0.02, alpha_2 = 0.1, iters=100, device = None, o_info = None):
     pyredner.set_print_timing(False)
+    
+    _, ori_x, ori_y, ori_reward = o_info
 
-    states, in_hands, obs, object_dir_list, params = envs.resetAttack() 
+    states, in_hands, obs, object_dir_list, params = envs._resetAttack(np.array([ori_x, ori_y])) 
     original_xyz_position_list, original_rot_mat_list, scale_list = params
 
     num_objects = len(object_dir_list)
@@ -151,14 +153,6 @@ def pgd_attack(envs, agent, epsilon_1 = 0.0005, epsilon_2 = 0.0005, alpha_1 = 0.
                             retain_graph=False, 
                             create_graph=False)
         x_grad, y_grad = grad[0].to(device)
-        # grad = torch.autograd.grad(outputs=loss, 
-        #                            inputs=(xyz_position_list[0], rot_mat_list[0]), 
-        #                            grad_outputs=None, 
-        #                            allow_unused=False, 
-        #                            retain_graph=False, 
-        #                            create_graph=False)
-        # x_grad, y_grad, _ = grad[0]
-        # rot_grad = grad[1] * 0.2
 
         xyz_position = xyz_position_list[0].detach().clone().to(device)
         rot_mat = rot_mat_list[0].detach().clone().to(device)
@@ -186,13 +180,6 @@ def pgd_attack(envs, agent, epsilon_1 = 0.0005, epsilon_2 = 0.0005, alpha_1 = 0.
         rot_mat_list[0] = rot_mat.detach().clone().to(device)
         # scale = scale.detach().clone()
 
-
-    #end of loop
-    # f.write("xyz_position: "+str(xyz_position)+ "\n")
-    # f.write("rot_mat: "+str(rot_mat)+ "\n")
-    states, in_hands, obs, object_dir_list, params = envs._resetAttack(xyz_position[:2]) 
-    original_xyz_position_list, original_rot_mat_list, scale_list = params
-
     _, actions = getGroundTruth(agent = agent,
                                 states = states,
                                 in_hands = in_hands,
@@ -209,7 +196,7 @@ def pgd_attack(envs, agent, epsilon_1 = 0.0005, epsilon_2 = 0.0005, alpha_1 = 0.
     _, _, _, reward, _ = envs.stepAttack(actions.detach())
 
     f=open("./object_info_2.txt","a")
-    f.write(str(object_index) + str(reward) + str(original_xyz_position_list[0]) + str(xyz_position_list[0]) + str(actions) + "\n")
+    f.write(str(object_index) + str(ori_reward) + str([ori_x,ori_y]) + str(xyz_position_list[0]) + str(actions) + str(reward) + "\n")
 
     return reward
 
@@ -245,6 +232,17 @@ def heightmapAttack(envs, agent, epsilon = 1e-5, alpha = 4e-4, iters = 5):
     
     return reward
 
+def read_numeric_values(file_path):
+    all_numeric_values = []
+
+    with open(file_path, 'r') as file:
+        for line in file:
+            # Use regex to extract numeric values from the line
+            values = [float(match) for match in re.findall(r'[-+]?\d*\.\d+(?:[eE][-+]?\d+)?|\d+', line)]
+            all_numeric_values.append(values)
+
+    return all_numeric_values
+
 if __name__ == '__main__':
     envs = EnvWrapper(num_processes, env, env_config, planner_config)
     agent = createAgent(test=False)
@@ -253,10 +251,15 @@ if __name__ == '__main__':
         agent.loadModel(load_model_pre)
     # agent.loadModel("/content/drive/MyDrive/my_archive/ck3/snapshot")
     s = 0.
-    
+    file_path = '/Users/tingxi/Desktop/object_original_position.txt'
+    all_values = read_numeric_values(file_path)
+    object_info = all_values[object_index*100: object_index*100 + 100]
+    #object_info is a list of lists, each sub-list is in such manner:
+    #[78.0, 0.4895, -0.0302, 1.0]
     print("object_index: ", object_index)
     for i in range(100):
-        reward = pgd_attack(envs, agent, iters=100, device = device, test_i = i)
+        o_info = object_info[i]
+        reward = pgd_attack(envs, agent, iters=100, device = device, o_info = o_info)
         s += reward
     sr_value = float(s)/100.0
     print("sr_value: ", sr_value)
