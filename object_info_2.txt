@@ -1,1 +1,0 @@
-00.0[0.5444, -0.0411]tensor([ 0.5648, -0.0380,  0.0501], dtype=torch.float64)tensor([ 0.5469, -0.0750,  2.5525,  0.0000], dtype=torch.float64)tensor(0.)
