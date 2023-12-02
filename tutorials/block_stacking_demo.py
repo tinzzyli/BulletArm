@@ -1,9 +1,11 @@
 from bulletarm import env_factory
 import time
+import numpy as np
 def runDemo():
   env_config = {'render': True, 'num_objects': 1,'object_index': 37}
   env = env_factory.createEnvs(0, 'object_grasping', env_config)
-  obs = env.reset()
+  pos = np.array([0.7, -0.2])
+  obs = env._resetAttack(pos)
   done = False
   while not done:
     action = env.getNextAction()
