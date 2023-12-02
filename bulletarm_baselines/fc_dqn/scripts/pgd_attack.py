@@ -196,7 +196,7 @@ def pgd_attack(envs, agent, epsilon_1 = 0.0005, epsilon_2 = 0.0005, alpha_1 = 0.
     _, _, _, reward, _ = envs.stepAttack(actions.detach())
 
     f=open("./object_info_2.txt","a")
-    f.write(str(object_index) + str(ori_reward) + str([ori_x,ori_y]) + str(xyz_position_list[0]) + str(actions) + str(reward) + "\n")
+    f.write("index: " + str(object_index) + ", ori_reward: " + str(ori_reward) + ", ori_pos: " + str([ori_x,ori_y]) + ", pos" + str(xyz_position_list[0]) + ", actions: " + str(actions) + ", reward: " + str(reward) + "\n")
 
     return reward
 
@@ -251,7 +251,7 @@ if __name__ == '__main__':
         agent.loadModel(load_model_pre)
     # agent.loadModel("/content/drive/MyDrive/my_archive/ck3/snapshot")
     s = 0.
-    file_path = '/Users/tingxi/Desktop/object_original_position.txt'
+    file_path = './object_original_position.txt'
     all_values = read_numeric_values(file_path)
     object_info = all_values[object_index*100: object_index*100 + 100]
     #object_info is a list of lists, each sub-list is in such manner:
