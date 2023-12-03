@@ -500,6 +500,9 @@ class SingleRunner(object):
       numpy.array: Observation
     '''
     return self.env.reset()
+
+  def _reset(self, position):
+    return self.env._reset(position)
   
   def resetAttack(self):
     return self.env.resetAttack()
