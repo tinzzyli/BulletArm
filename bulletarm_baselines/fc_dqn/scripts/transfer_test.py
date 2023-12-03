@@ -106,13 +106,14 @@ def getRewardFromValues(file_path):
     return reward
 
 if __name__ == '__main__':
-    file_path = './object_original_position.txt'
+    file_path = './object_attacked_position.txt'
     
     attackedPos = getAttackedPosFromValues(file_path)
     attackedPos = attackedPos[object_index*100: object_index*100 + 100]
     
     ori_reward = getRewardFromValues(file_path)
     ori_reward = ori_reward[object_index*100: object_index*100 + 100]
+    
     sr_value = test(attackedPos, ori_reward)
     print(sr_value)
     print(object_index)
