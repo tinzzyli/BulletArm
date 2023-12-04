@@ -194,8 +194,9 @@ def pgd_attack(envs = None, agent = None, epsilon_1 = 0.0005, epsilon_2 = 0.0005
     actions = actions.reshape(4)
     _, _, _, reward, _ = envs.stepAttack(actions.detach())
 
-    f=open("./object_pgd_attack_positioin.txt","a")
-    f.write("index: " + str(object_index) + ", ori_reward: " + str(ori_reward) + ", ori_pos_1: " + str([ori_x, ori_y]) + ", ori_pos_2: " + str(original_xyz_position_list[0]) + ", pos: " + str(xyz_position_list[0]) + ", actions: " + str(actions) + ", reward: " + str(reward) + "\n")
+    ff=open("./object_pgd_attack_positioin.txt","a")
+    ff.write("index: " + str(object_index) + ", ori_reward: " + str(ori_reward) + ", ori_pos_1: " + str([ori_x, ori_y]) + ", ori_pos_2: " + str(original_xyz_position_list[0]))
+    ff.write(", pos: " + str(xyz_position_list[0]) + ", actions: " + str(actions) + ", reward: " + str(reward) + "\n")
 
     return reward
 
