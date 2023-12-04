@@ -1,4 +1,4 @@
-import os
+mport os
 import sys
 import time
 import copy
@@ -37,7 +37,6 @@ def unify(R):
         r /= torch.sqrt(mod)
         R[idx] = r
     return R
-
 def rendering(obj_list):
     
     cam_look_at = torch.tensor([0.5, 0.0, 0.0])
@@ -60,10 +59,7 @@ def rendering(obj_list):
     heightmap =  heightmap*37821.71428571428 - 3407.3605408838816
     heightmap = torch.relu(heightmap)
     heightmap = torch.where(heightmap > 1.0, 6e-3, heightmap) 
-
     return heightmap.reshape(heightmap_size,heightmap_size)
-
-
 def getGroundTruth(agent, 
                    states,
                    in_hands,
@@ -76,24 +72,17 @@ def getGroundTruth(agent,
     states = states.unsqueeze(dim = 0).detach() # new variable
     in_hands = in_hands.unsqueeze(dim = 0).detach() # new variable
     object_list = []
-
     for idx,d in enumerate(object_dir_list):
         o = pyredner.load_obj(d, return_objects=True)[0]
-
         new_vertices = o.vertices.to(device).detach().clone() # new variable
         scale = scale_list[idx].clone().detach()
-
         new_vertices *= scale
-
         new_vertices = torch.matmul(new_vertices, rot_mat_list[idx].T.float())
         new_vertices[:,0:1] += xyz_position_list[idx][0]
         new_vertices[:,1:2] += xyz_position_list[idx][1]
         new_vertices[:,2:3] += xyz_position_list[idx][2]
         o.vertices = new_vertices.clone()
-
         object_list.append(o)
-
-
     tray_dir = "./tray.obj"
     tray = pyredner.load_obj(tray_dir, return_objects=True)[0]
     tray.vertices /= 1000
@@ -101,7 +90,6 @@ def getGroundTruth(agent,
     tray.vertices[:,1:2] += 0.0
     tray.vertices[:,2:3] += 0.0
     object_list.append(tray)
-
     obs = rendering(obj_list=object_list).reshape(1,1,heightmap_size,heightmap_size)   
     q_value_maps, _, actions = agent.getEGreedyActionsAttack(states, in_hands, obs, 0)
     
@@ -110,29 +98,29 @@ def getGroundTruth(agent,
     states = states.to(device)
     
     return q_value_maps, actions.double()
-
 def pgd_attack(envs = None, agent = None, epsilon_1 = 0.0005, epsilon_2 = 0.0005, alpha_1 = 0.02, alpha_2 = 0.1, iters=100, device = None, o_info = None):
     pyredner.set_print_timing(False)
-    
+
+    envs = EnvWrapper(num_processes, env, env_config, planner_config)
+    agent = createAgent(test=False)
+    agent.eval()
+    if load_model_pre:
+        agent.loadModel(load_model_pre)
+
     _, ori_x, ori_y, ori_reward = o_info
 
     states, in_hands, obs, object_dir_list, params = envs._resetAttack(np.array([ori_x, ori_y])) 
     original_xyz_position_list, original_rot_mat_list, scale_list = params
-
     num_objects = len(object_dir_list)
     xyz_position_list = copy.deepcopy(original_xyz_position_list)
     rot_mat_list = copy.deepcopy(original_rot_mat_list)
     scale_list = copy.deepcopy(scale_list)    
     mse_loss = nn.MSELoss()
-
-
     for iter in range(iters):
         leaf_tensor = xyz_position_list[0][:2].clone().to(device)
         leaf_tensor.requires_grad = True
         xyz_position_list[0][:2] = leaf_tensor
         # rot_mat_list[0].requires_grad = True
-
-
         _, actions = getGroundTruth(agent = agent,
                                     states = states,
                                     in_hands = in_hands,
@@ -162,12 +150,10 @@ def pgd_attack(envs = None, agent = None, epsilon_1 = 0.0005, epsilon_2 = 0.0005
             torch.clamp(y + y_eta, min = original_xyz_position_list[0][1].to(device) - alpha_1, max = original_xyz_position_list[0][1].to(device) + alpha_1),
             z]).to(device)
         """ attack on position """
-
         """ attack on rotation"""
         # rot_eta = rot_grad.sign() * epsilon_2
         # rot_mat = torch.clamp(unify(rot_mat + rot_eta), min = original_rot_mat_list[0] - alpha_2, max = original_rot_mat_list[0] + alpha_2)
         """ attack on rotation"""
-
         xyz_position_list[0] = xyz_position.detach().clone().to(device)
         # rot_mat_list[0] = rot_mat.detach().clone().to(device)
         # scale = scale.detach().clone()
@@ -178,7 +164,6 @@ def pgd_attack(envs = None, agent = None, epsilon_1 = 0.0005, epsilon_2 = 0.0005
     xyz_position_list = copy.deepcopy(_xyz_position_list)
     rot_mat_list = copy.deepcopy(_rot_mat_list)
     scale_list = copy.deepcopy(_scale_list)    
-
     # xyz_position_list = copy.deepcopy(original_xyz_position_list)
     # rot_mat_list = copy.deepcopy(original_rot_mat_list)
     # scale_list = copy.deepcopy(scale_list)  
@@ -197,31 +182,22 @@ def pgd_attack(envs = None, agent = None, epsilon_1 = 0.0005, epsilon_2 = 0.0005
     actions = torch.cat((actions, states.unsqueeze(1)), dim=1)
     actions = actions.reshape(4)
     _, _, _, reward, _ = envs.stepAttack(actions.detach())
-
     f=open("./object_pgd_attack_positioin.txt","a")
     f.write("index: " + str(object_index) + ", ori_reward: " + str(ori_reward) + ", ori_pos_1: " + str([ori_x, ori_y]) + ", ori_pos_2: " + str(original_xyz_position_list[0]) + ", pos: " + str(xyz_position_list[0]) + ", actions: " + str(actions) + ", reward: " + str(reward) + "\n")
-
     return reward
-
-
-
 def heightmapAttack(envs, agent, epsilon = 1e-5, alpha = 4e-4, iters = 5):
-
     states, in_hands, obs = envs.reset() 
     loss_function = nn.MSELoss()
     obs = obs.unsqueeze(dim = 0).detach() # new variable
     states = states.unsqueeze(dim = 0).detach() # new variable
     in_hands = in_hands.unsqueeze(dim = 0).detach() # new variable
-
     original_obs = obs.clone().detach()
     _, _, target = agent.getEGreedyActionsAttack(states, in_hands, obs, 0)
-
     for _ in range(iters):
         obs.requires_grad = True
         _, _, actions = agent.getEGreedyActionsAttack(states, in_hands, obs, 0)
         loss = loss_function(actions, target)
         grad = torch.autograd.grad(loss, obs)[0]
-
         eta = grad.sign() * epsilon
         obs = obs.detach()
         obs = torch.clamp(obs + eta, min = original_obs - alpha, max = original_obs + alpha)
@@ -234,25 +210,23 @@ def heightmapAttack(envs, agent, epsilon = 1e-5, alpha = 4e-4, iters = 5):
     _, _, _, reward, _ = envs.step(actions.detach())
     
     return reward
-
 def read_numeric_values(file_path):
     all_numeric_values = []
-
     with open(file_path, 'r') as file:
         for line in file:
             # Use regex to extract numeric values from the line
             values = [float(match) for match in re.findall(r'[-+]?\d*\.\d+(?:[eE][-+]?\d+)?|\d+', line)]
             all_numeric_values.append(values)
-
     return all_numeric_values
 
 if __name__ == '__main__':
+
     envs = EnvWrapper(num_processes, env, env_config, planner_config)
     agent = createAgent(test=False)
     agent.eval()
     if load_model_pre:
         agent.loadModel(load_model_pre)
-        
+
     s = 0.
     file_path = './object_original_position.txt'
     all_values = read_numeric_values(file_path)
@@ -262,6 +236,7 @@ if __name__ == '__main__':
     print("object_index: ", object_index)
     for i in range(100):
         o_info = object_info[i]
+        reward = pgd_attack(iters=100, device = device, o_info = o_info)
         reward = pgd_attack(envs, agent, iters=100, device = device, o_info = o_info)
         s += reward
     sr_value = float(s)/100.0
