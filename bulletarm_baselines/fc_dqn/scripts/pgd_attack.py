@@ -111,7 +111,7 @@ def getGroundTruth(agent,
     
     return q_value_maps, actions.double()
 
-def pgd_attack(envs = None, agent = None, epsilon_1 = 0.0005, epsilon_2 = 0.0005, alpha_1 = 0.02, alpha_2 = 0.1, iters=100, device = None, o_info = None):
+def pgd_attack(envs, agent, epsilon_1 = 0.0005, epsilon_2 = 0.0005, alpha_1 = 0.02, alpha_2 = 0.1, iters=100, device = None, o_info = None):
     pyredner.set_print_timing(False)
     
     _, ori_x, ori_y, ori_reward = o_info
@@ -127,10 +127,11 @@ def pgd_attack(envs = None, agent = None, epsilon_1 = 0.0005, epsilon_2 = 0.0005
 
 
     for iter in range(iters):
+        # l.info('Iteration '+str(iter)+'/'+str(iters))
         leaf_tensor = xyz_position_list[0][:2].clone().to(device)
         leaf_tensor.requires_grad = True
         xyz_position_list[0][:2] = leaf_tensor
-        # rot_mat_list[0].requires_grad = True
+        rot_mat_list[0].requires_grad = True
 
 
         _, actions = getGroundTruth(agent = agent,
@@ -152,11 +153,18 @@ def pgd_attack(envs = None, agent = None, epsilon_1 = 0.0005, epsilon_2 = 0.0005
                             retain_graph=False, 
                             create_graph=False)
         x_grad, y_grad = grad[0].to(device)
+
         xyz_position = xyz_position_list[0].detach().clone().to(device)
-        # rot_mat = rot_mat_list[0].detach().clone().to(device)
+        rot_mat = rot_mat_list[0].detach().clone().to(device)
+
         x,y,z = xyz_position.clone().detach().to(device)
         x_eta = torch.clamp(x_grad, min = -epsilon_1,  max = epsilon_1).to(device)
         y_eta = torch.clamp(y_grad, min = -epsilon_1,  max = epsilon_1).to(device)
+        
+        # coordinate boudary of the object, please do not change these values
+        # valid range of x and y is 0.2 while for z the range is 0.000025
+        # accumulated change should not exceed the boundaries
+
         xyz_position = torch.tensor([
             torch.clamp(x + x_eta, min = original_xyz_position_list[0][0].to(device) - alpha_1, max = original_xyz_position_list[0][0].to(device) + alpha_1),
             torch.clamp(y + y_eta, min = original_xyz_position_list[0][1].to(device) - alpha_1, max = original_xyz_position_list[0][1].to(device) + alpha_1),
@@ -169,20 +177,9 @@ def pgd_attack(envs = None, agent = None, epsilon_1 = 0.0005, epsilon_2 = 0.0005
         """ attack on rotation"""
 
         xyz_position_list[0] = xyz_position.detach().clone().to(device)
-        # rot_mat_list[0] = rot_mat.detach().clone().to(device)
+        rot_mat_list[0] = rot_mat.detach().clone().to(device)
         # scale = scale.detach().clone()
-        
-        
-    _, _, _, _, params = envs._resetAttack(xyz_position_list[0].cpu().numpy()) 
-    _xyz_position_list, _rot_mat_list, _scale_list = params
-    xyz_position_list = copy.deepcopy(_xyz_position_list)
-    rot_mat_list = copy.deepcopy(_rot_mat_list)
-    scale_list = copy.deepcopy(_scale_list)    
 
-    # xyz_position_list = copy.deepcopy(original_xyz_position_list)
-    # rot_mat_list = copy.deepcopy(original_rot_mat_list)
-    # scale_list = copy.deepcopy(scale_list)  
-    
     _, actions = getGroundTruth(agent = agent,
                                 states = states,
                                 in_hands = in_hands,
@@ -198,8 +195,8 @@ def pgd_attack(envs = None, agent = None, epsilon_1 = 0.0005, epsilon_2 = 0.0005
     actions = actions.reshape(4)
     _, _, _, reward, _ = envs.stepAttack(actions.detach())
 
-    f=open("./object_pgd_attack_positioin.txt","a")
-    f.write("index: " + str(object_index) + ", ori_reward: " + str(ori_reward) + ", ori_pos_1: " + str([ori_x, ori_y]) + ", ori_pos_2: " + str(original_xyz_position_list[0]) + ", pos: " + str(xyz_position_list[0]) + ", actions: " + str(actions) + ", reward: " + str(reward) + "\n")
+    f=open("./object_info_2.txt","a")
+    f.write(str(object_index) + str(ori_reward) + str([ori_x,ori_y]) + str(xyz_position_list[0]) + str(actions) + str(reward) + "\n")
 
     return reward
 
@@ -252,9 +249,9 @@ if __name__ == '__main__':
     agent.eval()
     if load_model_pre:
         agent.loadModel(load_model_pre)
-        
+    # agent.loadModel("/content/drive/MyDrive/my_archive/ck3/snapshot")
     s = 0.
-    file_path = './object_original_position.txt'
+    file_path = '/Users/tingxi/Desktop/object_original_position.txt'
     all_values = read_numeric_values(file_path)
     object_info = all_values[object_index*100: object_index*100 + 100]
     #object_info is a list of lists, each sub-list is in such manner:
@@ -266,6 +263,8 @@ if __name__ == '__main__':
         s += reward
     sr_value = float(s)/100.0
     print("sr_value: ", sr_value)
-    f=open("./object_pgd_attack_info.txt","a")
+
+    f=open("./object_info_1.txt","a")
     f.write("index: " + str(object_index) + ", num: " + str(num_objects) + ", SR: " + str(sr_value) + "\n")
+    # print(reward)
     print("end")
