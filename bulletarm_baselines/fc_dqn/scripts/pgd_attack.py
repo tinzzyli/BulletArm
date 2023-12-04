@@ -251,7 +251,7 @@ if __name__ == '__main__':
         agent.loadModel(load_model_pre)
     # agent.loadModel("/content/drive/MyDrive/my_archive/ck3/snapshot")
     s = 0.
-    file_path = '/Users/tingxi/Desktop/object_original_position.txt'
+    file_path = './object_original_position.txt'
     all_values = read_numeric_values(file_path)
     object_info = all_values[object_index*100: object_index*100 + 100]
     #object_info is a list of lists, each sub-list is in such manner:
