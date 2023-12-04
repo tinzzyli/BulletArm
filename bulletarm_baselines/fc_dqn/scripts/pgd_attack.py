@@ -111,8 +111,14 @@ def getGroundTruth(agent,
     
     return q_value_maps, actions.double()
 
-def pgd_attack(envs, agent, epsilon_1 = 0.0005, epsilon_2 = 0.0005, alpha_1 = 0.02, alpha_2 = 0.1, iters=100, device = None, o_info = None):
+def pgd_attack(envs = None, agent = None, epsilon_1 = 0.0005, epsilon_2 = 0.0005, alpha_1 = 0.02, alpha_2 = 0.1, iters=100, device = None, o_info = None):
     pyredner.set_print_timing(False)
+    
+    envs = EnvWrapper(num_processes, env, env_config, planner_config)
+    agent = createAgent(test=False)
+    agent.eval()
+    if load_model_pre:
+        agent.loadModel(load_model_pre)
     
     _, ori_x, ori_y, ori_reward = o_info
 
@@ -173,8 +179,11 @@ def pgd_attack(envs, agent, epsilon_1 = 0.0005, epsilon_2 = 0.0005, alpha_1 = 0.
         # scale = scale.detach().clone()
         
         
-    states, in_hands, obs, object_dir_list, params = envs._resetAttack(xyz_position_list[0].cpu().numpy()) 
-    # original_xyz_position_list, original_rot_mat_list, scale_list = params
+    _, _, _, _, params = envs._resetAttack(xyz_position_list[0].cpu().numpy()) 
+    _xyz_position_list, _rot_mat_list, _scale_list = params
+    xyz_position_list = copy.deepcopy(_xyz_position_list)
+    rot_mat_list = copy.deepcopy(_rot_mat_list)
+    scale_list = copy.deepcopy(_scale_list)    
 
     # xyz_position_list = copy.deepcopy(original_xyz_position_list)
     # rot_mat_list = copy.deepcopy(original_rot_mat_list)
@@ -244,11 +253,7 @@ def read_numeric_values(file_path):
     return all_numeric_values
 
 if __name__ == '__main__':
-    envs = EnvWrapper(num_processes, env, env_config, planner_config)
-    agent = createAgent(test=False)
-    agent.eval()
-    if load_model_pre:
-        agent.loadModel(load_model_pre)
+
         
     s = 0.
     file_path = './object_original_position.txt'
@@ -259,9 +264,8 @@ if __name__ == '__main__':
     print("object_index: ", object_index)
     for i in range(100):
         o_info = object_info[i]
-        reward = pgd_attack(envs, agent, iters=100, device = device, o_info = o_info)
+        reward = pgd_attack(iters=100, device = device, o_info = o_info)
         s += reward
-        time.sleep(1)
     sr_value = float(s)/100.0
     print("sr_value: ", sr_value)
     f=open("./object_pgd_attack_info.txt","a")
