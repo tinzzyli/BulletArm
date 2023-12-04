@@ -269,4 +269,3 @@ if __name__ == '__main__':
     f=open("./object_pgd_attack_info.txt","a")
     f.write("index: " + str(object_index) + ", num: " + str(num_objects) + ", SR: " + str(sr_value) + "\n")
     print("end")
-    
