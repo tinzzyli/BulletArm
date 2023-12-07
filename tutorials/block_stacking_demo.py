@@ -4,7 +4,7 @@ import numpy as np
 def runDemo():
   env_config = {'render': True, 'num_objects': 1,'object_index': 37}
   env = env_factory.createEnvs(0, 'object_grasping', env_config)
-  pos = np.array([0.7, -0.2])
+  pos = np.array([0.5, -0.0])
   obs = env._resetAttack(pos)
   done = False
   while not done:

@@ -13,6 +13,7 @@ import pybullet as pb
 import bulletarm.envs.configs as env_configs
 import torch
 import inspect
+import json
 class ObjectGrasping(BaseEnv):
     '''Open loop object grasping task.
 
@@ -314,7 +315,10 @@ class ObjectGrasping(BaseEnv):
                         for i in range(self.num_obj):
                             x = position[0]
                             y = position[1]
-                            randpos = [x, y, 0.40]
+                            with open("/Users/tingxi/Github/BulletArm/object_z_info.json", "r") as file:
+                                aabb_info = json.load(file)
+                            z = aabb_info[str(self.object_index)][5] - aabb_info[str(self.object_index)][2]
+                            randpos = [x, y, z]
                             obj = self._generateShapes(constants.GRASP_NET_OBJ, 1, 
                                                        rot=[pb.getQuaternionFromEuler([0., 0., -np.pi / 4])],
                                                        pos=[randpos], padding=self.min_boarder_padding,

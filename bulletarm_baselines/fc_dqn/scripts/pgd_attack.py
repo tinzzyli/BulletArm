@@ -133,7 +133,7 @@ def pgd_attack(envs = None, agent = None, epsilon_1 = 0.0005, epsilon_2 = 0.0005
         # rot_mat_list[0].requires_grad = True
 
 
-        _, actions = getGroundTruth(agent = agent,
+        q_value_maps, actions = getGroundTruth(agent = agent,
                                     states = states,
                                     in_hands = in_hands,
                                     object_dir_list = object_dir_list,
@@ -142,9 +142,11 @@ def pgd_attack(envs = None, agent = None, epsilon_1 = 0.0005, epsilon_2 = 0.0005
                                     scale_list = scale_list,
                                     device = device)
         actions = actions[0][:2].to(device)
-        
+        q_max_value = torch.max(q_value_maps)
+        target_q_value_maps = torch.zeros_like(q_value_maps)
+        target_q_value_maps = torch.where(q_value_maps < q_max_value, 0, target_q_value_maps)
         """ attack on position """
-        loss = - mse_loss(leaf_tensor, actions)      
+        loss = - mse_loss(q_value_maps, target_q_value_maps)      
         grad = torch.autograd.grad(outputs=loss, 
                             inputs=leaf_tensor, 
                             grad_outputs=None, 
@@ -180,7 +182,7 @@ def pgd_attack(envs = None, agent = None, epsilon_1 = 0.0005, epsilon_2 = 0.0005
     scale_list = copy.deepcopy(_scale_list)    
     
     _, actions = getGroundTruth(agent = agent,
-                                states = states,
+                                states = states, 
                                 in_hands = in_hands,
                                 object_dir_list = object_dir_list,
                                 xyz_position_list = xyz_position_list,
@@ -199,8 +201,6 @@ def pgd_attack(envs = None, agent = None, epsilon_1 = 0.0005, epsilon_2 = 0.0005
     ff.write(", pos: " + str(xyz_position_list[0]) + ", actions: " + str(actions) + ", reward: " + str(reward) + "\n")
 
     return reward
-
-
 
 def heightmapAttack(envs, agent, epsilon = 1e-5, alpha = 4e-4, iters = 5):
 
