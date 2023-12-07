@@ -174,7 +174,8 @@ def pgd_attack(envs = None, agent = None, epsilon_1 = 0.0005, epsilon_2 = 0.0005
         # rot_mat_list[0] = rot_mat.detach().clone().to(device)
         # scale = scale.detach().clone()
         
-        
+    envs.setInitializedFalse()
+    
     _, _, _, _, params = envs._resetAttack(xyz_position_list[0].cpu().numpy()) 
     _xyz_position_list, _rot_mat_list, _scale_list = params
     xyz_position_list = copy.deepcopy(_xyz_position_list)

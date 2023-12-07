@@ -317,7 +317,7 @@ class ObjectGrasping(BaseEnv):
                             y = position[1]
                             with open("./object_AABB_info.json", "r") as file:
                                 aabb_info = json.load(file)
-                            z = aabb_info[str(self.object_index)][5] - aabb_info[str(self.object_index)][2]
+                            z = (aabb_info[str(self.object_index)][5] - aabb_info[str(self.object_index)][2]) * 0.5
                             randpos = [x, y, z]
                             obj = self._generateShapes(constants.GRASP_NET_OBJ, 1, 
                                                        rot=[pb.getQuaternionFromEuler([0., 0., -np.pi / 4])],
@@ -334,6 +334,9 @@ class ObjectGrasping(BaseEnv):
             self.wait(200)
             self.obj_grasped = 0
         return self._getObservationAttack()
+    
+    def setInitializedFalse(self):
+        self.initialized = False
 
     def isObjInBox(self, obj_pos, tray_pos, tray_size):
         tray_range = self.tray_range(tray_pos, tray_size)

@@ -39,6 +39,9 @@ class EnvWrapper:
         
         return states, in_hands, obs, object_dir_list, object_param_list
     
+    def setInitializedFalse(self):
+        self.envs.setInitializedFalse()
+    
     def getNextAction(self):
         return torch.tensor(self.envs.getNextAction()).float()
 
