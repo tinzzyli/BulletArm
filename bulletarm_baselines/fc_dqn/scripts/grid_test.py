@@ -71,7 +71,9 @@ def test():
             total += dones.sum().int().item()
         
         s += rewards.sum().int().item()
+        
         if total<100:
+            envs.setInitializedFalse()
             states_, in_hands_, obs_, _, _ = envs._resetAttack(gridPositions[total])
         
         states_ = states_.unsqueeze(dim=0).detach()

@@ -125,13 +125,11 @@ def pgd_attack(envs = None, agent = None, epsilon_1 = 0.0005, epsilon_2 = 0.0005
     scale_list = copy.deepcopy(scale_list)    
     mse_loss = nn.MSELoss()
 
-
     for iter in range(iters):
         leaf_tensor = xyz_position_list[0][:2].clone().to(device)
         leaf_tensor.requires_grad = True
         xyz_position_list[0][:2] = leaf_tensor
         # rot_mat_list[0].requires_grad = True
-
 
         q_value_maps, actions = getGroundTruth(agent = agent,
                                     states = states,
@@ -201,6 +199,8 @@ def pgd_attack(envs = None, agent = None, epsilon_1 = 0.0005, epsilon_2 = 0.0005
     ff.write("index: " + str(object_index) + ", ori_reward: " + str(ori_reward) + ", ori_pos_1: " + str([ori_x, ori_y]) + ", ori_pos_2: " + str(original_xyz_position_list[0]))
     ff.write(", pos: " + str(xyz_position_list[0]) + ", actions: " + str(actions) + ", reward: " + str(reward) + "\n")
 
+    envs.setInitializedFalse()
+    
     return reward
 
 def heightmapAttack(envs, agent, epsilon = 1e-5, alpha = 4e-4, iters = 5):

@@ -60,7 +60,9 @@ def test(AttackedPos, ori_reward):
             total += dones.sum().int().item()
         
         s += rewards.sum().int().item()
+        
         if total<100:
+            envs.setInitializedFalse()
             states_, in_hands_, obs_ = envs._reset(AttackedPos[total])
         
         states_ = states_.unsqueeze(dim=0).detach()
