@@ -315,7 +315,7 @@ class ObjectGrasping(BaseEnv):
                         for i in range(self.num_obj):
                             x = position[0]
                             y = position[1]
-                            with open("/Users/tingxi/Github/BulletArm/object_z_info.json", "r") as file:
+                            with open("./object_AABB_info.json", "r") as file:
                                 aabb_info = json.load(file)
                             z = aabb_info[str(self.object_index)][5] - aabb_info[str(self.object_index)][2]
                             randpos = [x, y, z]

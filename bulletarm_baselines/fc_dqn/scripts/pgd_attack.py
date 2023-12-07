@@ -143,8 +143,8 @@ def pgd_attack(envs = None, agent = None, epsilon_1 = 0.0005, epsilon_2 = 0.0005
                                     device = device)
         actions = actions[0][:2].to(device)
         q_max_value = torch.max(q_value_maps)
-        target_q_value_maps = torch.zeros_like(q_value_maps)
-        target_q_value_maps = torch.where(q_value_maps < q_max_value, 0, target_q_value_maps)
+        # target_q_value_maps = torch.zeros_like(q_value_maps)
+        target_q_value_maps = torch.where(q_value_maps < q_max_value, 0, 1)
         """ attack on position """
         loss = - mse_loss(q_value_maps, target_q_value_maps)      
         grad = torch.autograd.grad(outputs=loss, 
