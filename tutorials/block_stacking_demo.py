@@ -2,7 +2,7 @@ from bulletarm import env_factory
 import time
 import numpy as np
 def runDemo():
-  env_config = {'render': True, 'num_objects': 2,'object_index': 18}
+  env_config = {'render': False, 'num_objects': 2,'object_index': 18}
   env = env_factory.createEnvs(0, 'object_grasping', env_config)
   
   _, _, _, _, params = env._resetAttack(np.array([0.5444, -0.0401])) 
