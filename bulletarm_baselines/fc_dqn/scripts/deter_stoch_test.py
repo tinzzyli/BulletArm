@@ -27,7 +27,7 @@ ExpertTransition = collections.namedtuple('ExpertTransition', 'state obs action 
 
 import re
 
-def test(AttackedPos, ori_reward):
+def test(ori_pos, ori_reward):
     pyredner.set_print_timing(False)
     plt.style.use('default')
     test_episode = 100
@@ -39,7 +39,7 @@ def test(AttackedPos, ori_reward):
     if load_model_pre:
         agent.loadModel(load_model_pre) 
     
-    states, in_hands, obs = envs._reset(AttackedPos[total])
+    states, in_hands, obs = envs._reset(ori_pos[total])
     states = states.unsqueeze(dim=0).detach()
     in_hands = in_hands.unsqueeze(dim=0).detach()
     obs = obs.unsqueeze(dim=0).detach()
@@ -54,7 +54,7 @@ def test(AttackedPos, ori_reward):
         states_, in_hands_, obs_, rewards, dones = envs.step(actions_star.detach(), auto_reset=True)
         
         f1=open("./object_transfer_position.txt","a")
-        f1.write("index: " + str(object_index) + ", attacked_pos: " + str(AttackedPos[total]) + ", ori_reward: " + str(ori_reward[total]) +  ", rewards: " + str(rewards) + "\n")
+        f1.write("index: " + str(object_index) + ", pos: " + str(ori_pos[total]) + ", ori_reward: " + str(ori_reward[total]) +  ", rewards: " + str(rewards) + "\n")
         
         if dones.sum():
             total += dones.sum().int().item()
@@ -63,7 +63,7 @@ def test(AttackedPos, ori_reward):
         
         if total<10000:
             envs.setInitializedFalse()
-            states_, in_hands_, obs_ = envs._reset(AttackedPos[total])
+            states_, in_hands_, obs_ = envs._reset(ori_pos[total])
         
         states_ = states_.unsqueeze(dim=0).detach()
         in_hands_ = in_hands_.unsqueeze(dim=0).detach()
@@ -83,40 +83,47 @@ def test(AttackedPos, ori_reward):
     return float(s) / total if total != 0 else 0
 
 def read_numeric_values(file_path):
-    all_numeric_values = []
+    # Initialize a list to store the numeric values
+    numeric_values = []
+    
+    pos_values = []
+    reward_values = []
 
+    # Open the file for reading
     with open(file_path, 'r') as file:
+        # Read each line in the file
         for line in file:
-            # Use regex to extract numeric values from the line
-            values = [float(match) for match in re.findall(r'[-+]?\d*\.\d+(?:[eE][-+]?\d+)?|\d+', line)]
-            all_numeric_values.append(values)
+            numbers = re.findall(r'-?\d+\.\d+|-?\d+', line)
+            # 将匹配到的数字转换为浮点数或整数，并添加到列表中
+            # numeric_values.append([float(num) if '.' in num else int(num) for num in numbers])
+            numeric = [float(num) if '.' in num else int(num) for num in numbers]
+            pos_values.append(numeric[1:3])
+            reward_values.append(numeric[3])
+            
+    return pos_values, reward_values
 
-    return all_numeric_values
+# def getori_posFromValues(file_path):
+#     values = read_numeric_values(file_path)
+#     pos = []
+#     for v in values:
+#         pos.append(v[4:6])
+#     return pos
 
-def getAttackedPosFromValues(file_path):
-    values = read_numeric_values(file_path)
-    pos = []
-    for v in values:
-        pos.append(v[4:6])
-    return pos
-
-def getRewardFromValues(file_path):
-    values = read_numeric_values(file_path)
-    reward = []
-    for v in values:
-        reward.append(v[-1])
-    return reward
+# def getRewardFromValues(file_path):
+#     values = read_numeric_values(file_path)
+#     reward = []
+#     for v in values:
+#         reward.append(v[-1])
+#     return reward
 
 if __name__ == '__main__':
     file_path = './100_object_original_position.txt'
     
-    attackedPos = getAttackedPosFromValues(file_path)
-    attackedPos = attackedPos[object_index*100: object_index*100 + 10000]
-    
-    ori_reward = getRewardFromValues(file_path)
+    ori_pos, ori_reward = read_numeric_values(file_path)
+    ori_pos = ori_pos[object_index*100: object_index*100 + 10000]
     ori_reward = ori_reward[object_index*100: object_index*100 + 10000]
     
-    sr_value = test(attackedPos, ori_reward)
+    sr_value = test(ori_pos, ori_reward)
     print(sr_value)
     print(object_index)
     f=open("./object_transfer_info.txt","a")
