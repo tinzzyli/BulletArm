@@ -53,7 +53,7 @@ def test(ori_pos, ori_reward):
         actions_star = actions_star.reshape(4)
         states_, in_hands_, obs_, rewards, dones = envs.step(actions_star.detach(), auto_reset=True)
         
-        f1=open("./object_transfer_position.txt","a")
+        f1=open("./deter_stoch_position.txt","a")
         f1.write("index: " + str(object_index) + ", pos: " + str(ori_pos[total]) + ", ori_reward: " + str(ori_reward[total]) +  ", rewards: " + str(rewards) + "\n")
         
         if dones.sum():
