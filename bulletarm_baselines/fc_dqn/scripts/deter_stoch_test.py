@@ -54,7 +54,7 @@ def test(ori_pos, ori_reward):
         states_, in_hands_, obs_, rewards, dones = envs.step(actions_star.detach(), auto_reset=True)
         
         f1=open("./deter_stoch_position.txt","a")
-        f1.write("index: " + str(object_index) + ", pos: " + str(ori_pos[total]) + ", ori_reward: " + str(ori_reward[total]) +  ", rewards: " + str(rewards) + "\n")
+        f1.write("index: " + str(object_index) + ", pos: " + str(ori_pos[total]) + ", ori_reward: " + str(ori_reward[total]) +  ", reward: " + str(rewards) + "\n")
         
         if dones.sum():
             total += dones.sum().int().item()
@@ -120,11 +120,11 @@ if __name__ == '__main__':
     file_path = './100_object_original_position.txt'
     
     ori_pos, ori_reward = read_numeric_values(file_path)
-    ori_pos = ori_pos[object_index*100: object_index*100 + 10000]
-    ori_reward = ori_reward[object_index*100: object_index*100 + 10000]
+    ori_pos = ori_pos[object_index*10000: object_index*10000 + 10000]
+    ori_reward = ori_reward[object_index*10000: object_index*10000 + 10000]
     
     sr_value = test(ori_pos, ori_reward)
     print(sr_value)
     print(object_index)
-    f=open("./object_transfer_info.txt","a")
+    f=open("./object_deter_stoch_info.txt","a")
     f.write("index: " + str(object_index) + ", num: " + str(num_objects) + ", SR: " + str(sr_value) + "\n")
