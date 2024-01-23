@@ -30,7 +30,7 @@ import re
 def test(ori_pos, ori_reward):
     pyredner.set_print_timing(False)
     plt.style.use('default')
-    test_episode = 100
+    test_episode = 10000
     total = 0
     s = 0
     envs = EnvWrapper(num_processes, env, env_config, planner_config)
