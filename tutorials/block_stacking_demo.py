@@ -2,21 +2,18 @@ from bulletarm import env_factory
 import time
 import numpy as np
 def runDemo():
-  env_config = {'render': True, 'num_objects': 1,'object_index': 6}
+  env_config = {'render': True, 'num_objects': 1,'object_index': 20}
   env = env_factory.createEnvs(0, 'object_grasping', env_config)
   
-  _, _, _, _, params = env._resetAttack(np.array([0.5499, -0.019])) 
+  _, _, _, _, params = env._resetAttack(np.array([0.5258, 0.0218])) 
   
   a, _rot_mat_list, _scale_list = params
   print(a)
   
-  
   # _ = env.stepAttack(np.array([0., 0.6, 0.1, 5.49776703]))
-    
   # _, _, _, _, _params = env._resetAttack(np.array([0.5434, -0.0411])) 
   # b, _rot_mat_list, _scale_list = _params
   # print(b)
-
   
   done = False
   while not done:
