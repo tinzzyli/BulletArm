@@ -179,6 +179,6 @@ if __name__ == '__main__':
         loss, grad, actions = loss_check(envs, agent, iters=100, device = device, o_info = o_info)
         difference = np.sqrt((o_info[1] - actions[0])**2 + (o_info[2] - actions[1])**2)
         f=open('./loss_check.txt', 'a')
-        f.write("Info: " + str(o_info) +", Grad: " + str(grad) + ", Loss: " + str(loss) + ", Difference: "+ str(difference) + "\n")
+        f.write("Info: " + str(o_info) + ", Action: "+ str(actions) + ", Grad: " + str(grad) + ", Loss: " + str(loss) + ", Difference: "+ str(difference) + "\n")
     print("end")
     
