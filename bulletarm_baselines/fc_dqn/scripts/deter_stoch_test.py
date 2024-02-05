@@ -121,7 +121,7 @@ def read_numeric_values(file_path):
 #     return reward
 
 if __name__ == '__main__':
-    file_path = './100_object_original_position.txt'
+    file_path = './object_original_position.txt'
     
     ori_pos, ori_reward = read_numeric_values(file_path)
     ori_pos = ori_pos[object_index*100: object_index*100 + 100]
@@ -130,5 +130,5 @@ if __name__ == '__main__':
         sr_value = test(ori_pos[i], ori_reward[i])
     print(sr_value)
     print(object_index)
-    f=open("./object_deter_stoch_info.txt","a")
-    f.write("index: " + str(object_index) + ", num: " + str(num_objects) + ", SR: " + str(sr_value) + "\n")
+    # f=open("./object_deter_stoch_info.txt","a")
+    # f.write("index: " + str(object_index) + ", num: " + str(num_objects) + ", SR: " + str(sr_value) + "\n")
