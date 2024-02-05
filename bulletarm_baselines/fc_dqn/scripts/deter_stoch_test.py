@@ -27,17 +27,12 @@ ExpertTransition = collections.namedtuple('ExpertTransition', 'state obs action 
 
 import re
 
-def test(ori_pos, ori_reward):
+def test(agent, envs, ori_pos, ori_reward):
     pyredner.set_print_timing(False)
     plt.style.use('default')
     test_episode = 100
     total = 0
     s = 0
-    envs = EnvWrapper(num_processes, env, env_config, planner_config)
-    agent = createAgent()
-    agent.eval()
-    if load_model_pre:
-        agent.loadModel(load_model_pre) 
     
     states, in_hands, obs, _, _ = envs._resetAttack(ori_pos)
     states = states.unsqueeze(dim=0).detach()
@@ -122,12 +117,17 @@ def read_numeric_values(file_path):
 
 if __name__ == '__main__':
     file_path = './object_original_position.txt'
-    
+    envs = EnvWrapper(num_processes, env, env_config, planner_config)
+    agent = createAgent()
+    agent.eval()
+    if load_model_pre:
+        agent.loadModel(load_model_pre) 
+        
     ori_pos, ori_reward = read_numeric_values(file_path)
     ori_pos = ori_pos[object_index*100: object_index*100 + 100]
     ori_reward = ori_reward[object_index*100: object_index*100 + 100]
     for i in range(100):
-        sr_value = test(ori_pos[i], ori_reward[i])
+        sr_value = test(agent, envs, ori_pos[i], ori_reward[i])
     print(sr_value)
     print(object_index)
     # f=open("./object_deter_stoch_info.txt","a")
