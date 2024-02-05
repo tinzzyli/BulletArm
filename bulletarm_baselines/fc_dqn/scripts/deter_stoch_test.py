@@ -39,7 +39,7 @@ def test(ori_pos, ori_reward):
     if load_model_pre:
         agent.loadModel(load_model_pre) 
     
-    states, in_hands, obs = envs._resetAttack(ori_pos)
+    states, in_hands, obs, _, _ = envs._resetAttack(ori_pos)
     states = states.unsqueeze(dim=0).detach()
     in_hands = in_hands.unsqueeze(dim=0).detach()
     obs = obs.unsqueeze(dim=0).detach()
@@ -67,7 +67,7 @@ def test(ori_pos, ori_reward):
             
         total += 1
         envs.setInitializedFalse()
-        states_, in_hands_, obs_ = envs._resetAttack(ori_pos)
+        states_, in_hands_, obs_, _, _ = envs._resetAttack(ori_pos)
         
         states_ = states_.unsqueeze(dim=0).detach()
         in_hands_ = in_hands_.unsqueeze(dim=0).detach()
@@ -131,4 +131,3 @@ if __name__ == '__main__':
     print(sr_value)
     print(object_index)
     # f=open("./object_deter_stoch_info.txt","a")
-    # f.write("index: " + str(object_index) + ", num: " + str(num_objects) + ", SR: " + str(sr_value) + "\n")
