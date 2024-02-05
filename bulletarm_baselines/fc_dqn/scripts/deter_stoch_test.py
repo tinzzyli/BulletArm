@@ -30,7 +30,7 @@ import re
 def test(ori_pos, ori_reward):
     pyredner.set_print_timing(False)
     plt.style.use('default')
-    test_episode = 10000
+    test_episode = 100
     total = 0
     s = 0
     envs = EnvWrapper(num_processes, env, env_config, planner_config)
@@ -39,31 +39,35 @@ def test(ori_pos, ori_reward):
     if load_model_pre:
         agent.loadModel(load_model_pre) 
     
-    states, in_hands, obs = envs._reset(ori_pos[total])
+    states, in_hands, obs = envs._resetAttack(ori_pos)
     states = states.unsqueeze(dim=0).detach()
     in_hands = in_hands.unsqueeze(dim=0).detach()
     obs = obs.unsqueeze(dim=0).detach()
     step_times = []
     pbar = tqdm(total=test_episode)
-    while total < 10000:
-        q_value_maps, actions_star_idx, actions_star = agent.getEGreedyActions(states, in_hands, obs, 0, 0)
+    while total < 100:
+        q_value_maps, actions_star_idx, actions_star = agent.getEGreedyActionsAttack(states, in_hands, obs, 0, 0)
         actions_star = actions_star.to(device)
         states = states.to(device)
         actions_star = torch.cat((actions_star, states.unsqueeze(1)), dim=1)
         actions_star = actions_star.reshape(4)
-        states_, in_hands_, obs_, rewards, dones = envs.step(actions_star.detach(), auto_reset=True)
+        states_, in_hands_, obs_, rewards, dones = envs.stepAttack(actions_star.detach(), auto_reset=True)
         
         f1=open("./deter_stoch_position.txt","a")
-        f1.write("index: " + str(object_index) + ", pos: " + str(ori_pos[total]) + ", ori_reward: " + str(ori_reward[total]) +  ", reward: " + str(rewards) + "\n")
+        f1.write("index: " + str(object_index) + ", pos: " + str(ori_pos) + ", ori_reward: " + str(ori_reward) +  ", reward: " + str(rewards) + "\n")
         
-        if dones.sum():
-            total += dones.sum().int().item()
+        # if dones.sum():
+        #     total += dones.sum().int().item()
         
         s += rewards.sum().int().item()
         
-        if total<10000:
-            envs.setInitializedFalse()
-            states_, in_hands_, obs_ = envs._reset(ori_pos[total])
+        # if total<10000:
+        #     envs.setInitializedFalse()
+        #     states_, in_hands_, obs_ = envs._reset(ori_pos[total])
+            
+        total += 1
+        envs.setInitializedFalse()
+        states_, in_hands_, obs_ = envs._resetAttack(ori_pos)
         
         states_ = states_.unsqueeze(dim=0).detach()
         in_hands_ = in_hands_.unsqueeze(dim=0).detach()
@@ -93,7 +97,7 @@ def read_numeric_values(file_path):
     with open(file_path, 'r') as file:
         # Read each line in the file
         for line in file:
-            numbers = re.findall(r'-?\d+\.\d+|-?\d+', line)
+            numbers = re.findall(r'[-+]?\d*\.\d+(?:[eE][-+]?\d+)?|\d+', line)
             # 将匹配到的数字转换为浮点数或整数，并添加到列表中
             # numeric_values.append([float(num) if '.' in num else int(num) for num in numbers])
             numeric = [float(num) if '.' in num else int(num) for num in numbers]
@@ -120,10 +124,10 @@ if __name__ == '__main__':
     file_path = './100_object_original_position.txt'
     
     ori_pos, ori_reward = read_numeric_values(file_path)
-    ori_pos = ori_pos[object_index*10000: object_index*10000 + 10000]
-    ori_reward = ori_reward[object_index*10000: object_index*10000 + 10000]
-    
-    sr_value = test(ori_pos, ori_reward)
+    ori_pos = ori_pos[object_index*100: object_index*100 + 100]
+    ori_reward = ori_reward[object_index*100: object_index*100 + 100]
+    for i in range(100):
+        sr_value = test(ori_pos[i], ori_reward[i])
     print(sr_value)
     print(object_index)
     f=open("./object_deter_stoch_info.txt","a")
