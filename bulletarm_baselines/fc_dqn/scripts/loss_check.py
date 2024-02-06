@@ -160,6 +160,8 @@ def loss_check(envs = None, agent = None, iters=100, device = None, o_info = Non
                         create_graph=False)
     x_grad, y_grad = grad[0].to(device)
     
+    envs.setInitializedFalse()
+    
     return loss, grad, actions
     
 if __name__ == '__main__':
