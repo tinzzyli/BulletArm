@@ -161,13 +161,15 @@ def loss_check(envs = None, agent = None, iters=100, device = None, o_info = Non
     obs = obs.unsqueeze(dim=0)
     
     q_value_maps, actions_star_idx, actions_star = agent.getEGreedyActionsAttack(states, in_hands, obs, 0, 0)
-    actions_star = actions_star.to(device)
+    actions_star = actions_star.to(device).double()
+    actions = actions_star[0][:2].to(device)
     states = states.to(device)
     actions_star = torch.cat((actions_star, states.unsqueeze(1)), dim=1)
     actions_star = actions_star.reshape(4)
     states_, in_hands_, obs_, rewards, dones = envs.stepAttack(actions_star.detach(), auto_reset=True)
     
-    actions = actions_star[0][:2].to(device)
+    
+    
 
     mse_loss = nn.MSELoss()
     q_max_value = torch.max(q_value_maps)
