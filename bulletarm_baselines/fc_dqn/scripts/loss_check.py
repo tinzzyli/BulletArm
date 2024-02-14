@@ -125,67 +125,42 @@ def getGroundTruth(agent,
 def loss_check(envs = None, agent = None, iters=100, device = None, o_info = None):
     pyredner.set_print_timing(False)
     _, ori_x, ori_y, ori_reward = o_info
-    
-    # states, in_hands, obs, object_dir_list, params = envs._resetAttack(np.array([ori_x, ori_y])) 
-    # original_xyz_position_list, original_rot_mat_list, scale_list = params
+    states, in_hands, obs, object_dir_list, params = envs._resetAttack(np.array([ori_x, ori_y])) 
+    original_xyz_position_list, original_rot_mat_list, scale_list = params
 
-    # num_objects = len(object_dir_list)
-    # xyz_position_list = copy.deepcopy(original_xyz_position_list)
-    # rot_mat_list = copy.deepcopy(original_rot_mat_list)
-    # scale_list = copy.deepcopy(scale_list)
+    num_objects = len(object_dir_list)
+    xyz_position_list = copy.deepcopy(original_xyz_position_list)
+    rot_mat_list = copy.deepcopy(original_rot_mat_list)
+    scale_list = copy.deepcopy(scale_list)
+    mse_loss = nn.MSELoss()
     
-    # leaf_tensor = xyz_position_list[0][:2].clone().to(device)
-    # leaf_tensor.requires_grad = True
-    # xyz_position_list[0][:2] = leaf_tensor
+    leaf_tensor = xyz_position_list[0][:2].clone().to(device)
+    leaf_tensor.requires_grad = True
+    xyz_position_list[0][:2] = leaf_tensor
     
-    # q_value_maps, actions = getGroundTruth(agent = agent,
-    #                             states = states,
-    #                             in_hands = in_hands,
-    #                             object_dir_list = object_dir_list,
-    #                             xyz_position_list = xyz_position_list,
-    #                             rot_mat_list = rot_mat_list,
-    #                             scale_list = scale_list,
-    #                             device = device)
-    
-    # actions = actions[0][:2].to(device)
+    q_value_maps, actions = getGroundTruth(agent = agent,
+                                states = states,
+                                in_hands = in_hands,
+                                object_dir_list = object_dir_list,
+                                xyz_position_list = xyz_position_list,
+                                rot_mat_list = rot_mat_list,
+                                scale_list = scale_list,
+                                device = device)
+    actions = actions[0][:2].to(device)
     
     """this block of code is for LOSS"""
-
-    ######
-    ori_pos = torch.tensor(o_info[1:3]).requires_grad_()
-    
-    states, in_hands, obs, _, _ = envs._resetAttack(ori_pos)
-    
-    states = states.unsqueeze(dim=0)
-    in_hands = in_hands.unsqueeze(dim=0)
-    obs = obs.unsqueeze(dim=0)
-    
-    q_value_maps, actions_star_idx, actions_star = agent.getEGreedyActionsAttack(states, in_hands, obs, 0, 0)
-    actions_star = actions_star.to(device).double()
-    actions = actions_star[0][:2].to(device)
-    states = states.to(device)
-    actions_star = torch.cat((actions_star, states.unsqueeze(1)), dim=1)
-    actions_star = actions_star.reshape(4)
-    states_, in_hands_, obs_, rewards, dones = envs.stepAttack(actions_star.detach(), auto_reset=True)
-    
-    
-    
-
-    mse_loss = nn.MSELoss()
     q_max_value = torch.max(q_value_maps)
     target_q_value_maps = torch.where(q_value_maps < q_max_value, 0, 1.0)
     loss = - mse_loss(q_value_maps, target_q_value_maps) 
     grad = torch.autograd.grad(outputs=loss, 
-                        inputs=ori_pos, 
+                        inputs=leaf_tensor, 
                         grad_outputs=None, 
                         allow_unused=False, 
                         retain_graph=False, 
                         create_graph=False)
     x_grad, y_grad = grad[0].to(device)
     
-    envs.setInitializedFalse()
-    
-    return loss, grad, actions
+    return loss, grad
     
 if __name__ == '__main__':
     envs = EnvWrapper(num_processes, env, env_config, planner_config)
@@ -201,10 +176,8 @@ if __name__ == '__main__':
     print("object_index: ", object_index)
     for i in range(100):
         o_info = object_info[i]
-        loss, grad, actions = loss_check(envs, agent, iters=100, device = device, o_info = o_info)
-        actions = actions.detach().cpu()
-        difference = np.sqrt((o_info[1] - actions[0])**2 + (o_info[2] - actions[1])**2)
+        loss, grad = loss_check(envs, agent, iters=100, device = device, o_info = o_info)
         f=open('./loss_check.txt', 'a')
-        f.write("Info: " + str(o_info) + ", Action: "+ str(actions) + ", Grad: " + str(grad) + ", Loss: " + str(loss) + ", Difference: "+ str(difference) + "\n")
+        f.write("index: " + str(object_index) + ", Pos: " + str(o_info) +", Grad: " + str(grad) + ", Loss: " + str(loss) + "\n")
     print("end")
     
