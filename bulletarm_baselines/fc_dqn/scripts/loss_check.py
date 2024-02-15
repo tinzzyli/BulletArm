@@ -132,7 +132,6 @@ def loss_check(envs = None, agent = None, iters=100, device = None, o_info = Non
     xyz_position_list = copy.deepcopy(original_xyz_position_list)
     rot_mat_list = copy.deepcopy(original_rot_mat_list)
     scale_list = copy.deepcopy(scale_list)
-    mse_loss = nn.MSELoss()
     
     leaf_tensor = xyz_position_list[0][:2].clone().to(device)
     leaf_tensor.requires_grad = True
@@ -149,6 +148,7 @@ def loss_check(envs = None, agent = None, iters=100, device = None, o_info = Non
     actions = actions[0][:2].to(device)
     
     """this block of code is for LOSS"""
+    mse_loss = nn.MSELoss()
     q_max_value = torch.max(q_value_maps)
     target_q_value_maps = torch.where(q_value_maps < q_max_value, 0, 1.0)
     loss = - mse_loss(q_value_maps, target_q_value_maps) 
@@ -160,7 +160,7 @@ def loss_check(envs = None, agent = None, iters=100, device = None, o_info = Non
                         create_graph=False)
     x_grad, y_grad = grad[0].to(device)
     
-    return loss, grad
+    return loss, grad, actions
     
 if __name__ == '__main__':
     envs = EnvWrapper(num_processes, env, env_config, planner_config)
@@ -176,8 +176,10 @@ if __name__ == '__main__':
     print("object_index: ", object_index)
     for i in range(100):
         o_info = object_info[i]
-        loss, grad = loss_check(envs, agent, iters=100, device = device, o_info = o_info)
+        loss, grad, actions = loss_check(envs, agent, iters=100, device = device, o_info = o_info)
+        actions = actions.detach().cpu()
+        difference = np.sqrt((o_info[1] - actions[0])**2 + (o_info[2] - actions[1])**2)
         f=open('./loss_check.txt', 'a')
-        f.write("index: " + str(object_index) + ", Pos: " + str(o_info) +", Grad: " + str(grad) + ", Loss: " + str(loss) + "\n")
+        f.write("Info: " + str(o_info) + ", Action: "+ str(actions) + ", Grad: " + str(grad) + ", Loss: " + str(loss) + ", Difference: "+ str(difference) + "\n")
     print("end")
     
