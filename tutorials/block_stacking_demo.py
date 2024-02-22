@@ -2,7 +2,7 @@ from bulletarm import env_factory
 import time
 import numpy as np
 def runDemo():
-  env_config = {'render': True, 'num_objects': 1,'object_index': 82}
+  env_config = {'render': True, 'num_objects': 1,'object_index': 84}
   env = env_factory.createEnvs(0, 'object_grasping', env_config)
   
   position = np.array([0.46139, 0.00033808])
