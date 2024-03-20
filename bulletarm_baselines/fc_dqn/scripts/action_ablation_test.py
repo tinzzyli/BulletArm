@@ -81,7 +81,7 @@ def main(file_path):
                 
                 position = np.array([numeric[0], numeric[1]])
                 object_index = int(numeric[0])
-                for idx_1 in tqdm(range(len(grid_points)), desc="object: "+str(object_index)+" at "+str(position)+"\n"):
+                for idx_1 in range(len(grid_points)):
                     point = grid_points[idx_1]
                     for idx_2 in range(len(list(unique_rotations))):
                         rotation = list(unique_rotations)[idx_2]
@@ -95,6 +95,7 @@ def main(file_path):
                 
                 unique_rotations = set()
                 max_min_values = []
+                print(entry_count)
                 
     return True
 
