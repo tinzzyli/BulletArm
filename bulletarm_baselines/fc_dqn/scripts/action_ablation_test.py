@@ -62,7 +62,7 @@ def main(file_path):
             max_y = max(max_y, numeric[4])
             min_y = min(min_y, numeric[4])
 
-            unique_rotations.add(numeric[5])
+            (unique_rotations).add(numeric[5])
 
             entry_count += 1
 
@@ -81,8 +81,8 @@ def main(file_path):
                 object_index = int(numeric[0])
                 for idx_1 in range(len(grid_points)):
                     point = grid_points[idx_1]
-                    for idx_2 in range(len(unique_rotations)):
-                        rotation = unique_rotations[idx_2]
+                    for idx_2 in range(len(list(unique_rotations))):
+                        rotation = list(unique_rotations)[idx_2]
                         dummy_bulletarm(position, point, rotation, object_index)
                 
                 
