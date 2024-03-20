@@ -2,6 +2,8 @@ from bulletarm import env_factory
 import time
 import numpy as np
 import re
+import pyredner
+import tqdm
 
 def dummy_bulletarm(position, point, rotation, object_index = None):
     env_config = {'render': False, 'num_objects': 1,'object_index': object_index}
@@ -15,7 +17,7 @@ def dummy_bulletarm(position, point, rotation, object_index = None):
     env.close()
     
     with open("./action_ablation_test.txt", "a") as file:
-        file.write(str([object_index, position, point, rotation, reward]))
+        file.write(str([object_index, position, point, rotation, reward])+"\n")
         
     return done
     
@@ -51,7 +53,7 @@ def main(file_path):
 
         entry_count = 0
 
-        for line in file:
+        for line in tqdm(file):
             # [84, 0.4648, -0.0111, 0.4625, -0.0125,  2.3562,  0.0,  0,  0]
             # idx, pos_x,   pos_y,  act_x,   act_y,   act_rot,  p,  r1, r2
             numbers = re.findall(r'[-+]?\d*\.\d+(?:[eE][-+]?\d+)?|\d+', line)
@@ -97,6 +99,8 @@ def main(file_path):
     return True
 
 if __name__ == "__main__":
+    pyredner.set_print_timing(False)
+
     file_path = "./action.txt"
     main(file_path)
     
