@@ -53,7 +53,7 @@ def main(file_path):
 
         entry_count = 0
 
-        for line in tqdm(file):
+        for line in file:
             # [84, 0.4648, -0.0111, 0.4625, -0.0125,  2.3562,  0.0,  0,  0]
             # idx, pos_x,   pos_y,  act_x,   act_y,   act_rot,  p,  r1, r2
             numbers = re.findall(r'[-+]?\d*\.\d+(?:[eE][-+]?\d+)?|\d+', line)
@@ -81,7 +81,7 @@ def main(file_path):
                 
                 position = np.array([numeric[0], numeric[1]])
                 object_index = int(numeric[0])
-                for idx_1 in range(len(grid_points)):
+                for idx_1 in tqdm(range(len(grid_points)), desc="object: "+str(object_index)+" at "+str(position)+"\n"):
                     point = grid_points[idx_1]
                     for idx_2 in range(len(list(unique_rotations))):
                         rotation = list(unique_rotations)[idx_2]
