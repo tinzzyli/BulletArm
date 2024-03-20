@@ -5,20 +5,40 @@ import re
 import pyredner
 import tqdm
 
-def dummy_bulletarm(position, point, rotation, object_index = None):
+# def dummy_bulletarm(position, point, rotation, object_index = None):
+#     env_config = {'render': False, 'num_objects': 1,'object_index': object_index}
+#     env = env_factory.createEnvs(0, 'object_grasping', env_config)
+    
+#     _, _, _, _, params = env._resetAttack(position)
+#     done = False
+#     while not done:
+#         action = np.array([0.0, point[0], point[1], rotation])
+#         obs, reward, done = env.stepAttack(action)
+        
+#     env.close()
+    
+#     with open("./action_ablation_test.txt", "a") as file:
+#         file.write(str([object_index, position, point, rotation, reward])+"\n")
+        
+#     return done
+
+def dummy_bulletarm(position, grid_points, unique_rotations, object_index = None):
     env_config = {'render': False, 'num_objects': 1,'object_index': object_index}
     env = env_factory.createEnvs(0, 'object_grasping', env_config)
-    _, _, _, _, params = env._resetAttack(position)
-    done = False
-    while not done:
-        action = np.array([0.0, point[0], point[1], rotation])
-        obs, reward, done = env.stepAttack(action)
-        
-    env.close()
     
-    with open("./action_ablation_test.txt", "a") as file:
-        file.write(str([object_index, position, point, rotation, reward])+"\n")
-        
+    for idx_1 in range(len(grid_points)):
+        point = grid_points[idx_1]
+        for idx_2 in range(len(list(unique_rotations))):
+            rotation = list(unique_rotations)[idx_2]
+            
+            _, _, _, _, params = env._resetAttack(position)
+            done = False
+            while not done:
+                action = np.array([0.0, point[0], point[1], rotation])
+                obs, reward, done = env.stepAttack(action)
+                with open("./action_ablation_test.txt", "a") as file:
+                    file.write(str([object_index, position, point, rotation, reward])+"\n")
+    env.close()
     return done
     
     
@@ -79,14 +99,17 @@ def main(file_path):
                     total_num_points = 10000
                 )
                 
+                # position = np.array([numeric[1], numeric[2]])
+                # object_index = int(numeric[0])
+                # for idx_1 in range(len(grid_points)):
+                #     point = grid_points[idx_1]
+                #     for idx_2 in range(len(list(unique_rotations))):
+                #         rotation = list(unique_rotations)[idx_2]
+                #         dummy_bulletarm(position, point, rotation, object_index)
+                
                 position = np.array([numeric[1], numeric[2]])
                 object_index = int(numeric[0])
-                for idx_1 in range(len(grid_points)):
-                    point = grid_points[idx_1]
-                    for idx_2 in range(len(list(unique_rotations))):
-                        rotation = list(unique_rotations)[idx_2]
-                        dummy_bulletarm(position, point, rotation, object_index)
-                
+                dummy_bulletarm(position, grid_points, unique_rotations, object_index)
                 
                 max_x = float('-inf')
                 min_x = float('inf')
