@@ -79,7 +79,7 @@ def main(file_path):
                     total_num_points = 10000
                 )
                 
-                position = np.array([numeric[0], numeric[1]])
+                position = np.array([numeric[1], numeric[2]])
                 object_index = int(numeric[0])
                 for idx_1 in range(len(grid_points)):
                     point = grid_points[idx_1]
