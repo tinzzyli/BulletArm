@@ -60,6 +60,7 @@ class DQN3DASR(Base3D):
     def decodeA2(self, a2_id):
         rz_id = a2_id.reshape(a2_id.size(0), 1).to(self.device)
         rz = self.rzs[rz_id].reshape(a2_id.size(0), 1).to(self.device)
+        # a2_id.size(0) = 1
         return rz_id, rz
 
     def decodeActions(self, pixels, a2_id):
@@ -109,6 +110,7 @@ class DQN3DASR(Base3D):
 
         rand = torch.tensor(np.random.uniform(0, 1, states.size(0)))
         rand_mask = rand < eps
+        # eps = 0 by default, rand_mask = tensor([False])
 
         if type(obs) is tuple:
             hm, ih = obs
@@ -122,7 +124,8 @@ class DQN3DASR(Base3D):
 
         rand_a2 = torch.randint_like(torch.empty(rand_mask.sum()), 0, self.a2_size)
         a2_id[rand_mask] = rand_a2.long()
-
+        # a2_id[0] = tensor([])
+        
         action_idx, actions = self.decodeActions(pixels, a2_id)
 
         return q_value_maps, action_idx, actions
