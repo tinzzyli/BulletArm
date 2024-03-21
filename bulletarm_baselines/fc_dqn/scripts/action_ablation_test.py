@@ -181,7 +181,7 @@ def worker(param, worker_id):
                         grid_points=grid_points, 
                         unique_rotations=unique_rotations, 
                         object_index=object_index,
-                        worker_id=object_index)
+                        worker_id=worker_id)
     except Exception as e:
         print("exception: \n", e)
     print("worker id job done: "+str(worker_id))
