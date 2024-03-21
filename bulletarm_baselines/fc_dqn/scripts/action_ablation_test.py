@@ -197,10 +197,10 @@ if __name__ == "__main__":
     
     num_workers = len(data)
     
-    pool = multiprocessing.Pool(processes=num_workers)
+    with multiprocessing.Pool(processes=num_workers) as pool:
     
-    for i in range(num_workers):
-        pool.apply_async(worker, args=(data[i], i))
-    
-    pool.close()
-    pool.join()
+        for i in range(num_workers):
+            pool.apply_async(worker, args=(data[i], i))
+        
+        pool.close()
+        pool.join()
