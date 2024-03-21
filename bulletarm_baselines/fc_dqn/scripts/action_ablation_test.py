@@ -4,7 +4,7 @@ import numpy as np
 import re
 import pyredner
 import tqdm
-
+import multiprocessing
 # def dummy_bulletarm(position, point, rotation, object_index = None):
 #     env_config = {'render': False, 'num_objects': 1,'object_index': object_index}
 #     env = env_factory.createEnvs(0, 'object_grasping', env_config)
@@ -22,7 +22,56 @@ import tqdm
         
 #     return done
 
-def dummy_bulletarm(position, grid_points, unique_rotations, object_index = None):
+def chunk_file(file_path):
+    with open(file_path, 'r') as file:
+
+        entry_count = 0
+
+        chunks = []
+        chunk = []
+        for line in file:
+            entry_count += 1
+            # [84, 0.4648, -0.0111, 0.4625, -0.0125,  2.3562,  0.0,  0,  0]
+            # idx, pos_x,   pos_y,  act_x,   act_y,   act_rot,  p,  r1, r2
+            numbers = re.findall(r'[-+]?\d*\.\d+(?:[eE][-+]?\d+)?|\d+', line)
+            numeric = [float(num) if '.' in num else int(num) for num in numbers]
+            chunk.append(numeric)
+            if entry_count % 100 == 0:
+                chunks.append(chunk)
+                chunk = []
+            
+        return chunks
+                
+def getData(chunk):
+    max_x = float('-inf')
+    min_x = float('inf')
+    max_y = float('-inf')
+    min_y = float('inf')
+    unique_rotations = set()
+    
+    for entry in chunk:
+        max_x = max(max_x, entry[3])
+        min_x = min(min_x, entry[3])
+        max_y = max(max_y, entry[4])
+        min_y = min(min_y, entry[4])
+        unique_rotations.add(entry[5])
+        
+    grid_points = getGridPosition(
+        max_x, 
+        min_x, 
+        max_y, 
+        min_y,
+        total_num_points = 10000)
+    position = np.array([float(entry[1]), float(entry[2])])
+    object_index = int(entry[0])
+    
+    return position, grid_points, unique_rotations, object_index
+        
+def dummy_bulletarm(position=None, 
+                    grid_points=None, 
+                    unique_rotations=None, 
+                    object_index=None):
+    
     env_config = {'render': False, 'num_objects': 1,'object_index': object_index}
     env = env_factory.createEnvs(0, 'object_grasping', env_config)
     
@@ -122,9 +171,30 @@ def main(file_path):
                 
     return True
 
+def worker(param, worker_id):
+    position, grid_points, unique_rotations, object_index = param
+    dummy_bulletarm(position=None, 
+                    grid_points=None, 
+                    unique_rotations=None, 
+                    object_index=None)
+    print("job done: "+str(worker_id)+"\n")
+    
 if __name__ == "__main__":
     pyredner.set_print_timing(False)
-
     file_path = "./action.txt"
-    main(file_path)
     
+    chunks = chunk_file(file_path)
+    
+    data = [
+        getData(chunk) for chunk in chunks
+    ]
+    
+    num_workers = len(data)
+    
+    pool = multiprocessing.Pool(processes=num_workers)
+    
+    for i in range(num_workers):
+        pool.apply_async(worker, args=(data[i], i))
+    
+    pool.close()
+    pool.join()
