@@ -5,6 +5,7 @@ import re
 import pyredner
 import tqdm
 import multiprocessing
+
 # def dummy_bulletarm(position, point, rotation, object_index = None):
 #     env_config = {'render': False, 'num_objects': 1,'object_index': object_index}
 #     env = env_factory.createEnvs(0, 'object_grasping', env_config)
@@ -70,8 +71,9 @@ def getData(chunk):
 def dummy_bulletarm(position=None, 
                     grid_points=None, 
                     unique_rotations=None, 
-                    object_index=None):
-    
+                    object_index=None,
+                    worker_id=None):
+    file_path = f"./output/action_ablation_test_worker_{worker_id}.txt"
     env_config = {'render': False, 'num_objects': 1,'object_index': object_index}
     env = env_factory.createEnvs(0, 'object_grasping', env_config)
     
@@ -85,7 +87,7 @@ def dummy_bulletarm(position=None,
             while not done:
                 action = np.array([0.0, point[0], point[1], rotation])
                 obs, reward, done = env.stepAttack(action)
-                with open("./action_ablation_test.txt", "a") as file:
+                with open(file_path, "a") as file:
                     file.write(str([object_index, position, point, rotation, reward])+"\n")
     env.close()
     return done
@@ -173,11 +175,15 @@ def main(file_path):
 
 def worker(param, worker_id):
     position, grid_points, unique_rotations, object_index = param
-    dummy_bulletarm(position=None, 
-                    grid_points=None, 
-                    unique_rotations=None, 
-                    object_index=None)
-    print("job done: "+str(worker_id)+"\n")
+    try:
+        dummy_bulletarm(position=position, 
+                        grid_points=grid_points, 
+                        unique_rotations=unique_rotations, 
+                        object_index=object_index,
+                        worker_id=object_index)
+    except Exception as e:
+        print("exception: \n", e)
+    print("worker id job done: "+str(worker_id))
     
 if __name__ == "__main__":
     pyredner.set_print_timing(False)
