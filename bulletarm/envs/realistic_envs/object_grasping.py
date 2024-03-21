@@ -284,7 +284,10 @@ class ObjectGrasping(BaseEnv):
                         for i in range(self.num_obj):
                             x = position[0]
                             y = position[1]
-                            randpos = [x, y, 0.40]
+                            with open("./object_AABB_info.json", "r") as file:
+                                aabb_info = json.load(file)
+                            z = (aabb_info[str(self.object_index)][5] - aabb_info[str(self.object_index)][2]) * 0.5
+                            randpos = [x, y, z]
                             obj = self._generateShapes(constants.GRASP_NET_OBJ, 1, 
                                                        rot=[pb.getQuaternionFromEuler([0., 0., -np.pi / 4])],
                                                        pos=[randpos], padding=self.min_boarder_padding,

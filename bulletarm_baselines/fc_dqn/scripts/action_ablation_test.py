@@ -82,13 +82,14 @@ def dummy_bulletarm(position=None,
         for idx_2 in range(len(list(unique_rotations))):
             rotation = list(unique_rotations)[idx_2]
             
-            _, _, _, _, params = env._resetAttack(position)
+            _, _, _, _, params = env._reset(position)
             done = False
             while not done:
                 action = np.array([0.0, point[0], point[1], rotation])
-                obs, reward, done = env.stepAttack(action)
+                obs, reward, done = env.step(action)
                 with open(file_path, "a") as file:
                     file.write(str([object_index, position, point, rotation, reward])+"\n")
+            env.setInitializedFalse()
     env.close()
     return done
     
