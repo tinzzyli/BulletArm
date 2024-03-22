@@ -5,7 +5,7 @@ import re
 import pyredner
 import tqdm
 import multiprocessing
-
+import asyncio
 # def dummy_bulletarm(position, point, rotation, object_index = None):
 #     env_config = {'render': False, 'num_objects': 1,'object_index': object_index}
 #     env = env_factory.createEnvs(0, 'object_grasping', env_config)
@@ -43,7 +43,7 @@ def chunk_file(file_path):
             
         return chunks
                 
-def getData(chunk):
+def getData(chunk, total_num_points):
     max_x = float('-inf')
     min_x = float('inf')
     max_y = float('-inf')
@@ -62,7 +62,7 @@ def getData(chunk):
         min_x, 
         max_y, 
         min_y,
-        total_num_points = 10000)
+        total_num_points = total_num_points)
     position = np.array([float(entry[1]), float(entry[2])])
     object_index = int(entry[0])
     
@@ -94,7 +94,7 @@ def dummy_bulletarm(position=None,
     return done
     
     
-def getGridPosition(max_x, min_x, max_y, min_y, total_num_points = 10000):
+def getGridPosition(max_x, min_x, max_y, min_y, total_num_points = None):
     
     side_num_points = int(np.sqrt(total_num_points))
     
@@ -189,19 +189,15 @@ def worker(param, worker_id):
 if __name__ == "__main__":
     pyredner.set_print_timing(False)
     file_path = "./action.txt"
+    total_num_points = 500
     
     chunks = chunk_file(file_path)
-    
     data = [
-        getData(chunk) for chunk in chunks
+        getData(chunk, total_num_points) for chunk in chunks
     ]
-    
     num_workers = len(data)
-    
     with multiprocessing.Pool(processes=num_workers) as pool:
-    
         for i in range(num_workers):
             pool.apply_async(worker, args=(data[i], i))
-        
         pool.close()
         pool.join()
