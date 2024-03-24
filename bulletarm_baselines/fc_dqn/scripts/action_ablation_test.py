@@ -73,7 +73,7 @@ def dummy_bulletarm(position=None,
                     unique_rotations=None, 
                     object_index=None,
                     worker_id=None):
-    file_path = f"./output/action_ablation_test_worker_{worker_id}.txt"
+    file_path = f"./output/{worker_id}.txt"
     env_config = {'render': False, 'num_objects': 1,'object_index': object_index}
     env = env_factory.createEnvs(0, 'object_grasping', env_config)
     
@@ -174,7 +174,8 @@ def main(file_path):
                 
     return True
 
-def worker(param, worker_id):
+def worker(param):
+    worker_id = multiprocessing.current_process().name 
     position, grid_points, unique_rotations, object_index = param
     try:
         dummy_bulletarm(position=position, 
@@ -184,20 +185,22 @@ def worker(param, worker_id):
                         worker_id=worker_id)
     except Exception as e:
         print("exception: \n", e)
-    print("worker id job done: "+str(worker_id))
+
     
 if __name__ == "__main__":
     pyredner.set_print_timing(False)
     file_path = "./action.txt"
+    
+    """ !!! Edit key arguments HERE !!! """
     total_num_points = 500
+    num_workers = multiprocessing.cpu_count()
     
     chunks = chunk_file(file_path)
     data = [
         getData(chunk, total_num_points) for chunk in chunks
     ]
-    num_workers = len(data)
+    
     with multiprocessing.Pool(processes=num_workers) as pool:
-        for i in range(num_workers):
-            pool.apply_async(worker, args=(data[i], i))
+        pool.map_async(worker, data)
         pool.close()
         pool.join()
