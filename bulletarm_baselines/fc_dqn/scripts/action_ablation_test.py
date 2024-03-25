@@ -3,25 +3,9 @@ import time
 import numpy as np
 import re
 import pyredner
-import tqdm
+from tqdm import tqdm
 import multiprocessing
 import asyncio
-# def dummy_bulletarm(position, point, rotation, object_index = None):
-#     env_config = {'render': False, 'num_objects': 1,'object_index': object_index}
-#     env = env_factory.createEnvs(0, 'object_grasping', env_config)
-    
-#     _, _, _, _, params = env._resetAttack(position)
-#     done = False
-#     while not done:
-#         action = np.array([0.0, point[0], point[1], rotation])
-#         obs, reward, done = env.stepAttack(action)
-        
-#     env.close()
-    
-#     with open("./action_ablation_test.txt", "a") as file:
-#         file.write(str([object_index, position, point, rotation, reward])+"\n")
-        
-#     return done
 
 def chunk_file(file_path):
     with open(file_path, 'r') as file:
@@ -91,7 +75,7 @@ def dummy_bulletarm(position=None,
                     file.write(str([object_index, position, point, rotation, reward])+"\n")
             env.setInitializedFalse()
     env.close()
-    return done
+    return worker_id
     
     
 def getGridPosition(max_x, min_x, max_y, min_y, total_num_points = None):
@@ -178,13 +162,15 @@ def worker(param):
     worker_id = multiprocessing.current_process().name 
     position, grid_points, unique_rotations, object_index = param
     try:
-        dummy_bulletarm(position=position, 
+        worker_id = dummy_bulletarm(position=position, 
                         grid_points=grid_points, 
                         unique_rotations=unique_rotations, 
                         object_index=object_index,
                         worker_id=worker_id)
+        return worker_id
     except Exception as e:
         print("exception: \n", e)
+        return -1
 
     
 if __name__ == "__main__":
@@ -193,7 +179,7 @@ if __name__ == "__main__":
     
     """ !!! Edit key arguments HERE !!! """
     total_num_points = 500
-    num_workers = multiprocessing.cpu_count()
+    num_workers = multiprocessing.cpu_count()//2 + 1
     
     chunks = chunk_file(file_path)
     data = [
@@ -201,6 +187,6 @@ if __name__ == "__main__":
     ]
     
     with multiprocessing.Pool(processes=num_workers) as pool:
-        pool.map_async(worker, data)
-        pool.close()
-        pool.join()
+        results = []
+        for result in tqdm(pool.imap_unordered(worker, data), total=len(data)):
+            results.append(result)
