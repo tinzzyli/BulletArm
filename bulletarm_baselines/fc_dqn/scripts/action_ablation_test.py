@@ -63,17 +63,27 @@ def dummy_bulletarm(position=None,
     
     for idx_1 in range(len(grid_points)):
         point = grid_points[idx_1]
-        for idx_2 in range(len(list(unique_rotations))):
-            rotation = list(unique_rotations)[idx_2]
+        # for idx_2 in range(len(list(unique_rotations))):
+        #     rotation = list(unique_rotations)[idx_2]
             
-            _, _, _ = env._reset(position)
-            done = False
-            while not done:
-                action = np.array([0.0, point[0], point[1], rotation])
-                obs, reward, done = env.step(action)
-                with open(file_path, "a") as file:
-                    file.write(str([object_index, position, point, rotation, reward])+"\n")
-            env.setInitializedFalse()
+        #     _, _, _ = env._reset(position)
+        #     done = False
+        #     while not done:
+        #         action = np.array([0.0, point[0], point[1], rotation])
+        #         obs, reward, done = env.step(action)
+        #         with open(file_path, "a") as file:
+        #             file.write(str([object_index, position, point, rotation, reward])+"\n")
+        #     env.setInitializedFalse()
+
+        rotation = 0.7854
+        _, _, _ = env._reset(position)
+        done = False
+        while not done:
+            action = np.array([0.0, point[0], point[1], rotation])
+            obs, reward, done = env.step(action)
+            with open(file_path, "a") as file:
+                file.write(str([object_index, position, point, rotation, reward])+"\n")
+        env.setInitializedFalse()
     env.close()
     return worker_id
     

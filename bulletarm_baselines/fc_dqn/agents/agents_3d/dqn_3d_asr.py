@@ -140,9 +140,10 @@ class DQN3DASR(Base3D):
         else:
             with torch.no_grad():
                 q1_map_prime, obs_prime_encoding = self.forwardFCN(next_states, next_obs[1], next_obs[0], target_net=True)
+                # q_value_maps, obs_encoding = self.forwardFCN(states, in_hand, obs, to_cpu=True)
                 x_star = torch_utils.argmax2d(q1_map_prime)
                 q2_prime = self.forwardQ2(next_states, next_obs[1], next_obs[0], obs_prime_encoding, x_star, target_net=True)
-
+                # q2_output = self.forwardQ2(states, in_hand, obs, obs_encoding, pixels, to_cpu=True)
                 q_prime = q2_prime.max(1)[0]
                 q_target = rewards + self.gamma * q_prime * non_final_masks
 
