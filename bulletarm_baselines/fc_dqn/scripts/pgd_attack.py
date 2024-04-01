@@ -31,6 +31,7 @@ from bulletarm_baselines.fc_dqn.utils.parameters import *
 from bulletarm_baselines.fc_dqn.utils.torch_utils import augmentBuffer, augmentBufferD4
 from bulletarm_baselines.fc_dqn.scripts.fill_buffer_deconstruct import fillDeconstructUsingRunner
 import re
+import json
 def unify(R):
     for idx,r in enumerate(R):
         mod = r[0]**2 + r[1]**2 + r[2]**2
@@ -144,7 +145,7 @@ def pgd_attack(envs = None, agent = None, epsilon_1 = 0.0005, epsilon_2 = 0.0005
         # target_q_value_maps = torch.zeros_like(q_value_maps)
         target_q_value_maps = torch.where(q_value_maps < q_max_value, 0, 1.0)
         """ attack on position """
-        loss = - mse_loss(q_value_maps, target_q_value_maps)      
+        loss = mse_loss(q_value_maps, target_q_value_maps)      
         grad = torch.autograd.grad(outputs=loss, 
                             inputs=leaf_tensor, 
                             grad_outputs=None, 
@@ -167,6 +168,18 @@ def pgd_attack(envs = None, agent = None, epsilon_1 = 0.0005, epsilon_2 = 0.0005
         # rot_eta = rot_grad.sign() * epsilon_2
         # rot_mat = torch.clamp(unify(rot_mat + rot_eta), min = original_rot_mat_list[0] - alpha_2, max = original_rot_mat_list[0] + alpha_2)
         """ attack on rotation"""
+        
+        data = {"object_index": object_index,
+                "iter_count": iter,
+                "position": [x,y],
+                "gradient": [x_grad, y_grad],
+                "displacement": [x_eta, y_eta],
+                "mes_loss": loss,
+                "action": actions,
+                "q_max_value": q_max_value
+                }
+        with open("./attack_log.json", 'a') as log:
+            json.dump(data, log)
 
         xyz_position_list[0] = xyz_position.detach().clone().to(device)
         # rot_mat_list[0] = rot_mat.detach().clone().to(device)
