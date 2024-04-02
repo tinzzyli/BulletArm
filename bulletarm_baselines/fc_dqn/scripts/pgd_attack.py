@@ -171,12 +171,12 @@ def pgd_attack(envs = None, agent = None, epsilon_1 = 0.0005, epsilon_2 = 0.0005
         
         data = {"object_index": object_index,
                 "iter_count": iter,
-                "position": [x.detach().numpy(),y.detach().numpy()],
-                "gradient": [x_grad.detach().numpy(), y_grad.detach().numpy()],
-                "displacement": [x_eta.detach().numpy(), y_eta.detach().numpy()],
-                "mes_loss": loss.detach().numpy(),
-                "action": actions.detach().numpy(),
-                "q_max_value": q_max_value.detach().numpy()
+                "position": [x.cpu().detach().numpy(),y.cpu().detach().numpy()],
+                "gradient": [x_grad.cpu().detach().numpy(), y_grad.cpu().detach().numpy()],
+                "displacement": [x_eta.cpu().detach().numpy(), y_eta.cpu().detach().numpy()],
+                "mes_loss": loss.cpu().detach().numpy(),
+                "action": actions.cpu().detach().numpy(),
+                "q_max_value": q_max_value.cpu().detach().numpy()
                 }
         with open("./attack_log.json", 'a') as log:
             json.dump(data, log)
