@@ -171,12 +171,12 @@ def pgd_attack(envs = None, agent = None, epsilon_1 = 0.0005, epsilon_2 = 0.0005
         
         data = {"object_index": object_index,
                 "iter_count": iter,
-                "position": [x,y],
-                "gradient": [x_grad, y_grad],
-                "displacement": [x_eta, y_eta],
-                "mes_loss": loss,
-                "action": actions,
-                "q_max_value": q_max_value
+                "position": [x.detach().numpy(),y.detach().numpy()],
+                "gradient": [x_grad.detach().numpy(), y_grad.detach().numpy()],
+                "displacement": [x_eta.detach().numpy(), y_eta.detach().numpy()],
+                "mes_loss": loss.detach().numpy(),
+                "action": actions.detach().numpy(),
+                "q_max_value": q_max_value.detach().numpy()
                 }
         with open("./attack_log.json", 'a') as log:
             json.dump(data, log)
@@ -271,10 +271,15 @@ if __name__ == '__main__':
     #object_info is a list of lists, each sub-list is in such manner:
     #[78.0, 0.4895, -0.0302, 1.0]
     print("object_index: ", object_index)
-    for i in range(100):
+    progress_bar = tqdm(range(100), desc='PGD Attack Progress', unit='step')
+
+    for i in progress_bar:
         o_info = object_info[i]
-        reward = pgd_attack(envs, agent, iters=100, device = device, o_info = o_info)
+        reward = pgd_attack(envs, agent, iters=100, device=device, o_info=o_info)
         s += reward
+        progress_bar.set_postfix(reward=reward)
+    progress_bar.close()
+    
     sr_value = float(s)/100.0
     print("sr_value: ", sr_value)
     f=open("./object_pgd_attack_info.txt","a")
