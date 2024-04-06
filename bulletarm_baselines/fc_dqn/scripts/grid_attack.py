@@ -43,14 +43,6 @@ def getGridPosition(position_index = None):
 
     return points
 
-def getPositions(file_path):
-    all_numeric_values = []
-    with open(file_path, 'r') as file:
-        for line in file:
-            values = [float(match) for match in re.findall(r'[-+]?\d*\.\d+(?:[eE][-+]?\d+)?|\d+', line)]
-            all_numeric_values.append(values)
-    return all_numeric_values
-
 def rendering(obj_list):
     
     cam_look_at = torch.tensor([0.5, 0.0, 0.0])
@@ -75,7 +67,6 @@ def rendering(obj_list):
     heightmap = torch.where(heightmap > 1.0, 6e-3, heightmap) 
 
     return heightmap.reshape(heightmap_size,heightmap_size)
-
 
 def getGroundTruth(agent, 
                    states,
@@ -213,10 +204,18 @@ def pgd_attack(envs = None, agent = None, epsilon_1 = 0.0005, epsilon_2 = 0.0005
 
     return reward
 
+def getPositions(file_path):
+    all_numeric_values = []
+    with open(file_path, 'r') as file:
+        for line in file:
+            values = [float(match) for match in re.findall(r'[-+]?\d*\.\d+(?:[eE][-+]?\d+)?|\d+', line)]
+            all_numeric_values.append(values)
+    return all_numeric_values
+
 def main(envs, agent, device, position_list):
     pyredner.set_print_timing(False)
     
-    for idx, item in enumerate(position_list):
+    for idx, item in tqdm(enumerate(position_list), total=len(position_list)):        
         o, x, y, reward = item
         states, in_hands, obs, _, _ = envs._resetAttack(np.array([x, y]))
         states = states.unsqueeze(dim=0).detach()
