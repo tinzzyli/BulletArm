@@ -233,7 +233,7 @@ def main(envs, agent, device, position_list):
         out2 = torch.cat((actions_star, reward), dim=0).to(device)
         out3 = torch.cat((out1, out2),dim=0).to(device)
         
-        torch.save(out3, f"dataset/{o}_{idx}.pt")
+        torch.save(out3, f"dataset/{int(o)}_{idx}.pt")
         
         envs.setInitializedFalse()
     return True
