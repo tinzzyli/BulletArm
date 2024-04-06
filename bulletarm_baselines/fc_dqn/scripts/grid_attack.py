@@ -43,6 +43,14 @@ def getGridPosition(position_index = None):
 
     return points
 
+def getPositions(file_path):
+    all_numeric_values = []
+    with open(file_path, 'r') as file:
+        for line in file:
+            values = [float(match) for match in re.findall(r'[-+]?\d*\.\d+(?:[eE][-+]?\d+)?|\d+', line)]
+            all_numeric_values.append(values)
+    return all_numeric_values
+
 def rendering(obj_list):
     
     cam_look_at = torch.tensor([0.5, 0.0, 0.0])
@@ -205,6 +213,32 @@ def pgd_attack(envs = None, agent = None, epsilon_1 = 0.0005, epsilon_2 = 0.0005
 
     return reward
 
+def main(envs, agent, device, position_list):
+    pyredner.set_print_timing(False)
+    
+    for idx, item in enumerate(position_list):
+        o, x, y, reward = item
+        states, in_hands, obs, _, _ = envs._resetAttack(np.array([x, y]))
+        states = states.unsqueeze(dim=0).detach()
+        in_hands = in_hands.unsqueeze(dim=0).detach()
+        obs = obs.unsqueeze(dim=0).detach()
+        (q_value_maps, q2_output), actions_star_idx, actions_star = agent.getEGreedyActionsAttack(states, in_hands, obs, 0, 0)
+        actions_star = actions_star.to(device).reshape(3)
+        
+        if type(actions_star) != torch.Tensor:
+            action_star = torch.tensor(actions_star)
+        if type(reward) != torch.Tensor:
+            reward = torch.tensor(reward)
+            
+        out1 = torch.cat((q_value_maps.view(-1), q2_output.view(-1)), dim=0)
+        out2 = torch.cat((action_star, reward), dim=0)
+        out3 = torch.cat((out1, out2),dim=0)
+        
+        torch.save(out3, f"dataset/{o}_{idx}.pt")
+        
+        envs.setInitializedFalse()
+    return True
+        
 if __name__ == '__main__':
     envs = EnvWrapper(num_processes, env, env_config, planner_config)
     agent = createAgent(test=False)
@@ -212,18 +246,13 @@ if __name__ == '__main__':
     if load_model_pre:
         agent.loadModel(load_model_pre)
         
-    s = 0.
+
     file_path = './object_original_position.txt'
-    gridPositions = getGridPosition()
+    positions = getPositions(file_path)
 
     print("object_index: ", object_index)
     for i in range(100):
-        o_info = gridPositions[i]
-        reward = pgd_attack(envs, agent, iters=100, device = device, o_info = o_info)
-        s += reward
-    sr_value = float(s)/100.0
-    print("sr_value: ", sr_value)
-    f=open("./object_grid_attack_info.txt","a")
-    f.write("index: " + str(object_index) + ", num: " + str(num_objects) + ", SR: " + str(sr_value) + "\n")
+        info = positions[object_index*100: object_index*100 + 100]
+        reward = main(envs, agent, device, info)
     print("end")
     

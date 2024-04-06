@@ -103,10 +103,10 @@ class DQN3DASR(Base3D):
             
     def getEGreedyActionsAttack(self, states, in_hand, obs, eps, coef=0.):
         q_value_maps, obs_encoding = self.forwardFCN(states, in_hand, obs, to_cpu=True)
-        with torch.no_grad():
-            pixels = torch_utils.argmax2d(q_value_maps).long()
-            q2_output = self.forwardQ2(states, in_hand, obs, obs_encoding, pixels, to_cpu=True)
-            a2_id = torch.argmax(q2_output, 1)
+
+        pixels = torch_utils.argmax2d(q_value_maps).long()
+        q2_output = self.forwardQ2(states, in_hand, obs, obs_encoding, pixels, to_cpu=True)
+        a2_id = torch.argmax(q2_output, 1)
 
         rand = torch.tensor(np.random.uniform(0, 1, states.size(0)))
         rand_mask = rand < eps
@@ -128,7 +128,7 @@ class DQN3DASR(Base3D):
         
         action_idx, actions = self.decodeActions(pixels, a2_id)
 
-        return q_value_maps, action_idx, actions
+        return (q_value_maps, q2_output), action_idx, actions
 
     def calcTDLoss(self):
         batch_size, states, obs, action_idx, rewards, next_states, next_obs, non_final_masks, step_lefts, is_experts = self._loadLossCalcDict()
