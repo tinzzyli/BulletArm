@@ -250,8 +250,7 @@ if __name__ == '__main__':
     positions = getPositions(file_path)
 
     print("object_index: ", object_index)
-    for i in range(100):
-        info = positions[object_index*100: object_index*100 + 100]
-        reward = main(envs, agent, device, info)
+    info = positions[object_index*100: object_index*100 + 100]
+    reward = main(envs, agent, device, info)
     print("end")
     
