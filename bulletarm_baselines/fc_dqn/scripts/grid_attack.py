@@ -225,12 +225,12 @@ def main(envs, agent, device, position_list):
         actions_star = actions_star.to(device).reshape(3)
         
         if type(actions_star) != torch.Tensor:
-            action_star = torch.tensor(actions_star)
+            actions_star = torch.tensor(actions_star)
         if type(reward) != torch.Tensor:
             reward = torch.tensor(reward)
             
         out1 = torch.cat((q_value_maps.view(-1), q2_output.view(-1)), dim=0)
-        out2 = torch.cat((action_star, reward), dim=0)
+        out2 = torch.cat((actions_star, reward), dim=0)
         out3 = torch.cat((out1, out2),dim=0)
         
         torch.save(out3, f"dataset/{o}_{idx}.pt")
