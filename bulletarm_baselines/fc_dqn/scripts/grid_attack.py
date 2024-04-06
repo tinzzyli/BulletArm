@@ -227,7 +227,7 @@ def main(envs, agent, device, position_list):
         if type(actions_star) != torch.Tensor:
             actions_star = torch.tensor(actions_star).to(device)
         if type(reward) != torch.Tensor:
-            reward = torch.tensor(reward).to(device)
+            reward = torch.tensor([reward]).to(device)
             
         out1 = torch.cat((q_value_maps.view(-1), q2_output.view(-1)), dim=0).to(device)
         out2 = torch.cat((actions_star, reward), dim=0).to(device)
