@@ -59,12 +59,10 @@ class CustomModel(nn.Module):
         x1 = torch.flatten(x1, 1)
         x1 = torch.relu(self.fc1(x1))
         x1 = torch.relu(self.fc2(x1))
-        print(x1.shape)
 
         # Input2的处理
         x2 = torch.relu(self.fc3(input2))
         x2 = torch.relu(self.fc4(x2))
-        print(x2.shape)
 
         # Input3的处理
         x3 = torch.relu(self.fc5(input3))
@@ -74,7 +72,6 @@ class CustomModel(nn.Module):
         x = torch.cat((x1, x2, x3), dim=1)
 
         # 输出层
-        print(x.shape)
         output = self.output_layer(x)
 
         return output
