@@ -91,7 +91,7 @@ def generate_path_list():
 
 def load_tensor(tensor_path, device):
     tensor = torch.load(tensor_path, map_location=device).detach()
-    q_value_map = tensor[:128*128].reshape(128,128)
+    q_value_map = tensor[:128*128].reshape(1,128,128)
     q2_output = tensor[128*128:-4]
     action = tensor[-4:-1]
     reward = tensor[-1:]
@@ -125,7 +125,7 @@ if __name__ == "__main__":
     MyModel.cuda()
     print(MyModel)
     
-    criterion = nn.CrossEntropyLoss()
+    criterion = nn.BCEWithLogitsLoss()
     optimizer = optim.SGD(MyModel.parameters(), lr=0.001)
     
     train_size = int(0.8 * len(data_path_list))
