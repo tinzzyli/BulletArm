@@ -151,6 +151,7 @@ if __name__ == "__main__":
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+            train_bar.update()
         
         avg_train_loss = train_loss / len(train_loader.dataset)
         log_train_loss.append(avg_train_loss)
@@ -164,6 +165,7 @@ if __name__ == "__main__":
                 output = MyModel(q_value_map, q2_output, action)
                 loss = criterion(output, reward)
                 eval_loss += loss.item()
+                eval_bar.update()
 
         avg_eval_loss = eval_loss / len(eval_loader.dataset)
         log_eval_loss.append(avg_eval_loss)
