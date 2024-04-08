@@ -12,6 +12,7 @@ import torch.nn as nn
 from tqdm import tqdm
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
+import matplotlib.pyplot as plt
 
 class CustomDataset(Dataset):
     def __init__(self, tensor_paths, device):
@@ -97,22 +98,6 @@ def load_tensor(tensor_path, device):
     return q_value_map, q2_output, action, reward
 
 
-def train(model, dataloader, criterion, optimizer):
-    model.train()
-    running_loss = 0.0
-    for inputs, targets in tqdm(dataloader, desc='Training', leave=False):
-        # 前向传播
-        outputs = model(inputs)
-        # 计算损失
-        loss = criterion(outputs, targets)
-        running_loss += loss.item()
-        # 反向传播和优化
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-    return running_loss / len(dataloader)
-
-
 if __name__ == "__main__":
     set_random_seed(42)
     if torch.cuda.is_available():
@@ -133,6 +118,7 @@ if __name__ == "__main__":
     batch_size = 1
     log_train_loss = []
     log_eval_loss = []
+    log_test_loss = []
     best_eval_loss = float('inf')
 
     MyModel = CustomModel(input1_channels, input2_size, input3_size, hidden_size, output_size)
@@ -162,13 +148,14 @@ if __name__ == "__main__":
             q_value_map, q2_output, action, reward = data
             output = MyModel(q_value_map, q2_output, action)
             loss = criterion(output, reward)
-            log_train_loss.append(loss.detach().item())
+            
             train_loss += loss.item()
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
         
         avg_train_loss = train_loss / len(train_loader.dataset)
+        log_train_loss.append(avg_train_loss)
         
         MyModel.eval()
         eval_loss = 0
@@ -178,27 +165,45 @@ if __name__ == "__main__":
                 q_value_map, q2_output, action, reward = data
                 output = MyModel(q_value_map, q2_output, action)
                 loss = criterion(output, reward)
-                log_eval_loss.append(loss.detach().item())
                 eval_loss += loss.item()
 
         avg_eval_loss = eval_loss / len(eval_loader.dataset)
+        log_eval_loss.append(avg_eval_loss)
         
         print(f'Epoch {e+1}/{num_epochs}, Average Train Loss: {avg_train_loss:.4f}, Average Eval Loss: {avg_eval_loss:.4f}')
         
         if avg_eval_loss < best_eval_loss:
             best_eval_loss = avg_eval_loss
             torch.save(MyModel.state_dict(), 'best_model_checkpoint.pth')
-            print("Checkpoint saved for best evaluation loss!")
         
     MyModel.eval()
     test_loss = 0
-    test_loader = tqdm(test_loader, desc=f'Epoch {e+1}/{num_epochs}, Training')
     with torch.no_grad():
         for idx, data in enumerate(test_loader):
             q_value_map, q2_output, action, reward = data
             output = MyModel(q_value_map, q2_output, action)
             loss = criterion(output, reward)
-            log_eval_loss.append(loss.detach().item())
+            log_test_loss.append(loss.detach().item())
             eval_loss += loss.item()
     avg_test_loss = test_loss / len(test_loader.dataset)
     print(f'Average Test Loss: {avg_test_loss:.4f}')
+    
+    plt.plot(log_train_loss, label='Train Loss')
+    plt.plot(log_eval_loss, label='Eval Loss')
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
+    plt.title('Training, Evaluation Loss')
+    plt.legend()
+    plt.savefig('loss_curve.png')
+    
+    plt.clf()
+    
+    plt.plot(log_test_loss, label='Test loss')
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
+    plt.title('Testing Loss')
+    plt.savefig('test_loss_figure.png')
+    
+    plt.clf()
+    
+    print("=== Task Done ===")
