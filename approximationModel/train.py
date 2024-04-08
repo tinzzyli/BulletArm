@@ -122,6 +122,7 @@ if __name__ == "__main__":
     best_eval_loss = float('inf')
 
     MyModel = CustomModel(input1_channels, input2_size, input3_size, hidden_size, output_size)
+    MyModel.cuda()
     print(MyModel)
     
     criterion = nn.CrossEntropyLoss()
