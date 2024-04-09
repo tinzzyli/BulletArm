@@ -184,7 +184,7 @@ if __name__ == "__main__":
             output = MyModel(q_value_map, q2_output, action)
             loss = criterion(output, reward)
             log_test_loss.append(loss.detach().item())
-            eval_loss += loss.item()
+            test_loss += loss.item()
     avg_test_loss = test_loss / len(test_loader.dataset)
     print(f'Average Test Loss: {avg_test_loss:.4f}')
     
