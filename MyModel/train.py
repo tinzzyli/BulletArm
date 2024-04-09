@@ -13,7 +13,7 @@ from tqdm import tqdm
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
-
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 class CustomDataset(Dataset):
     def __init__(self, tensor_paths, device):
         self.tensor_paths = tensor_paths
@@ -94,6 +94,22 @@ def load_tensor(tensor_path, device):
     reward = tensor[-1:]
     return q_value_map, q2_output, action, reward
 
+def split_dataset(train_data_ratio, eval_data_ratio, test_data_ratio, data_path_list, batch_size, device_name):
+    train_size = int(train_data_ratio * len(data_path_list))
+    eval_size = int(eval_data_ratio * len(data_path_list))
+    test_size = len(data_path_list) - train_size - eval_size
+    
+    assert test_data_ratio + eval_data_ratio + train_data_ratio == 1
+    
+    train_dataset = CustomDataset(data_path_list[:train_size], device_name)
+    eval_dataset = CustomDataset(data_path_list[train_size:train_size+eval_size], device_name)
+    test_dataset = CustomDataset(data_path_list[train_size+eval_size:], device_name)
+    
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=False)
+    eval_loader = DataLoader(eval_dataset, batch_size=batch_size, shuffle=False)
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+    
+    return train_loader, eval_loader, test_loader
 
 if __name__ == "__main__":
     set_random_seed(42)
@@ -106,6 +122,9 @@ if __name__ == "__main__":
     data_num = len(data_path_list)
     random.shuffle(data_path_list)
 
+    train_data_ratio = 0.8
+    eval_data_ratio = 0.1
+    test_data_ratio = 0.1
     input1_channels = 1
     input2_size = 16
     input3_size = 3
@@ -124,18 +143,14 @@ if __name__ == "__main__":
     
     criterion = nn.BCEWithLogitsLoss()
     optimizer = optim.SGD(MyModel.parameters(), lr=0.001)
+    scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=5, verbose=True)
     
-    train_size = int(0.8 * len(data_path_list))
-    eval_size = int(0.1 * len(data_path_list))
-    test_size = len(data_path_list) - train_size - eval_size
-
-    train_dataset = CustomDataset(data_path_list[:train_size], device_name)
-    eval_dataset = CustomDataset(data_path_list[train_size:train_size+eval_size], device_name)
-    test_dataset = CustomDataset(data_path_list[train_size+eval_size:], device_name)
-    
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=False)
-    eval_loader = DataLoader(eval_dataset, batch_size=batch_size, shuffle=False)
-    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+    train_loader, eval_loader, test_loader = split_dataset(train_data_ratio, 
+                                                           eval_data_ratio, 
+                                                           test_data_ratio, 
+                                                           data_path_list, 
+                                                           batch_size, 
+                                                           device_name)
     
     for e in range(num_epochs):
         
