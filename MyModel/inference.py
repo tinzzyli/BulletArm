@@ -48,6 +48,8 @@ if __name__ == "__main__":
     log_test_loss = []
     criterion = nn.BCEWithLogitsLoss()
     MyModel = CustomModel(input1_channels, input2_size, input3_size, hidden_size, output_size)
+    MyModel.eval()
+    MyModel.cuda()
     
     train_loader, eval_loader, test_loader = split_dataset(train_data_ratio, 
                                                            eval_data_ratio, 
@@ -57,7 +59,6 @@ if __name__ == "__main__":
                                                            device_name)
     checkpoint = torch.load('best_model_checkpoint.pth')
     MyModel.load_state_dict(checkpoint)
-    MyModel.eval()
     with torch.no_grad():
         test_loss = 0
         correct = 0
