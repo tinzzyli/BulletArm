@@ -56,7 +56,7 @@ if __name__ == "__main__":
                                                            batch_size, 
                                                            device_name)
     checkpoint = torch.load('best_model_checkpoint.pth')
-    MyModel.load_state_dict(checkpoint['model_state_dict'])
+    MyModel.load_state_dict(checkpoint)
     MyModel.eval()
     with torch.no_grad():
         test_loss = 0
