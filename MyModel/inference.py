@@ -93,7 +93,7 @@ if __name__ == "__main__":
     print(f'Precision: {precision:.4f}')
     print(f'Recall: {recall:.4f}')
     print(f'F1 Score: {f1:.4f}')
-    print(false_positives, true_positives)
+    print(false_positives, true_negatives)
 
     
     avg_test_loss = test_loss / len(test_loader.dataset)
