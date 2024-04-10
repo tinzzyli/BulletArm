@@ -233,24 +233,34 @@ def main(envs, agent, device, position_list):
         out2 = torch.cat((actions_star, reward), dim=0).to(device)
         out3 = torch.cat((out1, out2),dim=0).to(device)
         
-        torch.save(out3, f"dataset/{int(o)}_{idx}.pt")
+        torch.save(out3, f"dataset_1/{int(o)}_{idx}.pt")
         
         envs.setInitializedFalse()
     return True
         
 if __name__ == '__main__':
-    envs = EnvWrapper(num_processes, env, env_config, planner_config)
     agent = createAgent(test=False)
     agent.eval()
     if load_model_pre:
         agent.loadModel(load_model_pre)
-        
-
-    file_path = './object_original_position.txt'
+    file_path = './obejct_sochastic_position.txt'
     positions = getPositions(file_path)
-
-    print("object_index: ", object_index)
-    info = positions[object_index*100: object_index*100 + 100]
-    reward = main(envs, agent, device, info)
+    
+    p_dict = {}
+    for p in positions:
+        if p[0] not in p_dict:
+            p_dict[int(p[0])] = []
+            p_dict[int(p[0])].append(p[1:3])
+        else:
+            p_dict[int(p[0])].append(p[1:3])
+    for i in p_dict:
+        print(i, p_dict[i])
+        
+    for i in p_dict:
+        env_config['object_index'] = int(i)
+        envs = EnvWrapper(num_processes, env, env_config, planner_config)
+        print("object_index: ", i)
+        info = p_dict[i]
+        reward = main(envs, agent, device, info)
     print("end")
     

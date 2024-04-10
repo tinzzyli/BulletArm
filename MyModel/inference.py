@@ -57,6 +57,7 @@ if __name__ == "__main__":
                                                            data_path_list, 
                                                            batch_size, 
                                                            device_name)
+    
     checkpoint = torch.load('best_model_checkpoint.pth')
     MyModel.load_state_dict(checkpoint)
     with torch.no_grad():
