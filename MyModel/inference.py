@@ -82,7 +82,7 @@ if __name__ == "__main__":
             true_positives += ((predicted == 1) & (reward == 1)).sum().item()
             false_positives += ((predicted == 1) & (reward == 0)).sum().item()
             false_negatives += ((predicted == 0) & (reward == 1)).sum().item()
-            true_negatives += ((predicted == 0) & (reward == 0)).sum.item()
+            true_negatives += ((predicted == 0) & (reward == 0)).sum().item()
 
     accuracy = correct / total
     precision = true_positives / (true_positives + false_positives + 1e-10)
