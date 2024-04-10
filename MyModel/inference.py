@@ -66,6 +66,7 @@ if __name__ == "__main__":
         true_positives = 0
         false_positives = 0
         false_negatives = 0
+        true_negatives = 0
         for idx, data in enumerate(test_loader):
             q_value_map, q2_output, action, reward = data
             output = MyModel(q_value_map, q2_output, action)
@@ -81,6 +82,7 @@ if __name__ == "__main__":
             true_positives += ((predicted == 1) & (reward == 1)).sum().item()
             false_positives += ((predicted == 1) & (reward == 0)).sum().item()
             false_negatives += ((predicted == 0) & (reward == 1)).sum().item()
+            true_negatives += ((predicted == 0) & (reward == 0)).sum.item()
 
     accuracy = correct / total
     precision = true_positives / (true_positives + false_positives + 1e-10)
@@ -91,6 +93,7 @@ if __name__ == "__main__":
     print(f'Precision: {precision:.4f}')
     print(f'Recall: {recall:.4f}')
     print(f'F1 Score: {f1:.4f}')
+    print(false_positives)
 
     
     avg_test_loss = test_loss / len(test_loader.dataset)
