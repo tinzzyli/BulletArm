@@ -141,7 +141,7 @@ def collect_data(envs = None, agent = None, device = None, o_info = None):
     states_, in_hands_, obs_, rewards, dones = envs.stepAttack(actions_star.detach(), auto_reset=True)
     
     f1=open("./training_data.txt","a")
-    f1.write(str(object_index, ori_x, ori_y, actions_star.detach(), rewards) + "\n")
+    f1.write(str([object_index, ori_x, ori_y, actions_star.detach(), rewards]) + "\n")
     
     envs.setInitializedFalse()
     
