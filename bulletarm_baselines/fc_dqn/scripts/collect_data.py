@@ -32,16 +32,16 @@ from bulletarm_baselines.fc_dqn.utils.torch_utils import augmentBuffer, augmentB
 from bulletarm_baselines.fc_dqn.scripts.fill_buffer_deconstruct import fillDeconstructUsingRunner
 import re
 
-def getGridPosition(position_index = None):
+def getGridPosition(total_num_of_points):
     x_range = [0.45, 0.55]
     y_range = [-0.05, 0.05]
-    num_points = 10
+    num_points = int(np.sqrt(total_num_of_points))
     x_values = np.linspace(x_range[0], x_range[1], num_points)
     y_values = np.linspace(y_range[0], y_range[1], num_points)
     x_grid, y_grid = np.meshgrid(x_values, y_values)
     points = np.column_stack((x_grid.ravel(), y_grid.ravel()))
 
-    return points
+    return points, num_points**2
 
 def rendering(obj_list):
     
@@ -67,6 +67,14 @@ def rendering(obj_list):
     heightmap = torch.where(heightmap > 1.0, 6e-3, heightmap) 
 
     return heightmap.reshape(heightmap_size,heightmap_size)
+
+def getPositions(file_path):
+    all_numeric_values = []
+    with open(file_path, 'r') as file:
+        for line in file:
+            values = [float(match) for match in re.findall(r'[-+]?\d*\.\d+(?:[eE][-+]?\d+)?|\d+', line)]
+            all_numeric_values.append(values)
+    return all_numeric_values
 
 def getGroundTruth(agent, 
                    states,
@@ -115,102 +123,28 @@ def getGroundTruth(agent,
     
     return q_value_maps, actions.double()
 
-def pgd_attack(envs = None, agent = None, epsilon_1 = 0.0005, epsilon_2 = 0.0005, alpha_1 = 0.02, alpha_2 = 0.1, iters=100, device = None, o_info = None):
+def collect_data(envs = None, agent = None, device = None, o_info = None):
     pyredner.set_print_timing(False)
     
     ori_x, ori_y = o_info
 
     states, in_hands, obs, object_dir_list, params = envs._resetAttack(np.array([ori_x, ori_y])) 
-    original_xyz_position_list, original_rot_mat_list, scale_list = params
-
-    num_objects = len(object_dir_list)
-    xyz_position_list = copy.deepcopy(original_xyz_position_list)
-    rot_mat_list = copy.deepcopy(original_rot_mat_list)
-    scale_list = copy.deepcopy(scale_list)    
-    mse_loss = nn.MSELoss()
-
-
-    for iter in range(iters):
-        leaf_tensor = xyz_position_list[0][:2].clone().to(device)
-        leaf_tensor.requires_grad = True
-        xyz_position_list[0][:2] = leaf_tensor
-        # rot_mat_list[0].requires_grad = True
-
-
-        _, actions = getGroundTruth(agent = agent,
-                                    states = states,
-                                    in_hands = in_hands,
-                                    object_dir_list = object_dir_list,
-                                    xyz_position_list = xyz_position_list,
-                                    rot_mat_list = rot_mat_list,
-                                    scale_list = scale_list,
-                                    device = device)
-        actions = actions[0][:2].to(device)
-        
-        """ attack on position """
-        loss = - mse_loss(leaf_tensor, actions)      
-        grad = torch.autograd.grad(outputs=loss, 
-                            inputs=leaf_tensor, 
-                            grad_outputs=None, 
-                            allow_unused=False, 
-                            retain_graph=False, 
-                            create_graph=False)
-        x_grad, y_grad = grad[0].to(device)
-        xyz_position = xyz_position_list[0].detach().clone().to(device)
-        # rot_mat = rot_mat_list[0].detach().clone().to(device)
-        x,y,z = xyz_position.clone().detach().to(device)
-        x_eta = torch.clamp(x_grad, min = -epsilon_1,  max = epsilon_1).to(device)
-        y_eta = torch.clamp(y_grad, min = -epsilon_1,  max = epsilon_1).to(device)
-        xyz_position = torch.tensor([
-            torch.clamp(x + x_eta, min = original_xyz_position_list[0][0].to(device) - alpha_1, max = original_xyz_position_list[0][0].to(device) + alpha_1),
-            torch.clamp(y + y_eta, min = original_xyz_position_list[0][1].to(device) - alpha_1, max = original_xyz_position_list[0][1].to(device) + alpha_1),
-            z]).to(device)
-        """ attack on position """
-
-        """ attack on rotation"""
-        # rot_eta = rot_grad.sign() * epsilon_2
-        # rot_mat = torch.clamp(unify(rot_mat + rot_eta), min = original_rot_mat_list[0] - alpha_2, max = original_rot_mat_list[0] + alpha_2)
-        """ attack on rotation"""
-
-        xyz_position_list[0] = xyz_position.detach().clone().to(device)
-        # rot_mat_list[0] = rot_mat.detach().clone().to(device)
-        # scale = scale.detach().clone()
-        
-        
-    # _, _, _, _, params = envs._resetAttack(xyz_position_list[0].cpu().numpy()) 
-    # _xyz_position_list, _rot_mat_list, _scale_list = params
-    # xyz_position_list = copy.deepcopy(_xyz_position_list)
-    # rot_mat_list = copy.deepcopy(_rot_mat_list)
-    # scale_list = copy.deepcopy(_scale_list)    
+    states = states.unsqueeze(dim=0).detach()
+    in_hands = in_hands.unsqueeze(dim=0).detach()
+    obs = obs.unsqueeze(dim=0).detach()
     
-    _, actions = getGroundTruth(agent = agent,
-                                states = states,
-                                in_hands = in_hands,
-                                object_dir_list = object_dir_list,
-                                xyz_position_list = xyz_position_list,
-                                rot_mat_list = rot_mat_list,
-                                scale_list = scale_list,
-                                device = device)
+    q_value_maps, actions_star_idx, actions_star = agent.getEGreedyActionsAttack(states, in_hands, obs, 0, 0)
+    actions_star = actions_star.to(device)
+    states = states.to(device)
+    actions_star = torch.cat((actions_star, states.unsqueeze(1)), dim=1)
+    actions_star = actions_star.reshape(4)
+    states_, in_hands_, obs_, rewards, dones = envs.stepAttack(actions_star.detach(), auto_reset=True)
     
-    actions = actions.to(device)
-    states = states.to(device).unsqueeze(dim=0)
-    actions = torch.cat((actions, states.unsqueeze(1)), dim=1)
-    actions = actions.reshape(4)
-    _, _, _, reward, _ = envs.stepAttack(actions.detach())
-
-    ff=open("./object_grid_attack_positioin.txt","a")
-    ff.write("index: " + str(object_index) + ", ori_pos_1: " + str([ori_x, ori_y]) + ", ori_pos_2: " + str(original_xyz_position_list[0]))
-    ff.write(", pos: " + str(xyz_position_list[0]) + ", actions: " + str(actions) + ", reward: " + str(reward) + "\n")
-
-    return reward
-
-def getPositions(file_path):
-    all_numeric_values = []
-    with open(file_path, 'r') as file:
-        for line in file:
-            values = [float(match) for match in re.findall(r'[-+]?\d*\.\d+(?:[eE][-+]?\d+)?|\d+', line)]
-            all_numeric_values.append(values)
-    return all_numeric_values
+    f1=open("./training_data.txt","a")
+    f1.write(str(object_index, ori_x, ori_y, actions_star.detach(), rewards) + "\n")
+    
+    envs.setInitializedFalse()
+    
 
 def main(envs, agent, device, position_list):
     pyredner.set_print_timing(False)
@@ -239,28 +173,34 @@ def main(envs, agent, device, position_list):
     return True
         
 if __name__ == '__main__':
-    agent = createAgent(test=False)
+    envs = EnvWrapper(num_processes, env, env_config, planner_config)
+    agent = createAgent()
     agent.eval()
     if load_model_pre:
-        agent.loadModel(load_model_pre)
+        agent.loadModel(load_model_pre) 
     file_path = './obejct_sochastic_position.txt'
-    positions = getPositions(file_path)
+    # positions = getPositions(file_path)
+    total_num_of_points = 1000
+    positions, total_num_of_points = getGridPosition(total_num_of_points=total_num_of_points)
     
-    p_dict = {}
-    for p in positions:
-        if p[0] not in p_dict:
-            p_dict[int(p[0])] = []
-            p_dict[int(p[0])].append(p[1:3])
-        else:
-            p_dict[int(p[0])].append(p[1:3])
-    for i in p_dict:
-        print(i, p_dict[i])
+    # p_dict = {}
+    # for p in positions:
+    #     if p[0] not in p_dict:
+    #         p_dict[int(p[0])] = []
+    #         p_dict[int(p[0])].append(p[1:3])
+    #     else:
+    #         p_dict[int(p[0])].append(p[1:3])
+    # for i in p_dict:
+    #     print(i, p_dict[i])
         
-    for i in p_dict:
-        env_config['object_index'] = int(i)
-        envs = EnvWrapper(num_processes, env, env_config, planner_config)
-        print("object_index: ", i)
-        info = p_dict[i]
-        reward = main(envs, agent, device, info)
+    # for i in p_dict:
+    #     env_config['object_index'] = int(i)
+    #     envs = EnvWrapper(num_processes, env, env_config, planner_config)
+    #     print("object_index: ", i)
+    #     info = p_dict[i]
+    #     reward = main(envs, agent, device, info)
+    
+    for pos in tqdm(positions, desc="Collecting Data"):
+        collect_data(envs, agent, device=device, o_info=pos)
     print("end")
     
